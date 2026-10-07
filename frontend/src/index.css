@@ -1,0 +1,184 @@
+@import 'tailwindcss';
+
+/* Tokens from DESIGN.md. Spacing uses Tailwind's default 4px base unit,
+   which matches the design's 4px grid (p-6 = 24px card padding). */
+@theme {
+  --color-ocbc-red: #e4002b;
+  --color-ocbc-red-deep: #b00021;
+  --color-ocbc-red-tint: #fdeaed;
+
+  --color-obsidian-bar: #333333;
+  --color-ink: #171718;
+  --color-carbon: #25282b;
+  --color-smoke: #7c7e83;
+  --color-ash: #a3a7ad;
+  --color-frost: #e5e7eb;
+  --color-bone: #f5f5f7;
+  --color-porcelain: #ffffff;
+  --color-shadow-veil: #bfbfbf;
+  --color-slate-wash: #5b7080;
+
+  --color-status-verified: #1f7a4d;
+  --color-status-verified-surface: #ebf5ef;
+  --color-status-caution: #b06c00;
+  --color-status-caution-surface: #fdf4e6;
+  --color-status-unsupported: #a3243b;
+  --color-status-unsupported-surface: #fbedef;
+  --color-status-unknown: #7c7e83;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --text-caption: 12px;
+  --text-caption--line-height: 1.4;
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 1.43;
+  --text-body: 16px;
+  --text-body--line-height: 1.5;
+  --text-subheading: 20px;
+  --text-subheading--line-height: 1.4;
+  --text-subheading--letter-spacing: -0.2px;
+  --text-heading-sm: 24px;
+  --text-heading-sm--line-height: 1.33;
+  --text-heading-sm--letter-spacing: -0.24px;
+  --text-heading: 36px;
+  --text-heading--line-height: 1.11;
+  --text-heading--letter-spacing: -0.36px;
+  --text-display: 72px;
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -1.8px;
+
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+
+  --shadow-xl: rgba(0, 0, 0, 0.25) 0px 25px 50px -12px;
+  --shadow-md: rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.1) 0px 4px 6px -4px;
+
+  --gradient-slate-wash: radial-gradient(64.38% 210.53% at 35.62% 50%, #8296a6 0%, #5b7080 100%);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    background: var(--color-porcelain);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-carbon);
+    outline-offset: 2px;
+  }
+}
+
+@utility eyebrow {
+  font-size: 12px;
+  line-height: 1.33;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Claim highlight: tint + 1px underline, wraps cleanly across lines. */
+.claim {
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  border-radius: 12px;
+  padding: 1px 0 1px 4px;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  color: var(--color-ink);
+  cursor: pointer;
+  transition: background-color 160ms ease, box-shadow 160ms ease;
+}
+.claim-static {
+  cursor: default;
+}
+.claim:not(.claim-static):hover,
+.claim[aria-current='true'] {
+  box-shadow: 0 0 0 1px currentColor inset;
+}
+/* Supported claims stay quiet so flags stand out: no tint, dotted underline. */
+.claim-subtle {
+  background: transparent;
+  border-bottom-style: dotted;
+  border-bottom-color: color-mix(in srgb, currentColor 55%, transparent) !important;
+}
+.claim-reveal {
+  animation: claim-in 420ms ease-out both;
+}
+@keyframes claim-in {
+  from {
+    background-color: transparent;
+    border-bottom-color: transparent;
+  }
+}
+
+.caret::after {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -2px;
+  border-radius: 9999px;
+  background: var(--color-carbon);
+  animation: blink 900ms steps(1) infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spin {
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.rise-in {
+  animation: rise-in 320ms ease-out both;
+}
+
+/* Ghost passage text drifting behind the character while checks run. */
+@keyframes drift {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+.drift {
+  animation: drift 14s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* Thin, quiet scrollbars inside panels. */
+.scroll-quiet {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-frost) transparent;
+}

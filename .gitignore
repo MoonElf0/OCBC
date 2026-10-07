@@ -1,0 +1,6 @@
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
+
+# Frontend build output and dependencies
+node_modules/
+dist/
