@@ -9,6 +9,8 @@ import AnswerText from './AnswerText'
 import { CharacterMark } from './Character'
 import { ScoreBadge, Eyebrow } from './ui'
 import ChecksSheet from './ChecksSheet'
+import Challenger from './Challenger'
+import { TrustChips } from './TrustMap'
 
 export default function Thread() {
   const { state } = useStore()
@@ -156,9 +158,11 @@ function AnswerCard({ m }) {
             Prototype: your question was matched to the scripted question “{scenarioById(m.scenarioId).question}”
           </p>
         )}
+        {settled && <TrustChips m={m} claims={claims} />}
       </div>
 
       {settled && <AssessmentStrip m={m} active={active} claims={claims} offered={offered} />}
+      {settled && !m.outcome && <div className="pt-3"><Challenger m={m} /></div>}
       {m.outcome && <Outcome outcome={m.outcome} />}
     </article>
   )
@@ -352,3 +356,4 @@ function Composer() {
     </div>
   )
 }
+

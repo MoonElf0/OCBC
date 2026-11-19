@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { UserRound, MessageSquare, Inbox, ChartLine, Check } from 'lucide-react'
+import { UserRound, MessageSquare, Inbox, ChartLine, Check, Sun, Moon } from 'lucide-react'
+import { getTheme, applyTheme } from '../lib/theme'
 import { useStore } from '../state/store'
 import { CharacterMark } from './Character'
 
@@ -14,6 +15,7 @@ const LINKS = {
 export default function TopNav() {
   const { state, dispatch } = useStore()
   const [open, setOpen] = useState(false)
+  const [dark, setDark] = useState(getTheme() === 'dark')
   const menu = useRef(null)
   const admin = state.view !== 'workspace'
   const pending = state.queue.filter((q) => q.status === 'pending').length
@@ -67,6 +69,10 @@ export default function TopNav() {
               Back to workspace
             </button>
           )}
+          <button onClick={() => dispatch({ type: 'pitch', open: true })} className="whitespace-nowrap rounded-full border border-white/25 px-4 py-1.5 text-body-sm font-medium text-white hover:border-white/60">Pitch</button>
+          <button onClick={() => { applyTheme(dark ? 'light' : 'dark'); setDark(!dark) }} aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'} className="grid size-9 place-items-center rounded-full border border-white/25 hover:border-white/60">
+            {dark ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
           <div ref={menu} className="relative">
             <button
               onClick={() => setOpen((o) => !o)}

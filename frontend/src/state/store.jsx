@@ -20,6 +20,8 @@ const initial = {
   liveDecisions: [],
   unreadOutcomes: 0,
   toast: null,
+  trust: null, // { id, claimId } while the Trust Map is open
+  pitch: false,
   seq: 1042,
 }
 
@@ -159,6 +161,12 @@ function reducer(state, a) {
       return { ...s, toast: { text: askers.length ? 'Decision sent back to the employee who asked.' : 'Decision recorded.' } }
     }
 
+    case 'trust':
+      return { ...state, trust: a.id ? { id: a.id, claimId: a.claimId } : null }
+
+    case 'pitch':
+      return { ...state, pitch: a.open }
+
     case 'toast':
       return { ...state, toast: a.toast }
 
@@ -249,3 +257,4 @@ export function useActiveAnswer() {
 }
 
 export { bandFor }
+
