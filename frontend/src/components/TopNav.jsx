@@ -38,7 +38,7 @@ export default function TopNav() {
 
   return (
     <nav className="h-16 shrink-0 bg-obsidian-bar text-white">
-      <div className="mx-auto flex h-full max-w-[1200px] items-center gap-8 px-6">
+      <div className="mx-auto flex h-full max-w-[1560px] items-center gap-8 px-6">
         <div className="flex items-center gap-2.5">
           <span className="grid size-8 place-items-center rounded-full bg-white/10">
             <CharacterMark size={22} />

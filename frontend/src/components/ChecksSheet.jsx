@@ -115,16 +115,17 @@ export function CheckRow({ meta, check, scenarioId, question, defaultOpen = fals
       <button className="flex w-full items-center gap-4 text-left disabled:cursor-default" onClick={() => setOpen((o) => !o)} disabled={!settled} aria-expanded={open}>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2">
-            <span className="text-body-sm font-medium text-ink">{meta.name}</span>
+            <span className="text-body font-semibold text-ink">{meta.name}</span>
             <span className="text-caption text-ash">{METHOD_LABEL[meta.method]}</span>
           </div>
-          <div className="mt-0.5 text-body-sm text-smoke">{settled ? check.summary : meta.question}</div>
+          <div className="mt-0.5 text-body-sm font-medium text-carbon">{settled ? (check.short ?? check.summary) : meta.question}</div>
         </div>
         <CheckPill status={check.status} />
-        <ChevronDown size={16} className={`shrink-0 text-ash transition-transform ${open ? 'rotate-180' : ''} ${settled ? '' : 'opacity-0'}`} aria-hidden="true" />
+        <ChevronDown size={18} className={`shrink-0 text-carbon transition-transform ${open ? 'rotate-180' : ''} ${settled ? '' : 'opacity-0'}`} aria-hidden="true" />
       </button>
       {open && settled && (
         <div className="rise-in mt-3 space-y-2">
+          {check.short && <p className="text-body-sm text-smoke">{check.summary}</p>}
           {check.evidence.map((e, j) => (
             <EvidenceItem key={j} item={e} scenarioId={scenarioId} question={question} />
           ))}

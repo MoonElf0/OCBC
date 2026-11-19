@@ -15,7 +15,7 @@ export function figures(text) {
   return (text.match(/\d+(?:[.,:]\d+)*/g) ?? []).map((f) => f.replace(/,/g, ''))
 }
 
-const display = (text) => (text.match(/(?:SGD\s)?\d+(?:[.,:]\d+)*(?:%|\s(?:basis points|bps|pm|am))?/) ?? [''])[0]
+export const display = (text) => (text.match(/(?:SGD\s)?\d+(?:[.,:]\d+)*(?:%|\s(?:basis points|bps|pm|am))?/) ?? [''])[0]
 
 function passageRef(r) {
   return { docId: r.docId, section: r.section, passage: r.passage }
@@ -25,11 +25,11 @@ export function citationCheck(answer, claims) {
   const cited = answer.citations
   if (!cited.length) {
     return claims.length
-      ? { id: 'citation', status: 'fail', summary: 'The answer cites no documents.', evidence: [{ kind: 'search' }] }
-      : { id: 'citation', status: 'na', summary: 'No documents cited and no claims made.', evidence: [{ kind: 'search' }] }
+      ? { id: 'citation', status: 'fail', short: 'Cites no documents', summary: 'The answer cites no documents.', evidence: [{ kind: 'search' }] }
+      : { id: 'citation', status: 'na', short: 'Nothing cited, nothing claimed', summary: 'No documents cited and no claims made.', evidence: [{ kind: 'search' }] }
   }
   const missing = cited.filter((id) => !DOCUMENTS[id])
-  if (missing.length) return { id: 'citation', status: 'fail', summary: `Cited ${missing.join(', ')} does not exist in the approved library.`, evidence: [] }
+  if (missing.length) return { id: 'citation', status: 'fail', short: 'Cited document doesn’t exist', summary: `Cited ${missing.join(', ')} does not exist in the approved library.`, evidence: [] }
 
   const checked = claims.filter((c) => c.source && cited.includes(c.source.docId))
   const mismatched = checked.filter((c) => {
@@ -43,6 +43,7 @@ export function citationCheck(answer, claims) {
     return {
       id: 'citation',
       status: 'fail',
+      short: `Says ${said} — source says ${display(c.source.passage)}`,
       summary: `${c.source.docId} exists, but the answer cites it for ${said} and the passage says ${display(c.source.passage)}.`,
       evidence: mismatched.map((m) => passageRef(m.source)),
     }
@@ -50,6 +51,7 @@ export function citationCheck(answer, claims) {
   return {
     id: 'citation',
     status: 'pass',
+    short: 'Cited documents exist and match',
     summary: `${cited.length === 1 ? 'The cited document exists' : cited.length === 2 ? 'Both cited documents exist' : `All ${cited.length} cited documents exist`} in the approved library, and every figure in the ${checked.length} cited claim${checked.length === 1 ? '' : 's'} appears in its passage.`,
     evidence: checked.map((c) => passageRef(c.source)),
   }
@@ -57,7 +59,7 @@ export function citationCheck(answer, claims) {
 
 export function freshnessCheck(answer, claims) {
   const ids = [...new Set([...answer.citations, ...claims.map((c) => c.source?.docId).filter(Boolean)])].filter((id) => DOCUMENTS[id])
-  if (!ids.length) return { id: 'freshness', status: 'na', summary: 'No source to check.', evidence: [{ kind: 'search' }] }
+  if (!ids.length) return { id: 'freshness', status: 'na', short: 'No source to check', summary: 'No source to check.', evidence: [{ kind: 'search' }] }
   const results = ids.map((id) => ({ id, ...freshnessOf(id) }))
   const superseded = results.filter((r) => r.state === 'superseded')
   const overdue = results.filter((r) => r.state === 'overdue')
@@ -68,6 +70,7 @@ export function freshnessCheck(answer, claims) {
     return {
       id: 'freshness',
       status: 'fail',
+      short: `Source replaced by ${by.id}`,
       summary: `${r.id} was last updated ${ageLabel(r.months)} and has been superseded by ${by.id}.`,
       evidence: [{ docId: by.id, section: pointer.id, passage: pointer.text }],
     }
@@ -79,6 +82,7 @@ export function freshnessCheck(answer, claims) {
     return {
       id: 'freshness',
       status: 'warning',
+      short: `Source ${r.months} months old — review overdue`,
       summary: `${r.id} was last updated ${ageLabel(r.months)}, past its ${doc.reviewCycleMonths}-month review cycle. It has not been superseded.`,
       evidence: used ? [passageRef(used)] : [],
     }
@@ -87,6 +91,7 @@ export function freshnessCheck(answer, claims) {
   return {
     id: 'freshness',
     status: 'pass',
+    short: 'All sources up to date',
     summary: `${results.length === 1 ? `${oldest.id} was updated within its` : `All ${results.length} sources were updated within their`} 12-month review cycle (oldest: ${oldest.id}, ${ageLabel(oldest.months)}).`,
     evidence: claims.filter((c) => c.source?.docId === oldest.id).slice(0, 1).map((c) => passageRef(c.source)),
   }
@@ -94,19 +99,20 @@ export function freshnessCheck(answer, claims) {
 
 export function crossrefCheck(answer, claims) {
   const sourced = claims.filter((c) => c.source)
-  if (!sourced.length) return { id: 'crossref', status: 'na', summary: 'No approved source to compare against.', evidence: [{ kind: 'search' }] }
+  if (!sourced.length) return { id: 'crossref', status: 'na', short: 'Nothing to compare against', summary: 'No approved source to compare against.', evidence: [{ kind: 'search' }] }
   const diffs = claims
     .filter((c) => c.counter)
     .map((c) => ({ c, claimed: figures(answer.text.slice(c.start, c.end))[0], current: figures(c.counter.passage)[0] }))
     .filter((d) => d.claimed && d.current && d.claimed !== d.current)
   if (!diffs.length) {
-    return { id: 'crossref', status: 'pass', summary: 'Every figure agrees with the approved sources retrieved for the same point.', evidence: sourced.slice(0, 1).map((c) => passageRef(c.source)) }
+    return { id: 'crossref', status: 'pass', short: 'Figures match current policy', summary: 'Every figure agrees with the approved sources retrieved for the same point.', evidence: sourced.slice(0, 1).map((c) => passageRef(c.source)) }
   }
   const d = diffs[0]
   const conflict = diffs.some((x) => x.c.status === 'conflicting')
   return {
     id: 'crossref',
     status: conflict ? 'fail' : 'warning',
+    short: `Says ${display(answer.text.slice(d.c.start, d.c.end))} — policy says ${display(d.c.counter.passage)}`,
     summary: `The answer states ${display(answer.text.slice(d.c.start, d.c.end))}; the current approved source (${d.c.counter.docId} ${d.c.counter.section}) states ${display(d.c.counter.passage)}.`,
     evidence: diffs.map((x) => passageRef(x.c.counter)),
   }
