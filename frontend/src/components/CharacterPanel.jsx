@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, ChevronLeft, ChevronRight, ThumbsUp, ThumbsDown, Inbox, Clock, CircleSlash, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, ChevronDown, ThumbsUp, ThumbsDown, Inbox, Clock, CircleSlash, Sparkles, Flag, BookOpen, ListChecks, Maximize2, MessageSquare, Lightbulb, CircleCheck, Search, LoaderCircle } from 'lucide-react'
 import { useStore, useActiveAnswer } from '../state/store'
-import { DOCUMENTS } from '../fixtures'
-import { CHECKS, CHECK_STATUS, CLAIM_STATUS, TONES, BAND_ICON, bandFor, METHOD_LABEL } from '../lib/status'
+import { CHECKS, CHECK_STATUS, CHECK_ICON, CLAIM_STATUS, CLAIM_COUNT_LABEL, TONES, BAND_ICON, bandFor, METHOD_LABEL, topicIcon } from '../lib/status'
 import { freshnessOf, formatDate } from '../lib/freshness'
+import { display } from '../lib/rules'
 import { scenarioById } from '../lib/pipeline'
-import { visibleClaims, moodFor, flagged, runningCheck } from '../lib/view'
+import { visibleClaims, moodFor, flagged, runningCheck, claimCounts } from '../lib/view'
 import Character from './Character'
-import { PrimaryButton, GhostButton, Eyebrow, SourceChip, Passage, Pill, ScoreBadge } from './ui'
+import { PrimaryButton, GhostButton, SourceChip, ScoreBadge, SectionHeader, IconTile, CheckPill } from './ui'
 import { SearchRecord } from './Evidence'
 import { OUTCOME_META } from './Thread'
 
@@ -29,16 +29,10 @@ export default function CharacterPanel() {
         Assessment AI panel
       </h2>
       {state.offerId && <OfferBanner />}
-      {claimMode && (
-        <div className="flex shrink-0 items-center justify-between border-b border-frost bg-porcelain px-5 py-3">
-          <button onClick={() => dispatch({ type: 'overall' })} className="inline-flex items-center gap-1.5 rounded-full text-body-sm font-medium text-carbon hover:text-ink">
-            <ArrowLeft size={16} /> Overall answer
-          </button>
-          <ClaimCounter m={m} claimId={state.panel.claimId} />
-        </div>
-      )}
+      {m && !claimMode && <QuestionSwitcher answers={answers} m={m} onPick={(id) => dispatch({ type: 'select', id })} />}
+      {claimMode && <ClaimNav m={m} claimId={state.panel.claimId} />}
       <div ref={scroller} className="scroll-quiet min-h-0 flex-1 overflow-y-auto">
-        {!m ? <EmptyState /> : claimMode ? <ClaimDetail m={m} claimId={state.panel.claimId} /> : <Overall m={m} answers={answers} />}
+        {!m ? <EmptyState /> : claimMode ? <ClaimDetail m={m} claimId={state.panel.claimId} /> : <Overall m={m} />}
       </div>
       {m && <Actions m={m} />}
     </aside>
@@ -50,12 +44,72 @@ function claimList(m) {
   return [...flagged(claims), ...claims.filter((c) => c.status === 'supported')]
 }
 
-function ClaimCounter({ m, claimId }) {
-  const list = claimList(m)
+/** Numbered tabs, one per answer, each carrying its verdict icon; the active question underneath. */
+function QuestionSwitcher({ answers, m, onPick }) {
+  const idx = answers.findIndex((a) => a.id === m.id)
+  const prev = answers[idx - 1]
+  const next = answers[idx + 1]
+  const topic = scenarioById(m.scenarioId).topic
+  const TopicIcon = topicIcon(topic)
   return (
-    <span className="text-caption text-smoke">
-      Claim {list.findIndex((c) => c.id === claimId) + 1} of {list.length}
-    </span>
+    <nav aria-label="Switch question" className="shrink-0 border-b border-frost bg-porcelain px-4 pt-3 pb-3">
+      <div className="flex items-center gap-2">
+        <ArrowButton Icon={ChevronLeft} label="Previous question" onClick={() => prev && onPick(prev.id)} disabled={!prev} />
+        <div className="scroll-quiet flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto" role="tablist">
+          {answers.map((a, i) => {
+            const active = a.id === m.id
+            const done = !!a.result
+            const band = done ? bandFor(a.result.score) : null
+            const Icon = done ? BAND_ICON[band.status] : LoaderCircle
+            return (
+              <button
+                key={a.id}
+                role="tab"
+                aria-selected={active}
+                aria-label={`Question ${i + 1}${band ? `, ${band.label}` : ', checking'}: ${a.question}`}
+                title={a.question}
+                onClick={() => onPick(a.id)}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-body-sm font-semibold transition-colors ${active ? 'border-carbon bg-carbon text-white' : 'border-frost bg-porcelain text-carbon hover:border-ash'}`}
+              >
+                <Icon size={15} strokeWidth={2.25} className={`${done ? (active ? 'text-white' : TONES[band.status].text) : 'spin'}`} aria-hidden="true" />Q{i + 1}
+              </button>
+            )
+          })}
+        </div>
+        <ArrowButton Icon={ChevronRight} label="Next question" onClick={() => next && onPick(next.id)} disabled={!next} />
+      </div>
+      <p className="mt-2.5 flex items-center gap-2 text-body-sm font-medium text-ink" title={m.question}>
+        <TopicIcon size={17} className="shrink-0 text-carbon" aria-hidden="true" />
+        <span className="truncate">{m.question}</span>
+      </p>
+    </nav>
+  )
+}
+
+function ArrowButton({ Icon, label, onClick, disabled }) {
+  return (
+    <button onClick={onClick} disabled={disabled} aria-label={label} className="grid size-9 shrink-0 place-items-center rounded-full border border-frost bg-porcelain text-ink transition-colors hover:border-carbon disabled:cursor-default disabled:text-ash disabled:hover:border-frost">
+      <Icon size={18} />
+    </button>
+  )
+}
+
+function ClaimNav({ m, claimId }) {
+  const { dispatch } = useStore()
+  const list = claimList(m)
+  const idx = list.findIndex((c) => c.id === claimId)
+  const go = (k) => list[k] && dispatch({ type: 'select', id: m.id, claimId: list[k].id })
+  return (
+    <div className="flex shrink-0 items-center gap-2 border-b border-frost bg-porcelain px-4 py-3">
+      <GhostButton onClick={() => dispatch({ type: 'overall' })} className="py-1.5">
+        <ArrowLeft size={16} /> All results
+      </GhostButton>
+      <span className="ml-auto text-body-sm font-medium text-carbon">
+        Claim {idx + 1} of {list.length}
+      </span>
+      <ArrowButton Icon={ChevronLeft} label="Previous claim" onClick={() => go(idx - 1)} disabled={idx <= 0} />
+      <ArrowButton Icon={ChevronRight} label="Next claim" onClick={() => go(idx + 1)} disabled={idx >= list.length - 1} />
+    </div>
   )
 }
 
@@ -63,7 +117,9 @@ function OfferBanner() {
   const { state, dispatch } = useStore()
   return (
     <div className="rise-in flex shrink-0 items-center justify-between gap-3 border-b border-frost bg-porcelain px-5 py-3">
-      <span className="text-body-sm text-carbon">A newer answer is ready.</span>
+      <span className="inline-flex items-center gap-2 text-body-sm font-medium text-ink">
+        <Sparkles size={16} className="text-carbon" aria-hidden="true" /> A newer answer is ready
+      </span>
       <GhostButton onClick={() => dispatch({ type: 'select', id: state.offerId })} className="py-1.5">
         View it <ChevronRight size={14} />
       </GhostButton>
@@ -71,53 +127,26 @@ function OfferBanner() {
   )
 }
 
-/** Character stage: fills the top of the panel edge to edge. */
-function Stage({ mood, m, compact, onPrev, onNext, prevLabel, nextLabel, line, settled }) {
+/** Character stage: fills the top of the panel edge to edge. Shrinks once the verdict is in. */
+function Stage({ mood, m, line, settled }) {
   const { dispatch } = useStore()
-  const sc = m ? scenarioById(m.scenarioId) : null
-  const ghost = sc ? sc.verification.claims.map((c) => c.source?.passage).filter(Boolean) : []
-  const thinking = mood === 'thinking'
   return (
     <div
-      className={`relative shrink-0 overflow-hidden transition-[height] duration-500 ${compact || settled ? 'h-44' : 'h-[clamp(200px,28vh,256px)]'}`}
+      className={`relative shrink-0 overflow-hidden transition-[height] duration-500 ${settled ? 'h-36' : m ? 'h-44' : 'h-[clamp(200px,28vh,256px)]'}`}
       style={{ background: m ? 'radial-gradient(80% 90% at 60% 40%, #ffffff 0%, #f5f5f7 70%)' : 'var(--gradient-slate-wash)' }}
     >
-      {/* Faint source passages drift behind the character while checks run. */}
-      <div
-        className={`pointer-events-none absolute inset-x-8 top-0 bottom-0 transition-opacity duration-500 ${thinking ? 'opacity-100' : 'opacity-0'}`}
-        style={{ maskImage: 'linear-gradient(transparent, #000 25%, #000 60%, transparent)' }}
-        aria-hidden="true"
-      >
-        <div className="drift space-y-2 pt-4 text-[9px] leading-snug text-ash/50">
-          {[...ghost, ...ghost, ...ghost].map((p, i) => (
-            <p key={i} className={i % 2 ? 'pl-24' : 'pr-24'}>
-              {p}
-            </p>
-          ))}
-        </div>
-      </div>
       <button
         onClick={() => m && dispatch({ type: 'checks', open: true })}
         disabled={!m}
         className={`group absolute inset-0 flex items-end pb-2 disabled:cursor-default ${line ? 'justify-end pr-10' : 'justify-center'}`}
         aria-label={m ? 'Open all six checks' : 'Assessment AI character'}
       >
-        <Character mood={mood} className={`${compact ? 'h-36' : 'h-[92%]'} w-auto transition-[height] duration-500 drop-shadow-[0_18px_18px_rgba(0,0,0,0.12)] transition-transform group-hover:scale-[1.02]`} />
+        <Character mood={mood} className="h-[92%] w-auto drop-shadow-[0_18px_18px_rgba(0,0,0,0.12)] transition-transform group-hover:scale-[1.02]" />
       </button>
       {line && (
-        <div key={line} className="rise-in pointer-events-none absolute left-5 top-5 max-w-[44%] rounded-2xl border border-frost bg-porcelain px-3 py-2 text-caption text-carbon shadow-md" aria-live="polite">
+        <div key={line} className="rise-in pointer-events-none absolute left-5 top-1/2 max-w-[52%] -translate-y-1/2 rounded-2xl border border-frost bg-porcelain px-4 py-3 text-body-sm font-medium text-ink shadow-md" aria-live="polite">
           {line}
         </div>
-      )}
-      {onPrev && (
-        <button onClick={onPrev} disabled={!prevLabel} aria-label={prevLabel ?? 'No previous'} className="absolute left-4 bottom-4 grid size-9 place-items-center rounded-full border border-frost bg-porcelain text-carbon shadow-md transition-opacity hover:text-ink disabled:opacity-0">
-          <ChevronLeft size={16} />
-        </button>
-      )}
-      {onNext && (
-        <button onClick={onNext} disabled={!nextLabel} aria-label={nextLabel ?? 'No next'} className="absolute right-4 bottom-4 grid size-9 place-items-center rounded-full border border-frost bg-porcelain text-carbon shadow-md transition-opacity hover:text-ink disabled:opacity-0">
-          <ChevronRight size={16} />
-        </button>
       )}
     </div>
   )
@@ -131,31 +160,37 @@ function EmptyState() {
       <Stage mood="idle" />
       <div className="space-y-6 p-6">
         <div>
-          <Eyebrow>Assessment AI</Eyebrow>
-          <h3 className="mt-2 text-heading-sm font-medium text-ink">Nothing to assess yet</h3>
-          <p className="mt-2 max-w-[44ch] text-body-sm text-carbon">
-            Ask the Policy Assistant a question. I’ll check its answer against the approved policy library, score it, flag any claim no source supports, and show you the evidence.
+          <h3 className="text-heading-sm font-semibold text-ink">Nothing to check yet</h3>
+          <p className="mt-2 max-w-[40ch] text-body-sm text-carbon">
+            Ask a question on the right. I’ll <b className="font-semibold text-ink">score</b> the answer, <b className="font-semibold text-ink">flag</b> weak claims and <b className="font-semibold text-ink">show the source</b>.
           </p>
         </div>
         <div>
-          <Eyebrow className="mb-2">What the flags mean</Eyebrow>
-          <ul className="space-y-2">
+          <SectionHeader Icon={Flag} title="What the flags mean" />
+          <ul className="grid grid-cols-2 gap-2">
             {LEGEND.map((k) => {
               const s = CLAIM_STATUS[k]
               return (
-                <li key={k} className="flex items-center gap-2 text-body-sm text-carbon">
-                  <span className={`claim ${k === 'supported' ? 'claim-subtle' : TONES[s.tone].surface} ${TONES[s.tone].border} ${TONES[s.tone].text} pointer-events-none`}>
-                    <s.Icon size={12} strokeWidth={2.5} aria-hidden="true" className="mr-1 inline-block -translate-y-px align-middle" />
-                    <span className="text-ink">{s.label}</span>
-                  </span>
+                <li key={k} className="flex items-center gap-2 rounded-2xl border border-frost bg-porcelain px-3 py-2 text-body-sm font-medium text-ink">
+                  <IconTile Icon={s.Icon} tone={s.tone} size="sm" />
+                  {s.label}
                 </li>
               )
             })}
           </ul>
         </div>
         <div>
-          <Eyebrow className="mb-2">Six checks on every answer</Eyebrow>
-          <p className="text-body-sm text-carbon">{CHECKS.map((c) => c.name).join(' · ')}</p>
+          <SectionHeader Icon={ListChecks} title="Six checks on every answer" />
+          <ul className="grid grid-cols-2 gap-2">
+            {CHECKS.map((c) => {
+              const Icon = CHECK_ICON[c.id]
+              return (
+                <li key={c.id} className="flex items-center gap-2 text-body-sm font-medium text-carbon">
+                  <Icon size={16} className="shrink-0" aria-hidden="true" /> {c.name}
+                </li>
+              )
+            })}
+          </ul>
         </div>
       </div>
     </div>
@@ -182,91 +217,36 @@ function useCountUp(target, run) {
   return v
 }
 
+// Working states only — once scored, the verdict speaks for itself.
 const MOOD_LINE = {
-  watching: 'Reading the answer as it arrives…',
-  thinking: 'Checking it against approved sources…',
-  verified: 'This one holds up.',
-  caution: 'Mostly sound — check the flags before you act.',
-  unsupported: 'I would not act on this answer.',
-  unknown: 'Nothing here I can verify.',
+  watching: 'Reading the answer…',
+  thinking: 'Checking the sources…',
 }
 
-function moodLine(m, mood) {
-  const claims = m.result?.claims ?? []
-  if (mood === 'caution' && claims.some((c) => c.status === 'unsupported' || c.status === 'conflicting')) return 'One claim isn’t supported. Don’t act on it unchecked.'
-  return MOOD_LINE[mood]
-}
-
-function Overall({ m, answers }) {
-  const { dispatch } = useStore()
-  const idx = answers.findIndex((a) => a.id === m.id)
-  const prev = answers[idx - 1]
-  const next = answers[idx + 1]
+function Overall({ m }) {
   const mood = moodFor(m)
-  const flags = flagged(visibleClaims(m))
   const sc = scenarioById(m.scenarioId)
-
   return (
     <div>
-      <Stage
-        mood={mood}
-        m={m}
-        onPrev={() => prev && dispatch({ type: 'select', id: prev.id })}
-        onNext={() => next && dispatch({ type: 'select', id: next.id })}
-        prevLabel={prev && 'Previous answer'}
-        nextLabel={next && 'Next answer'}
-        line={moodLine(m, mood)}
-        settled={m.phase === 'done'}
-      />
-      <div className="space-y-6 p-6">
-        <div>
-          <Eyebrow>
-            Answer {idx + 1} of {answers.length} · in panel
-          </Eyebrow>
-          <p className="mt-1 line-clamp-2 text-body-sm text-carbon">“{m.question}”</p>
-        </div>
-
-        <ScoreBlock m={m} />
-
-        {flags.length > 0 && (
-          <div>
-            <Eyebrow className="mb-2">Flagged claims · open for evidence</Eyebrow>
-            <ul className="space-y-2">
-              {flags.map((c) => {
-                const s = CLAIM_STATUS[c.status]
-                return (
-                  <li key={c.id}>
-                    <button onClick={() => dispatch({ type: 'select', id: m.id, claimId: c.id })} className="rise-in flex w-full items-start gap-3 rounded-2xl border border-frost bg-porcelain p-3 text-left transition-colors hover:border-ash">
-                      <span className={`mt-0.5 ${TONES[s.tone].text}`}>
-                        <s.Icon size={16} aria-hidden="true" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className={`eyebrow ${TONES[s.tone].text}`}>{s.label}</span>
-                        <span className="mt-0.5 line-clamp-2 block text-body-sm text-ink">{m.text.slice(c.start, c.end)}</span>
-                      </span>
-                      <ChevronRight size={16} className="mt-0.5 shrink-0 text-ash" aria-hidden="true" />
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
-        )}
-
+      <Stage mood={mood} m={m} line={MOOD_LINE[mood]} settled={!!m.result} />
+      <div className="space-y-7 p-6">
+        <ScoreCard m={m} />
+        <FlaggedClaims m={m} />
         {m.phase === 'done' && <Sources m={m} sc={sc} />}
-
         <CheckList m={m} />
       </div>
     </div>
   )
 }
 
-function ScoreBlock({ m }) {
+function ScoreCard({ m }) {
+  const { dispatch } = useStore()
   const result = m.result
   const score = result?.score
   const band = result ? bandFor(score) : null
   const first = result && !counted.has(m.id)
   const shown = useCountUp(score, !!first)
+  const [why, setWhy] = useState(false)
   useEffect(() => {
     if (result) counted.add(m.id)
   }, [result, m.id])
@@ -274,177 +254,375 @@ function ScoreBlock({ m }) {
   if (!result) {
     const running = runningCheck(m)
     return (
-      <div aria-live="polite">
+      <div className="rounded-3xl border border-frost bg-porcelain p-5" aria-live="polite">
         <div className="flex items-baseline gap-2">
           <span className="text-display font-semibold text-ash tabular-nums animate-pulse">––</span>
           <span className="text-body text-smoke">/ 100</span>
         </div>
-        <div className="mt-3 h-1 overflow-hidden rounded-full bg-frost">
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-frost">
           <div className="h-full w-1/3 animate-pulse rounded-full bg-ash" />
         </div>
-        <div className="eyebrow mt-3 text-carbon">{m.phase === 'verifying' ? `Verifying · ${running ? running.name : 'starting'}` : 'Waiting for the answer'}</div>
+        <div className="mt-4 inline-flex items-center gap-2 text-body-sm font-medium text-carbon">
+          <LoaderCircle size={16} className="spin" aria-hidden="true" />
+          {m.phase === 'verifying' ? `Checking ${running ? running.name.toLowerCase() : '…'}` : 'Waiting for the answer'}
+        </div>
       </div>
     )
   }
   const t = TONES[band.status]
   const Icon = BAND_ICON[band.status]
+  const flags = flagged(result.claims)
+  const counts = claimCounts(result.claims)
   return (
-    <div className="rise-in" aria-live="polite">
-      {score == null ? (
-        <div className="text-heading font-semibold text-carbon">Not scored</div>
-      ) : (
-        <div className="flex items-baseline gap-2">
-          <span className="text-display font-semibold text-ink tabular-nums">{shown}</span>
-          <span className="text-body text-smoke">/ 100</span>
-        </div>
-      )}
-      <div className="mt-3 h-1 overflow-hidden rounded-full bg-frost" role="presentation">
+    <div className="rise-in rounded-3xl border border-frost bg-porcelain p-5" aria-live="polite">
+      <p className="text-heading-sm font-semibold text-ink">{result.headline}</p>
+      <div className="mt-3 flex items-center justify-between gap-4">
+        {score == null ? (
+          <div className="text-heading font-semibold text-carbon">Not scored</div>
+        ) : (
+          <div className="flex items-baseline gap-2">
+            <span className="text-display font-semibold text-ink tabular-nums">{shown}</span>
+            <span className="text-body text-smoke">/ 100</span>
+          </div>
+        )}
+        <span className={`inline-flex items-center gap-2 rounded-2xl px-3 py-2 ${t.surface} ${t.text}`}>
+          <Icon size={22} strokeWidth={2.25} aria-hidden="true" />
+          <span className="leading-tight">
+            <span className="block text-body font-semibold">{score == null ? 'No claims' : band.label}</span>
+            <span className="block text-caption font-medium text-carbon">reliability</span>
+          </span>
+        </span>
+      </div>
+      <div className="mt-4 h-2 overflow-hidden rounded-full bg-frost" role="presentation">
         <div className={`h-full rounded-full ${t.fill} transition-[width] duration-700 ease-out`} style={{ width: `${score ?? 0}%` }} />
       </div>
-      <div className={`eyebrow mt-3 flex items-center gap-1.5 ${t.text}`}>
-        <Icon size={14} strokeWidth={2.25} aria-hidden="true" />
-        {score == null ? 'No claims to verify' : `Reliability · ${band.label}${result.noSource ? ' · No source found' : ''}`}
-      </div>
-      <p className="mt-2 max-w-[44ch] text-body-sm text-carbon">{result.explanation}</p>
-      {result.parts && (
-        <p className="mt-2 text-caption text-smoke">
-          Score = claims supported {result.parts.claimPts}/60 + checks passed {result.parts.checkPts}/40{result.parts.capped ? `, capped at ${result.parts.cap}${result.parts.cap < 95 ? ' because no source was found' : ''}` : ''}.
-        </p>
+
+      {result.claims.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {Object.entries(CLAIM_STATUS)
+            .filter(([k]) => counts[k])
+            .map(([k, s]) => {
+              const target = result.claims.find((c) => c.status === k)
+              return (
+                <button
+                  key={k}
+                  onClick={() => dispatch({ type: 'select', id: m.id, claimId: target.id })}
+                  className={`inline-flex items-center gap-1.5 rounded-full border border-frost px-3 py-1.5 text-body-sm font-semibold transition-colors hover:border-carbon ${TONES[s.tone].text}`}
+                >
+                  <s.Icon size={16} strokeWidth={2.25} aria-hidden="true" />
+                  <span className="text-ink">
+                    {counts[k]} {CLAIM_COUNT_LABEL[k]}
+                  </span>
+                </button>
+              )
+            })}
+        </div>
       )}
+
+      <button onClick={() => setWhy((w) => !w)} aria-expanded={why} className="mt-4 inline-flex items-center gap-1 text-body-sm font-medium text-carbon underline-offset-4 hover:text-ink hover:underline">
+        Why this score? <ChevronDown size={16} className={`transition-transform ${why ? 'rotate-180' : ''}`} aria-hidden="true" />
+      </button>
+      {why && (
+        <div className="rise-in mt-2 space-y-2 rounded-2xl bg-bone p-4 text-body-sm text-carbon">
+          <p>{result.explanation}</p>
+          {result.parts && (
+            <p className="text-caption text-smoke">
+              Claims {result.parts.claimPts}/60 + checks {result.parts.checkPts}/40{result.parts.capped ? ` · capped at ${result.parts.cap}${result.parts.cap < 95 ? ' (no source found)' : ''}` : ''}
+            </p>
+          )}
+        </div>
+      )}
+      {flags.length === 0 && result.claims.length > 0 && <span className="sr-only">No flagged claims.</span>}
     </div>
   )
 }
 
-function CheckList({ m }) {
+function FlaggedClaims({ m }) {
   const { dispatch } = useStore()
+  const flags = flagged(visibleClaims(m))
+  if (!flags.length) return null
   return (
-    <div>
-      <div className="mb-2 flex items-center justify-between">
-        <Eyebrow>Six checks</Eyebrow>
-        <button onClick={() => dispatch({ type: 'checks', open: true })} className="eyebrow rounded-xl px-1 text-carbon hover:text-ink">
-          See evidence
-        </button>
-      </div>
-      <ul className="divide-y divide-frost overflow-hidden rounded-2xl bg-porcelain">
-        {CHECKS.map((c, i) => {
-          const s = CHECK_STATUS[m.checks[i].status]
+    <section aria-labelledby="flags-title">
+      <SectionHeader Icon={Flag} title="Flagged claims" count={flags.length} id="flags-title" />
+      <ul className="space-y-2.5">
+        {flags.map((c) => {
+          const s = CLAIM_STATUS[c.status]
+          const t = TONES[s.tone]
           return (
-            <li key={c.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
-              <span className="text-body-sm font-medium text-ink">{c.name}</span>
-              <span className={`inline-flex shrink-0 items-center gap-1 text-[12px] font-medium uppercase tracking-[0.05em] ${TONES[s.tone].text}`}>
-                <s.Icon size={12} strokeWidth={2.25} className={m.checks[i].status === 'running' ? 'spin' : ''} aria-hidden="true" />
-                {s.label}
-              </span>
+            <li key={c.id}>
+              <button
+                onClick={() => dispatch({ type: 'select', id: m.id, claimId: c.id })}
+                className={`rise-in group flex w-full items-center gap-3 rounded-2xl border p-3.5 text-left transition-shadow hover:shadow-md ${t.surface}`}
+                style={{ borderColor: 'color-mix(in srgb, var(--tone) 35%, transparent)', '--tone': `var(--color-status-${s.tone})` }}
+              >
+                <span className={`grid size-10 shrink-0 place-items-center rounded-full bg-porcelain ${t.text}`} aria-hidden="true">
+                  <s.Icon size={20} strokeWidth={2.25} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className={`eyebrow font-semibold ${t.text}`}>{s.label}</span>
+                  <span className="mt-0.5 block text-body font-semibold leading-snug text-ink">{c.short ?? m.text.slice(c.start, c.end)}</span>
+                </span>
+                <span className="inline-flex shrink-0 items-center gap-0.5 text-body-sm font-medium text-carbon group-hover:text-ink">
+                  Details <ChevronRight size={16} aria-hidden="true" />
+                </span>
+              </button>
             </li>
           )
         })}
       </ul>
-    </div>
+    </section>
   )
 }
 
 function Sources({ m, sc }) {
   const ids = [...m.citations, ...sc.verification.retrieved.filter((d) => !m.citations.includes(d))]
   return (
-    <div className="rise-in">
-      <Eyebrow className="mb-2">Sources</Eyebrow>
+    <section className="rise-in" aria-labelledby="sources-title">
+      <SectionHeader Icon={BookOpen} title="Sources" count={ids.length} id="sources-title" />
       {ids.length === 0 ? (
-        <div className="flex items-start gap-2 rounded-2xl border border-frost bg-porcelain p-3 text-body-sm text-carbon">
-          <CircleSlash size={16} className="mt-0.5 shrink-0 text-status-unknown" aria-hidden="true" />
+        <div className="flex items-center gap-3 rounded-2xl border border-frost bg-porcelain p-3.5">
+          <IconTile Icon={CircleSlash} tone="unknown" />
           <span>
-            <span className="eyebrow block text-carbon">No source found</span>
-            No approved document covers this question.
+            <span className="block text-body-sm font-semibold text-ink">No source found</span>
+            <span className="text-caption text-smoke">No approved document covers this</span>
           </span>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
           {ids.map((id) => (
-            <SourceChip key={id} docId={id} tag={m.citations.includes(id) ? 'Cited by agent' : 'Found by Assessment AI'} className="bg-porcelain" />
+            <SourceChip key={id} docId={id} tag={m.citations.includes(id) ? null : 'Found by checker'} className="bg-porcelain" />
           ))}
         </div>
       )}
-    </div>
+    </section>
+  )
+}
+
+const CHECK_ORDER = { fail: 0, warning: 1, pass: 2, na: 3 }
+
+function CheckList({ m }) {
+  const { dispatch } = useStore()
+  const [open, setOpen] = useState(null)
+  // Pipeline order while checks resolve; worst first once the verdict is in.
+  const rows = CHECKS.map((meta, i) => ({ meta, check: m.checks[i] }))
+  if (m.result) rows.sort((a, b) => CHECK_ORDER[a.check.status] - CHECK_ORDER[b.check.status])
+  return (
+    <section aria-labelledby="checks-title-panel">
+      <SectionHeader Icon={ListChecks} title="Six checks" id="checks-title-panel">
+        {m.result &&
+          ['fail', 'warning'].map((k) => {
+            const n = m.checks.filter((x) => x.status === k).length
+            if (!n) return null
+            const s = CHECK_STATUS[k]
+            return (
+              <span key={k} className={`inline-flex items-center gap-1 text-body-sm font-semibold ${TONES[s.tone].text}`}>
+                <s.Icon size={16} strokeWidth={2.25} aria-hidden="true" />
+                <span className="text-ink">
+                  {n} {k === 'fail' ? 'failed' : n === 1 ? 'warning' : 'warnings'}
+                </span>
+              </span>
+            )
+          })}
+        {m.result && m.checks.every((x) => x.status === 'pass' || x.status === 'na') && (
+          <span className="inline-flex items-center gap-1 text-body-sm font-semibold text-status-verified">
+            <CircleCheck size={16} strokeWidth={2.25} aria-hidden="true" />
+            <span className="text-ink">All passed</span>
+          </span>
+        )}
+      </SectionHeader>
+      <ul className="divide-y divide-frost overflow-hidden rounded-2xl border border-frost bg-porcelain">
+        {rows.map(({ meta: c, check }) => {
+          const settled = check.status !== 'queued' && check.status !== 'running'
+          const isOpen = open === c.id && settled
+          const TypeIcon = CHECK_ICON[c.id]
+          return (
+            <li key={c.id}>
+              <button
+                onClick={() => setOpen(isOpen ? null : c.id)}
+                disabled={!settled}
+                aria-expanded={isOpen}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-bone disabled:cursor-default disabled:hover:bg-transparent"
+              >
+                <TypeIcon size={18} className="shrink-0 text-carbon" aria-hidden="true" />
+                <span className="min-w-0 flex-1 text-body-sm font-semibold text-ink">{c.name}</span>
+                <CheckPill status={check.status} />
+                <ChevronDown size={18} className={`shrink-0 text-carbon transition-transform ${isOpen ? 'rotate-180' : ''} ${settled ? '' : 'opacity-0'}`} aria-hidden="true" />
+              </button>
+              {isOpen && (
+                <div className="rise-in flex items-center gap-2 px-4 pb-3.5 pl-[46px]">
+                  <ArrowRight size={15} className="shrink-0 text-carbon" aria-hidden="true" />
+                  <span className="text-body-sm font-medium text-ink">{check.short ?? check.summary}</span>
+                  <span className="ml-auto shrink-0 rounded-xl bg-bone px-2 py-0.5 text-caption text-smoke">{c.method === 'rule' ? 'Rule' : 'AI judge'}</span>
+                </div>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+      <GhostButton onClick={() => dispatch({ type: 'checks', open: true })} className="mt-3 w-full bg-porcelain">
+        <Maximize2 size={16} /> Open full evidence
+      </GhostButton>
+    </section>
+  )
+}
+
+const short = (f) => f.replace(/\s?basis points/, ' bps')
+
+/** The figure the answer stated vs the one current policy states, when they differ. */
+function figureSwap(m, c) {
+  if (!c.counter) return null
+  const said = display(m.text.slice(c.start, c.end))
+  const policy = display(c.counter.passage)
+  return said && policy && said !== policy ? { said: short(said), policy: short(policy), raw: display(c.counter.passage) } : null
+}
+
+/** Policy passages for a claim, in one card: current rule first, then the source the claim leaned on. */
+function policyPassages(c) {
+  const f = c.source ? freshnessOf(c.source.docId) : null
+  const out = []
+  if (c.counter) out.push({ ...c.counter, tag: { label: c.status === 'conflicting' ? 'The rule' : 'Current policy', tone: null, Icon: BookOpen } })
+  if (c.source) {
+    let tag = null
+    let edge = null
+    if (c.nearest) tag = { label: 'Closest match — doesn’t mention this', tone: 'unknown', Icon: Search }
+    else if (c.status === 'conflicting') {
+      tag = { label: 'Contradicts the answer', tone: 'unsupported', Icon: CLAIM_STATUS.conflicting.Icon }
+      edge = 'unsupported'
+    } else if (f?.state === 'superseded') {
+      tag = { label: `Replaced by ${f.supersededBy.id} on ${formatDate(f.supersededBy.updated)}`, tone: 'caution', Icon: Clock }
+      edge = 'caution'
+    } else if (f?.state === 'overdue') {
+      tag = { label: `${f.months} months old — review overdue`, tone: 'caution', Icon: Clock }
+      edge = 'caution'
+    }
+    out.push({ ...c.source, tag, edge })
+  }
+  return out
+}
+
+function Bolded({ text, figure }) {
+  const i = figure ? text.indexOf(figure) : -1
+  if (i < 0) return text
+  return (
+    <>
+      {text.slice(0, i)}
+      <b className="font-semibold">{figure}</b>
+      {text.slice(i + figure.length)}
+    </>
   )
 }
 
 function ClaimDetail({ m, claimId }) {
-  const { dispatch } = useStore()
   const list = claimList(m)
-  const idx = list.findIndex((c) => c.id === claimId)
-  const c = list[idx]
+  const c = list.find((x) => x.id === claimId)
   if (!c) return null
   const s = CLAIM_STATUS[c.status]
   const t = TONES[s.tone]
-  const f = c.source ? freshnessOf(c.source.docId) : null
   const checkMeta = CHECKS.find((k) => k.id === c.check)
-  const go = (k) => list[k] && dispatch({ type: 'select', id: m.id, claimId: list[k].id })
+  const passages = policyPassages(c)
+  const docs = [...new Set(passages.map((p) => p.docId))]
+  const swap = figureSwap(m, c)
 
   return (
-    <div>
-      <Stage
-        compact
-        mood={s.tone === 'verified' ? 'verified' : s.tone}
-        m={m}
-        onPrev={() => go(idx - 1)}
-        onNext={() => go(idx + 1)}
-        prevLabel={idx > 0 ? 'Previous claim' : null}
-        nextLabel={idx < list.length - 1 ? 'Next claim' : null}
-      />
-      <div className="space-y-5 p-6">
-        <div className="rise-in" key={c.id}>
-          <Pill Icon={s.Icon} label={`${s.label} claim`} tone={s.tone} />
-          <blockquote className={`mt-3 rounded-2xl border-l-2 bg-porcelain p-4 text-body text-ink ${t.border}`}>{m.text.slice(c.start, c.end)}</blockquote>
+    <div className="space-y-5 p-6" key={c.id}>
+      <div className="rise-in flex items-center gap-3">
+        <span className={`grid size-12 shrink-0 place-items-center rounded-full ${t.surface} ${t.text}`} aria-hidden="true">
+          <s.Icon size={24} strokeWidth={2.25} />
+        </span>
+        <div className="min-w-0">
+          <div className={`eyebrow font-semibold ${t.text}`}>{s.label} claim</div>
+          <div className="text-heading-sm font-semibold text-ink">{c.short ?? c.reason}</div>
         </div>
+      </div>
 
-        <div>
-          <Eyebrow className="mb-1.5">Why it was flagged</Eyebrow>
-          <p className="max-w-[44ch] text-body-sm text-carbon">{c.reason}</p>
-          <p className="mt-1.5 text-caption text-smoke">
-            Verdict from {checkMeta.name.toLowerCase()} · {METHOD_LABEL[checkMeta.method]}
+      {swap ? (
+        <div className="rise-in grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-3xl border border-frost bg-porcelain p-5">
+          <div>
+            <div className={`mb-1 inline-flex items-center gap-1.5 text-body-sm font-semibold ${t.text}`}>
+              <s.Icon size={16} strokeWidth={2.25} aria-hidden="true" />
+              <span className="text-carbon">Answer said</span>
+            </div>
+            <div className={`${swap.said.length > 8 ? 'text-heading-sm' : 'text-heading'} whitespace-nowrap font-semibold text-smoke line-through decoration-2`}>{swap.said}</div>
+          </div>
+          <ArrowRight size={24} className="text-carbon" aria-hidden="true" />
+          <div>
+            <div className="mb-1 inline-flex items-center gap-1.5 text-body-sm font-semibold text-carbon">
+              <BookOpen size={16} aria-hidden="true" />
+              Policy says
+            </div>
+            <div className={`${swap.policy.length > 8 ? 'text-heading-sm' : 'text-heading'} whitespace-nowrap font-semibold text-ink`}>{swap.policy}</div>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-3xl border border-frost bg-porcelain p-4">
+          <div className="mb-2 flex items-center gap-2 text-body-sm font-semibold text-ink">
+            <MessageSquare size={17} className="text-carbon" aria-hidden="true" /> The answer said
+          </div>
+          <p className={`rounded-2xl border px-4 py-3 text-body text-ink ${t.surface}`} style={{ borderColor: 'color-mix(in srgb, var(--tone) 30%, transparent)', '--tone': `var(--color-status-${s.tone})` }}>
+            “{m.text.slice(c.start, c.end)}”
           </p>
         </div>
+      )}
 
-        {c.source ? (
-          <div>
-            <Eyebrow className="mb-1.5">{c.nearest ? 'Nearest passage retrieved' : c.status === 'conflicting' ? 'Source it conflicts with' : 'Source passage'}</Eyebrow>
-            <Passage docId={c.source.docId} section={c.source.section} passage={c.source.passage} className="bg-porcelain" />
+      <div className="rounded-3xl border border-frost bg-porcelain p-4">
+        <div className="mb-3 flex items-center gap-2 text-body-sm font-semibold text-ink">
+          <BookOpen size={17} className="text-carbon" aria-hidden="true" /> What the policy says
+        </div>
+        {passages.length ? (
+          <div className="space-y-3">
+            {docs.map((docId) => (
+              <div key={docId} className="space-y-2">
+                {passages
+                  .filter((p) => p.docId === docId)
+                  .map((p) => (
+                    <div
+                      key={p.section}
+                      className={`rounded-2xl px-4 py-3 ${p.edge ? `border ${TONES[p.edge].surface}` : 'bg-bone'}`}
+                      style={p.edge ? { borderColor: `color-mix(in srgb, var(--color-status-${p.edge}) 40%, transparent)` } : undefined}
+                    >
+                      {p.tag && (
+                        <span className={`mb-1.5 flex items-center gap-1.5 text-body-sm font-semibold ${p.tag.tone ? TONES[p.tag.tone].text : 'text-carbon'}`}>
+                          <p.tag.Icon size={15} strokeWidth={2.25} aria-hidden="true" />
+                          <span className="text-ink">{p.tag.label}</span>
+                        </span>
+                      )}
+                      <p className="text-body text-ink">
+                        <span className="mr-2 rounded-lg bg-porcelain px-1.5 py-0.5 text-caption font-semibold text-carbon">{p.section}</span>“<Bolded text={p.passage} figure={swap?.raw} />”
+                      </p>
+                    </div>
+                  ))}
+                <SourceChip docId={docId} className="bg-porcelain" />
+              </div>
+            ))}
           </div>
         ) : (
-          <div>
-            <Eyebrow className="mb-1.5">Source</Eyebrow>
-            <div className="mb-2 flex items-center gap-2 text-body-sm text-carbon">
-              <CircleSlash size={16} className="text-status-unknown" aria-hidden="true" />
-              <span className="eyebrow text-carbon">No source found</span>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-body-sm font-semibold text-ink">
+              <CircleSlash size={18} className="text-status-unknown" aria-hidden="true" /> No source found
             </div>
             <SearchRecord scenarioId={m.scenarioId} />
           </div>
         )}
-
-        {f?.stale && (
-          <div className="flex gap-3 rounded-2xl border bg-status-caution-surface p-4" style={{ borderColor: 'color-mix(in srgb, var(--color-status-caution) 30%, transparent)' }}>
-            <Clock size={16} className="mt-0.5 shrink-0 text-status-caution" aria-hidden="true" />
-            <div className="text-body-sm text-carbon">
-              <span className="eyebrow block text-carbon">Stale source</span>
-              {f.state === 'superseded' ? (
-                <>
-                  {DOCUMENTS[c.source.docId].title} was last updated {formatDate(DOCUMENTS[c.source.docId].updated)} and was superseded by {f.supersededBy.title} ({f.supersededBy.id}) on {formatDate(f.supersededBy.updated)}.
-                </>
-              ) : (
-                <>
-                  {DOCUMENTS[c.source.docId].title} is {f.months} months old, past its {DOCUMENTS[c.source.docId].reviewCycleMonths}-month review cycle.
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {c.counter && (
-          <div>
-            <Eyebrow className="mb-1.5">{c.status === 'conflicting' ? 'What the policy allows' : 'Current approved policy says'}</Eyebrow>
-            <Passage docId={c.counter.docId} section={c.counter.section} passage={c.counter.passage} className="bg-porcelain" />
-          </div>
-        )}
       </div>
+
+      <Reasoning reason={c.reason} method={`${checkMeta.name} · ${METHOD_LABEL[checkMeta.method]}`} />
+    </div>
+  )
+}
+
+function Reasoning({ reason, method }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="px-1">
+      <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="inline-flex items-center gap-1.5 text-body-sm font-medium text-carbon underline-offset-4 hover:text-ink hover:underline">
+        <Lightbulb size={17} aria-hidden="true" /> Full reasoning <ChevronDown size={16} className={`transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+      </button>
+      {open && (
+        <div className="rise-in mt-2 rounded-2xl bg-porcelain p-4">
+          <p className="text-body-sm text-carbon">{reason}</p>
+          <p className="mt-1 text-caption text-smoke">{method}</p>
+        </div>
+      )}
     </div>
   )
 }
@@ -460,14 +638,15 @@ function Actions({ m }) {
   }, [m.id])
 
   return (
-    <div className="shrink-0 border-t border-frost bg-bone px-6 py-4">
+    <div className="shrink-0 border-t border-frost bg-porcelain px-6 py-4">
       {m.outcome ? (
         <OutcomeLine outcome={m.outcome} />
       ) : m.routed ? (
-        <div className="flex items-start gap-2 text-body-sm text-carbon">
-          <Inbox size={16} className="mt-0.5 shrink-0 text-carbon" aria-hidden="true" />
-          <span>
-            <span className="font-medium text-ink">{m.routed.joined ? 'Joined a review already open' : m.routed.by === 'auto' ? 'Routed to a reviewer automatically' : 'With a reviewer'}</span> · {m.routed.queueId} · pending. The outcome will appear on this answer.
+        <div className="flex items-center gap-3">
+          <IconTile Icon={Inbox} />
+          <span className="text-body-sm text-carbon">
+            <span className="block font-semibold text-ink">With a reviewer</span>
+            The outcome will appear on this answer.
           </span>
         </div>
       ) : composing ? (
@@ -479,8 +658,8 @@ function Actions({ m }) {
             setComposing(false)
           }}
         >
-          <label htmlFor="esc-note" className="eyebrow text-smoke">
-            Note for the reviewer (optional)
+          <label htmlFor="esc-note" className="text-body-sm font-semibold text-ink">
+            Note for the reviewer <span className="font-normal text-smoke">(optional)</span>
           </label>
           <textarea id="esc-note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Client is waiting on this limit today." className="w-full resize-none rounded-2xl border border-frost bg-porcelain px-3 py-2 text-body-sm text-ink placeholder:text-smoke focus:border-ash focus:outline-none" />
           <div className="flex gap-2">
@@ -493,21 +672,21 @@ function Actions({ m }) {
           </div>
         </form>
       ) : (
-        <div className="grid grid-cols-2 gap-2">
-          <PrimaryButton onClick={() => setComposing(true)} disabled={!done} className="col-span-2 whitespace-nowrap">
+        <div className="flex gap-2">
+          <PrimaryButton onClick={() => setComposing(true)} disabled={!done} className="flex-1 whitespace-nowrap">
             <Inbox size={16} /> Send for human review
           </PrimaryButton>
-          <GhostButton onClick={() => dispatch({ type: 'feedback', id: m.id, value: 'helpful' })} pressed={m.feedback === 'helpful'} disabled={!done}>
-            <ThumbsUp size={15} /> Helpful
+          <GhostButton onClick={() => dispatch({ type: 'feedback', id: m.id, value: 'helpful' })} pressed={m.feedback === 'helpful'} disabled={!done} aria-label="Helpful" title="Helpful" className="px-3">
+            <ThumbsUp size={17} />
           </GhostButton>
-          <GhostButton onClick={() => dispatch({ type: 'feedback', id: m.id, value: 'wrong' })} pressed={m.feedback === 'wrong'} disabled={!done}>
-            <ThumbsDown size={15} /> Wrong
+          <GhostButton onClick={() => dispatch({ type: 'feedback', id: m.id, value: 'wrong' })} pressed={m.feedback === 'wrong'} disabled={!done} aria-label="Wrong" title="Wrong" className="px-3">
+            <ThumbsDown size={17} />
           </GhostButton>
         </div>
       )}
       {m.feedback && !m.routed && !composing && (
-        <p className="mt-2 flex items-center gap-1 text-caption text-smoke">
-          <Sparkles size={12} aria-hidden="true" /> Feedback recorded for this answer (this session only).
+        <p className="mt-2 flex items-center gap-1.5 text-caption text-smoke">
+          {m.feedback === 'helpful' ? <ThumbsUp size={13} aria-hidden="true" /> : <ThumbsDown size={13} aria-hidden="true" />} Marked {m.feedback} · this session only
         </p>
       )}
     </div>
@@ -517,14 +696,14 @@ function Actions({ m }) {
 function OutcomeLine({ outcome }) {
   const o = OUTCOME_META[outcome.decision]
   return (
-    <div className="flex items-start gap-2 text-body-sm text-carbon">
-      <o.Icon size={16} className={`mt-0.5 shrink-0 ${TONES[o.tone].text}`} aria-hidden="true" />
-      <span className="min-w-0">
-        <span className={`eyebrow flex flex-wrap items-center gap-2 ${TONES[o.tone].text}`}>
+    <div className="flex items-start gap-3">
+      <IconTile Icon={o.Icon} tone={o.tone} />
+      <span className="min-w-0 text-body-sm text-carbon">
+        <span className="flex flex-wrap items-center gap-2 font-semibold text-ink">
           {o.label}
           {outcome.recheck && <ScoreBadge score={outcome.recheck.result.score} />}
         </span>
-        <span className="mt-1 block">{outcome.note}</span>
+        <span className="mt-0.5 block">{outcome.note}</span>
       </span>
     </div>
   )

@@ -8,7 +8,23 @@ import {
   Shuffle,
   LoaderCircle,
   CircleSlash,
+  Building2,
+  IdCard,
+  ArrowLeftRight,
+  Receipt,
+  Vault,
+  MessageCircleQuestion,
+  Quote,
+  Layers,
+  Anchor,
+  Scale,
+  Target,
 } from 'lucide-react'
+
+export const CHECK_ICON = { citation: Quote, freshness: Clock, crossref: Layers, groundedness: Anchor, consistency: Scale, intent: Target }
+
+export const TOPIC_ICON = { sme: Building2, kyc: IdCard, fx: ArrowLeftRight, fees: Receipt, collateral: Vault }
+export const topicIcon = (topic) => TOPIC_ICON[topic] ?? MessageCircleQuestion
 import { BANDS } from '../fixtures'
 
 // Plural-safe labels for counts, e.g. '2 on stale sources'.

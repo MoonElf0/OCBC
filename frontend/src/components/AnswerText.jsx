@@ -40,7 +40,7 @@ export default function AnswerText({ text, shown = text.length, claims = [], act
             className={`claim claim-reveal ${onClaim ? '' : 'claim-static'} ${subtle ? 'claim-subtle' : t.surface} ${t.border} ${t.text}`}
             style={{ animationDelay: `${i * 60}ms` }}
           >
-            <s.Icon size={12} strokeWidth={2.5} aria-hidden="true" className="mr-1 inline-block -translate-y-px align-middle" />
+            <s.Icon size={15} strokeWidth={2.25} aria-hidden="true" className="mr-1 inline-block -translate-y-px align-middle" />
             <span className="text-ink">{p.text}</span>
           </span>
         )

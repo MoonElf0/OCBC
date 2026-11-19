@@ -1,4 +1,4 @@
-import { Clock } from 'lucide-react'
+import { Clock, CalendarDays, FileText, ScanSearch } from 'lucide-react'
 import { TONES, CLAIM_STATUS, CHECK_STATUS, BAND_ICON, bandFor } from '../lib/status'
 import { freshnessOf } from '../lib/freshness'
 import { DOCUMENTS } from '../fixtures'
@@ -86,30 +86,60 @@ export function ScoreBadge({ score, className = '' }) {
   )
 }
 
-/** Source chip: title, separator, freshness. Only the note takes the caution colour. */
+/** Square icon tile that leads a section or a row. */
+export function IconTile({ Icon, tone, size = 'md', className = '' }) {
+  const box = size === 'lg' ? 'size-11 rounded-2xl' : size === 'sm' ? 'size-8 rounded-xl' : 'size-9 rounded-xl'
+  const t = tone ? TONES[tone] : null
+  return (
+    <span className={`grid shrink-0 place-items-center ${box} ${t ? `${t.surface} ${t.text}` : 'border border-frost bg-porcelain text-carbon'} ${className}`} aria-hidden="true">
+      <Icon size={size === 'lg' ? 22 : size === 'sm' ? 16 : 18} strokeWidth={2} />
+    </span>
+  )
+}
+
+/** Section title: icon tile, bold title, optional count and right-hand slot. */
+export function SectionHeader({ Icon, title, count, children, id }) {
+  return (
+    <div className="mb-3 flex items-center gap-3">
+      <IconTile Icon={Icon} />
+      <h3 id={id} className="text-[18px] font-semibold tracking-[-0.01em] text-ink">
+        {title}
+      </h3>
+      {count != null && <span className="rounded-full bg-frost px-2 py-0.5 text-caption font-semibold tabular-nums text-carbon">{count}</span>}
+      {children && <div className="ml-auto flex items-center gap-2">{children}</div>}
+    </div>
+  )
+}
+
+
+/** Source chip: document icon, title, then freshness led by its own icon. */
 export function SourceChip({ docId, section, tag, className = '' }) {
   const doc = DOCUMENTS[docId]
   const f = freshnessOf(docId)
+  const Fresh = f.stale ? Clock : CalendarDays
   return (
-    <div className={`flex max-w-full items-start gap-3 rounded-xl border border-frost bg-bone px-3 py-2 ${className}`}>
+    <div className={`flex max-w-full items-center gap-3 rounded-2xl border border-frost bg-bone px-3 py-2.5 ${className}`}>
+      <IconTile Icon={FileText} size="sm" className="!bg-bone" />
       <div className="min-w-0 flex-1">
-        <div className="text-body-sm font-medium text-ink">{doc.title}</div>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-caption">
+        <div className="text-body-sm font-semibold text-ink">{doc.title}</div>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-caption">
           <span className="whitespace-nowrap text-smoke">
             {doc.id}
             {section ? ` ${section}` : ''}
           </span>
-          <span className="text-smoke" aria-hidden="true">
-            ·
-          </span>
-          <span className={`inline-flex items-center gap-1 whitespace-nowrap ${f.stale ? 'text-status-caution' : 'text-smoke'}`}>
-            {f.stale && <Clock size={12} strokeWidth={2.25} aria-hidden="true" />}
-            {f.note}
+          <span className={`inline-flex items-center gap-1 whitespace-nowrap font-medium ${f.stale ? 'text-status-caution' : 'text-smoke'}`}>
+            <Fresh size={13} strokeWidth={2.25} aria-hidden="true" />
+            <span>{f.note.replace('Last updated ', 'Updated ')}</span>
             {f.stale && <span className="sr-only">(stale source)</span>}
           </span>
         </div>
       </div>
-      {tag && <span className="eyebrow shrink-0 rounded-xl border border-frost bg-porcelain px-2 py-0.5 text-[12px] text-carbon">{tag}</span>}
+      {tag && (
+        <span className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-frost bg-porcelain px-2 py-1 text-caption font-medium text-carbon">
+          <ScanSearch size={14} aria-hidden="true" />
+          {tag}
+        </span>
+      )}
     </div>
   )
 }
@@ -117,7 +147,7 @@ export function SourceChip({ docId, section, tag, className = '' }) {
 export function Passage({ docId, section, passage, className = '' }) {
   return (
     <figure className={`rounded-2xl bg-bone p-4 ${className}`}>
-      <blockquote className="text-body-sm text-carbon">“{passage}”</blockquote>
+      <blockquote className="text-body text-ink">“{passage}”</blockquote>
       <figcaption className="mt-3">
         <SourceChip docId={docId} section={section} className="bg-porcelain" />
       </figcaption>

@@ -10,9 +10,9 @@ export default function App() {
   return (
     <div className="flex h-full flex-col">
       <TopNav />
-      <main className="min-h-0 flex-1">
+      <main className="min-h-0 flex-1 overflow-hidden">
         {state.view === 'workspace' && (
-          <div className="mx-auto grid h-full max-w-[1200px] grid-cols-1 gap-6 px-6 py-6 lg:grid-cols-[minmax(360px,34%)_1fr]">
+          <div className="mx-auto grid h-full max-w-[1560px] grid-cols-1 gap-6 px-6 py-6 lg:grid-cols-[minmax(440px,38%)_1fr] lg:grid-rows-[minmax(0,1fr)]">
             <CharacterPanel />
             <Thread />
           </div>
