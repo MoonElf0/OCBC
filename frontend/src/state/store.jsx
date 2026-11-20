@@ -33,7 +33,7 @@ export function reviewReasons(result, highStakes) {
 }
 
 const initial = {
-  view: 'workspace', // 'workspace' | 'review' | 'trends'
+  view: 'workspace', // 'workspace' | 'review' | 'trends' | 'versions'
   messages: [],
   activeId: null,
   panel: { mode: 'overall' }, // or { mode: 'claim', claimId }

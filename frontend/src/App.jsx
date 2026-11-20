@@ -6,6 +6,7 @@ import ReviewQueue from './admin/ReviewQueue'
 import Trends from './admin/Trends'
 import Library from './admin/Library'
 import Evaluation from './admin/Evaluation'
+import Versions from './admin/Versions'
 import TrustMap from './components/TrustMap'
 import Pitch from './pitch/Pitch'
 
@@ -25,6 +26,7 @@ export default function App() {
         {state.view === 'trends' && <Trends />}
         {state.view === 'library' && <Library />}
         {state.view === 'evaluation' && <Evaluation />}
+        {state.view === 'versions' && <Versions />}
       </main>
       <TrustMap />
       {state.pitch && <Pitch />}

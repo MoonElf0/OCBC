@@ -1981,6 +1981,1345 @@
       "initials": "PR"
     }
   },
+  "AGENT_VERSIONS": [
+    {
+      "id": "v1",
+      "label": "Agent v1",
+      "stage": "In production",
+      "summary": "The agent employees use today. Every answer in the workspace comes from v1.",
+      "changes": []
+    },
+    {
+      "id": "v2",
+      "label": "Agent v2",
+      "stage": "Release candidate",
+      "summary": "Built from the Trends recommendations. Not used in the workspace until it passes this check.",
+      "changes": [
+        "Retrieval index excludes superseded documents",
+        "Prompt: quote numeric limits verbatim and say when approval is needed",
+        "Prompt: answer only for the product named in the question",
+        "Prompt: decline when no approved source is found",
+        "New step: summarise long passages before answering"
+      ]
+    }
+  ],
+  "EVAL_ANSWERS": [
+    {
+      "id": "eval-sme-limit-v2",
+      "topic": "sme",
+      "question": "What's the approval limit for a cross-border transfer under the SME lending policy?",
+      "answer": {
+        "text": "A relationship manager can approve a single SME cross-border transfer of up to SGD 200,000. Transfers above the relationship manager limit require approval from the Business Banking Credit Committee before release.",
+        "citations": [
+          "DOC-SME-112",
+          "DOC-SME-104"
+        ]
+      },
+      "verification": {
+        "explanation": "Both claims match current policy. The limit comes from the current Cross-Border Payments Standard, not the superseded circular.",
+        "headline": "Safe to use",
+        "retrieved": [],
+        "claims": [
+          {
+            "id": "eval-sme-limit-v2-c1",
+            "start": 0,
+            "end": 90,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-SME-112",
+              "section": "§3.1",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+            },
+            "reason": "Matches the current relationship manager limit."
+          },
+          {
+            "id": "eval-sme-limit-v2-c2",
+            "start": 92,
+            "end": 213,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-SME-104",
+              "section": "§5.2",
+              "passage": "Transfers above the relationship manager limit require approval from the Business Banking Credit Committee before release."
+            },
+            "reason": "Matches the escalation rule."
+          }
+        ],
+        "checks": [
+          {
+            "id": "groundedness",
+            "status": "pass",
+            "short": "Both claims backed by current policy",
+            "summary": "2 of 2 claims are supported by a current approved source.",
+            "evidence": [
+              {
+                "docId": "DOC-SME-112",
+                "section": "§3.1",
+                "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+              },
+              {
+                "docId": "DOC-SME-104",
+                "section": "§5.2",
+                "passage": "Transfers above the relationship manager limit require approval from the Business Banking Credit Committee before release."
+              }
+            ]
+          },
+          {
+            "id": "consistency",
+            "status": "pass",
+            "short": "No contradictions",
+            "summary": "No contradiction with any approved document.",
+            "evidence": [
+              {
+                "docId": "DOC-SME-112",
+                "section": "§3.1",
+                "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+              }
+            ]
+          },
+          {
+            "id": "intent",
+            "status": "pass",
+            "short": "Answers the question asked",
+            "summary": "States the limit asked for and the escalation path.",
+            "evidence": [
+              {
+                "kind": "question"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "eval-sme-cutoff-v1",
+      "topic": "sme",
+      "question": "What's the same-day processing cut-off for SME cross-border transfers?",
+      "answer": {
+        "text": "Transfers approved before 3:00 pm Singapore time are targeted for same-day processing, subject to correspondent bank availability.",
+        "citations": [
+          "DOC-SME-087"
+        ]
+      },
+      "verification": {
+        "explanation": "The 3:00 pm cut-off comes only from a circular that was superseded in May 2026. The current standard sets 2:30 pm.",
+        "headline": "Cut-off is outdated",
+        "retrieved": [
+          "DOC-SME-112"
+        ],
+        "claims": [
+          {
+            "id": "eval-sme-cutoff-v1-c1",
+            "start": 0,
+            "end": 85,
+            "status": "unsupported",
+            "check": "freshness",
+            "source": {
+              "docId": "DOC-SME-087",
+              "section": "§4",
+              "passage": "Transfers approved before 3:00 pm Singapore time are targeted for same-day processing, subject to correspondent bank availability."
+            },
+            "counter": {
+              "docId": "DOC-SME-112",
+              "section": "§3.4",
+              "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+            },
+            "short": "3:00 pm cut-off is outdated — now 2:30 pm",
+            "reason": "No current approved source supports 3:00 pm. The only passage stating it is in a superseded circular; the current Cross-Border Payments Standard sets 2:30 pm."
+          }
+        ],
+        "checks": [
+          {
+            "id": "groundedness",
+            "status": "fail",
+            "short": "Claim rests on a replaced circular",
+            "summary": "0 of 1 claims is supported by a current approved source.",
+            "evidence": [
+              {
+                "docId": "DOC-SME-087",
+                "section": "§4",
+                "passage": "Transfers approved before 3:00 pm Singapore time are targeted for same-day processing, subject to correspondent bank availability."
+              }
+            ]
+          },
+          {
+            "id": "consistency",
+            "status": "pass",
+            "short": "No contradictions",
+            "summary": "The answer does not contradict itself. The cut-off discrepancy is reported under cross-referencing.",
+            "evidence": [
+              {
+                "docId": "DOC-SME-087",
+                "section": "§4",
+                "passage": "Transfers approved before 3:00 pm Singapore time are targeted for same-day processing, subject to correspondent bank availability."
+              }
+            ]
+          },
+          {
+            "id": "intent",
+            "status": "pass",
+            "short": "Answers the question asked",
+            "summary": "The question asks for the cut-off. The answer states one.",
+            "evidence": [
+              {
+                "kind": "question"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "eval-sme-cutoff-v2",
+      "topic": "sme",
+      "question": "What's the same-day processing cut-off for SME cross-border transfers?",
+      "answer": {
+        "text": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs.",
+        "citations": [
+          "DOC-SME-112"
+        ]
+      },
+      "verification": {
+        "explanation": "Both claims match the current Cross-Border Payments Standard.",
+        "headline": "Safe to use",
+        "retrieved": [],
+        "claims": [
+          {
+            "id": "eval-sme-cutoff-v2-c1",
+            "start": 0,
+            "end": 85,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-SME-112",
+              "section": "§3.4",
+              "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+            },
+            "reason": "Matches the current processing cut-off."
+          },
+          {
+            "id": "eval-sme-cutoff-v2-c2",
+            "start": 87,
+            "end": 145,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-SME-112",
+              "section": "§3.4",
+              "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+            },
+            "reason": "Matches the processing rule."
+          }
+        ],
+        "checks": [
+          {
+            "id": "groundedness",
+            "status": "pass",
+            "short": "Both claims backed",
+            "summary": "2 of 2 claims are supported by a current approved source.",
+            "evidence": [
+              {
+                "docId": "DOC-SME-112",
+                "section": "§3.4",
+                "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+              }
+            ]
+          },
+          {
+            "id": "consistency",
+            "status": "pass",
+            "short": "No contradictions",
+            "summary": "No contradiction with any approved document.",
+            "evidence": [
+              {
+                "docId": "DOC-SME-112",
+                "section": "§3.4",
+                "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+              }
+            ]
+          },
+          {
+            "id": "intent",
+            "status": "pass",
+            "short": "Answers the question asked",
+            "summary": "States the cut-off asked for.",
+            "evidence": [
+              {
+                "kind": "question"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "eval-kyc-ubo-v2",
+      "topic": "kyc",
+      "question": "What documents do I need to verify the beneficial owners of a new SME client?",
+      "answer": {
+        "text": "For each beneficial owner holding 20% or more of the company, collect a government-issued photo ID and proof of residential address dated within the last three months. You also need the company's latest business profile from the company registry, and the ownership structure must be confirmed in writing by a director.",
+        "citations": [
+          "DOC-KYC-031"
+        ]
+      },
+      "verification": {
+        "explanation": "Three of four claims match the due-diligence procedure, but the ownership threshold is wrong: the procedure says 25%, the answer says 20%. v1 stated this correctly.",
+        "headline": "Wrong ownership threshold",
+        "retrieved": [],
+        "claims": [
+          {
+            "id": "eval-kyc-ubo-v2-c1",
+            "start": 4,
+            "end": 60,
+            "status": "conflicting",
+            "check": "consistency",
+            "source": {
+              "docId": "DOC-KYC-031",
+              "section": "§4.1",
+              "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+            },
+            "counter": {
+              "docId": "DOC-KYC-031",
+              "section": "§4.1",
+              "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+            },
+            "short": "Says 20% — policy threshold is 25%",
+            "reason": "The procedure identifies beneficial owners at 25% or more. The answer restates the threshold as 20%, so it contradicts its own cited source."
+          },
+          {
+            "id": "eval-kyc-ubo-v2-c2",
+            "start": 62,
+            "end": 166,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            },
+            "reason": "Matches the identity evidence requirement."
+          },
+          {
+            "id": "eval-kyc-ubo-v2-c3",
+            "start": 182,
+            "end": 245,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-KYC-031",
+              "section": "§4.3",
+              "passage": "Obtain the company's latest business profile from the company registry."
+            },
+            "reason": "Matches the company records requirement."
+          },
+          {
+            "id": "eval-kyc-ubo-v2-c4",
+            "start": 251,
+            "end": 317,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-KYC-031",
+              "section": "§4.4",
+              "passage": "The ownership structure must be confirmed in writing by a director of the company."
+            },
+            "reason": "Matches the ownership confirmation requirement."
+          }
+        ],
+        "checks": [
+          {
+            "id": "groundedness",
+            "status": "warning",
+            "short": "3 of 4 claims backed",
+            "summary": "3 of 4 claims are supported. 1 contradicts the cited source.",
+            "evidence": [
+              {
+                "docId": "DOC-KYC-031",
+                "section": "§4.1",
+                "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+              },
+              {
+                "docId": "DOC-KYC-031",
+                "section": "§4.2",
+                "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+              }
+            ]
+          },
+          {
+            "id": "consistency",
+            "status": "fail",
+            "short": "Says 20% — procedure says 25%",
+            "summary": "The answer gives a 20% ownership threshold; the cited procedure sets 25%.",
+            "evidence": [
+              {
+                "docId": "DOC-KYC-031",
+                "section": "§4.1",
+                "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+              }
+            ]
+          },
+          {
+            "id": "intent",
+            "status": "pass",
+            "short": "Answers the question asked",
+            "summary": "The question asks which documents are needed. The answer lists them.",
+            "evidence": [
+              {
+                "kind": "question"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "eval-kyc-address-v1",
+      "topic": "kyc",
+      "question": "How recent must a beneficial owner's proof of address be?",
+      "answer": {
+        "text": "Proof of residential address must be dated within the last three months, alongside a government-issued photo ID for each beneficial owner.",
+        "citations": [
+          "DOC-KYC-031"
+        ]
+      },
+      "verification": {
+        "explanation": "Both claims match the identity evidence requirement in the current due-diligence procedure.",
+        "headline": "Safe to use",
+        "retrieved": [],
+        "claims": [
+          {
+            "id": "eval-kyc-address-v1-c1",
+            "start": 0,
+            "end": 71,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            },
+            "reason": "Matches the three-month requirement."
+          },
+          {
+            "id": "eval-kyc-address-v1-c2",
+            "start": 83,
+            "end": 137,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            },
+            "reason": "Matches the identity evidence requirement."
+          }
+        ],
+        "checks": [
+          {
+            "id": "groundedness",
+            "status": "pass",
+            "short": "Both claims backed",
+            "summary": "2 of 2 claims are supported.",
+            "evidence": [
+              {
+                "docId": "DOC-KYC-031",
+                "section": "§4.2",
+                "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+              }
+            ]
+          },
+          {
+            "id": "consistency",
+            "status": "pass",
+            "short": "No contradictions",
+            "summary": "No contradiction with any approved document.",
+            "evidence": [
+              {
+                "docId": "DOC-KYC-031",
+                "section": "§4.2",
+                "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+              }
+            ]
+          },
+          {
+            "id": "intent",
+            "status": "pass",
+            "short": "Answers the question asked",
+            "summary": "States how recent the proof of address must be.",
+            "evidence": [
+              {
+                "kind": "question"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "eval-kyc-address-v2",
+      "topic": "kyc",
+      "question": "How recent must a beneficial owner's proof of address be?",
+      "answer": {
+        "text": "Each beneficial owner must provide proof of residential address dated within the last three months, together with a government-issued photo ID.",
+        "citations": [
+          "DOC-KYC-031"
+        ]
+      },
+      "verification": {
+        "explanation": "Both claims match the identity evidence requirement in the current due-diligence procedure.",
+        "headline": "Safe to use",
+        "retrieved": [],
+        "claims": [
+          {
+            "id": "eval-kyc-address-v2-c1",
+            "start": 35,
+            "end": 98,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            },
+            "reason": "Matches the three-month requirement."
+          },
+          {
+            "id": "eval-kyc-address-v2-c2",
+            "start": 114,
+            "end": 142,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            },
+            "reason": "Matches the identity evidence requirement."
+          }
+        ],
+        "checks": [
+          {
+            "id": "groundedness",
+            "status": "pass",
+            "short": "Both claims backed",
+            "summary": "2 of 2 claims are supported.",
+            "evidence": [
+              {
+                "docId": "DOC-KYC-031",
+                "section": "§4.2",
+                "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+              }
+            ]
+          },
+          {
+            "id": "consistency",
+            "status": "pass",
+            "short": "No contradictions",
+            "summary": "No contradiction with any approved document.",
+            "evidence": [
+              {
+                "docId": "DOC-KYC-031",
+                "section": "§4.2",
+                "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+              }
+            ]
+          },
+          {
+            "id": "intent",
+            "status": "pass",
+            "short": "Answers the question asked",
+            "summary": "States how recent the proof of address must be.",
+            "evidence": [
+              {
+                "kind": "question"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "eval-fx-override-v2",
+      "topic": "fx",
+      "question": "Can I override the FX rate for a corporate client without approval?",
+      "answer": {
+        "text": "Only within your authority. Relationship managers may apply FX rate overrides of up to 10 basis points. Any override above 10 basis points requires prior approval from the Treasury desk head. Every override must be recorded in the deal ticket with a reason code.",
+        "citations": [
+          "DOC-FX-019"
+        ]
+      },
+      "verification": {
+        "explanation": "All three claims match the FX Rate Override Guidelines.",
+        "headline": "Safe to use",
+        "retrieved": [],
+        "claims": [
+          {
+            "id": "eval-fx-override-v2-c1",
+            "start": 28,
+            "end": 102,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-FX-019",
+              "section": "§2.1",
+              "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+            },
+            "reason": "Matches the authority limit."
+          },
+          {
+            "id": "eval-fx-override-v2-c2",
+            "start": 104,
+            "end": 190,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            },
+            "reason": "Matches the approval rule."
+          },
+          {
+            "id": "eval-fx-override-v2-c3",
+            "start": 192,
+            "end": 261,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-FX-019",
+              "section": "§3.1",
+              "passage": "Every override must be recorded in the deal ticket with a reason code."
+            },
+            "reason": "Matches the record-keeping rule."
+          }
+        ],
+        "checks": [
+          {
+            "id": "groundedness",
+            "status": "pass",
+            "short": "All 3 claims backed",
+            "summary": "3 of 3 claims are supported.",
+            "evidence": [
+              {
+                "docId": "DOC-FX-019",
+                "section": "§2.1",
+                "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+              },
+              {
+                "docId": "DOC-FX-019",
+                "section": "§2.2",
+                "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+              },
+              {
+                "docId": "DOC-FX-019",
+                "section": "§3.1",
+                "passage": "Every override must be recorded in the deal ticket with a reason code."
+              }
+            ]
+          },
+          {
+            "id": "consistency",
+            "status": "pass",
+            "short": "No contradictions",
+            "summary": "No contradiction with the guideline.",
+            "evidence": [
+              {
+                "docId": "DOC-FX-019",
+                "section": "§2.2",
+                "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+              }
+            ]
+          },
+          {
+            "id": "intent",
+            "status": "pass",
+            "short": "Answers the question asked",
+            "summary": "Answers whether approval is needed.",
+            "evidence": [
+              {
+                "kind": "question"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "eval-fx-approver-v1",
+      "topic": "fx",
+      "question": "Who approves an FX rate override above 10 basis points?",
+      "answer": {
+        "text": "Any override above 10 basis points requires approval from the Treasury desk head. The Treasury desk head can give that approval after the deal is booked.",
+        "citations": [
+          "DOC-FX-019"
+        ]
+      },
+      "verification": {
+        "explanation": "The approver is right, but the guideline requires approval before the override, not after. No approved document allows approval after booking.",
+        "headline": "Approval timing is wrong",
+        "retrieved": [],
+        "claims": [
+          {
+            "id": "eval-fx-approver-v1-c1",
+            "start": 0,
+            "end": 80,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            },
+            "reason": "Matches the approval rule."
+          },
+          {
+            "id": "eval-fx-approver-v1-c2",
+            "start": 82,
+            "end": 152,
+            "status": "unsupported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            },
+            "nearest": true,
+            "short": "Approval after booking isn’t in any policy",
+            "reason": "No retrieved passage allows approval after the deal is booked. The nearest passage, shown here, requires prior approval."
+          }
+        ],
+        "checks": [
+          {
+            "id": "groundedness",
+            "status": "warning",
+            "short": "1 of 2 claims backed",
+            "summary": "1 of 2 claims is supported. 1 has no supporting passage.",
+            "evidence": [
+              {
+                "docId": "DOC-FX-019",
+                "section": "§2.2",
+                "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+              }
+            ]
+          },
+          {
+            "id": "consistency",
+            "status": "warning",
+            "short": "Timing contradicts “prior approval”",
+            "summary": "The answer allows approval after booking; the guideline requires prior approval.",
+            "evidence": [
+              {
+                "docId": "DOC-FX-019",
+                "section": "§2.2",
+                "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+              }
+            ]
+          },
+          {
+            "id": "intent",
+            "status": "pass",
+            "short": "Answers the question asked",
+            "summary": "Names who approves.",
+            "evidence": [
+              {
+                "kind": "question"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "eval-fx-approver-v2",
+      "topic": "fx",
+      "question": "Who approves an FX rate override above 10 basis points?",
+      "answer": {
+        "text": "Any override above 10 basis points requires prior approval from the Treasury desk head. Every override must be recorded in the deal ticket with a reason code.",
+        "citations": [
+          "DOC-FX-019"
+        ]
+      },
+      "verification": {
+        "explanation": "Both claims match the FX Rate Override Guidelines.",
+        "headline": "Safe to use",
+        "retrieved": [],
+        "claims": [
+          {
+            "id": "eval-fx-approver-v2-c1",
+            "start": 0,
+            "end": 86,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            },
+            "reason": "Matches the approval rule."
+          },
+          {
+            "id": "eval-fx-approver-v2-c2",
+            "start": 88,
+            "end": 157,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-FX-019",
+              "section": "§3.1",
+              "passage": "Every override must be recorded in the deal ticket with a reason code."
+            },
+            "reason": "Matches the record-keeping rule."
+          }
+        ],
+        "checks": [
+          {
+            "id": "groundedness",
+            "status": "pass",
+            "short": "Both claims backed",
+            "summary": "2 of 2 claims are supported.",
+            "evidence": [
+              {
+                "docId": "DOC-FX-019",
+                "section": "§2.2",
+                "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+              },
+              {
+                "docId": "DOC-FX-019",
+                "section": "§3.1",
+                "passage": "Every override must be recorded in the deal ticket with a reason code."
+              }
+            ]
+          },
+          {
+            "id": "consistency",
+            "status": "pass",
+            "short": "No contradictions",
+            "summary": "No contradiction with the guideline.",
+            "evidence": [
+              {
+                "docId": "DOC-FX-019",
+                "section": "§2.2",
+                "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+              }
+            ]
+          },
+          {
+            "id": "intent",
+            "status": "pass",
+            "short": "Answers the question asked",
+            "summary": "Names who approves.",
+            "evidence": [
+              {
+                "kind": "question"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "eval-fees-waiver-v2",
+      "topic": "fees",
+      "question": "Can a branch manager waive the annual fee on an SME business account?",
+      "answer": {
+        "text": "Yes. A branch manager can waive account service fees of up to SGD 500 per account per year. Waivers above SGD 500 need approval from the area head.",
+        "citations": [
+          "DOC-OPS-045"
+        ]
+      },
+      "verification": {
+        "explanation": "Both limits match the Fee Waiver Authority Matrix, but that document is 22 months old and past its 12-month review. No agent change fixes this; the document needs reviewing.",
+        "headline": "Right limits, outdated source",
+        "retrieved": [],
+        "claims": [
+          {
+            "id": "eval-fees-waiver-v2-c1",
+            "start": 5,
+            "end": 90,
+            "status": "stale",
+            "check": "freshness",
+            "source": {
+              "docId": "DOC-OPS-045",
+              "section": "Row 3",
+              "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+            },
+            "short": "SGD 500 limit — source overdue for review",
+            "reason": "Matches the source, but the source is 22 months old and overdue for its annual review."
+          },
+          {
+            "id": "eval-fees-waiver-v2-c2",
+            "start": 92,
+            "end": 146,
+            "status": "stale",
+            "check": "freshness",
+            "source": {
+              "docId": "DOC-OPS-045",
+              "section": "Row 4",
+              "passage": "Waivers above SGD 500 require approval from the area head."
+            },
+            "short": "Area-head rule — source overdue",
+            "reason": "Matches the source, but the source is overdue for review."
+          }
+        ],
+        "checks": [
+          {
+            "id": "groundedness",
+            "status": "pass",
+            "short": "Both claims match a source",
+            "summary": "2 of 2 claims match a source passage. Both rest on a document overdue for review.",
+            "evidence": [
+              {
+                "docId": "DOC-OPS-045",
+                "section": "Row 3",
+                "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+              },
+              {
+                "docId": "DOC-OPS-045",
+                "section": "Row 4",
+                "passage": "Waivers above SGD 500 require approval from the area head."
+              }
+            ]
+          },
+          {
+            "id": "consistency",
+            "status": "pass",
+            "short": "No contradictions",
+            "summary": "No contradiction with any approved document.",
+            "evidence": [
+              {
+                "docId": "DOC-OPS-045",
+                "section": "Row 4",
+                "passage": "Waivers above SGD 500 require approval from the area head."
+              }
+            ]
+          },
+          {
+            "id": "intent",
+            "status": "pass",
+            "short": "Answers the question asked",
+            "summary": "Answers only about the SME business account asked about.",
+            "evidence": [
+              {
+                "kind": "question"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "eval-fees-cards-v1",
+      "topic": "fees",
+      "question": "Who handles annual fee reversals for retail credit cards?",
+      "answer": {
+        "text": "Annual fee reversals for retail credit cards are handled by the Cards Service team.",
+        "citations": [
+          "DOC-CRD-022"
+        ]
+      },
+      "verification": {
+        "explanation": "The claim matches the current Cards Servicing Handbook.",
+        "headline": "Safe to use",
+        "retrieved": [],
+        "claims": [
+          {
+            "id": "eval-fees-cards-v1-c1",
+            "start": 0,
+            "end": 82,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-CRD-022",
+              "section": "§7.2",
+              "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+            },
+            "reason": "Matches the handbook."
+          }
+        ],
+        "checks": [
+          {
+            "id": "groundedness",
+            "status": "pass",
+            "short": "Claim backed by policy",
+            "summary": "1 of 1 claims is supported.",
+            "evidence": [
+              {
+                "docId": "DOC-CRD-022",
+                "section": "§7.2",
+                "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+              }
+            ]
+          },
+          {
+            "id": "consistency",
+            "status": "pass",
+            "short": "No contradictions",
+            "summary": "No contradiction with any approved document.",
+            "evidence": [
+              {
+                "docId": "DOC-CRD-022",
+                "section": "§7.2",
+                "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+              }
+            ]
+          },
+          {
+            "id": "intent",
+            "status": "pass",
+            "short": "Answers the question asked",
+            "summary": "Names the team asked about.",
+            "evidence": [
+              {
+                "kind": "question"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "eval-fees-cards-v2",
+      "topic": "fees",
+      "question": "Who handles annual fee reversals for retail credit cards?",
+      "answer": {
+        "text": "The Cards Service team handles annual fee reversals for retail credit cards.",
+        "citations": [
+          "DOC-CRD-022"
+        ]
+      },
+      "verification": {
+        "explanation": "The claim matches the current Cards Servicing Handbook.",
+        "headline": "Safe to use",
+        "retrieved": [],
+        "claims": [
+          {
+            "id": "eval-fees-cards-v2-c1",
+            "start": 0,
+            "end": 75,
+            "status": "supported",
+            "check": "groundedness",
+            "source": {
+              "docId": "DOC-CRD-022",
+              "section": "§7.2",
+              "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+            },
+            "reason": "Matches the handbook."
+          }
+        ],
+        "checks": [
+          {
+            "id": "groundedness",
+            "status": "pass",
+            "short": "Claim backed by policy",
+            "summary": "1 of 1 claims is supported.",
+            "evidence": [
+              {
+                "docId": "DOC-CRD-022",
+                "section": "§7.2",
+                "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+              }
+            ]
+          },
+          {
+            "id": "consistency",
+            "status": "pass",
+            "short": "No contradictions",
+            "summary": "No contradiction with any approved document.",
+            "evidence": [
+              {
+                "docId": "DOC-CRD-022",
+                "section": "§7.2",
+                "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+              }
+            ]
+          },
+          {
+            "id": "intent",
+            "status": "pass",
+            "short": "Answers the question asked",
+            "summary": "Names the team asked about.",
+            "evidence": [
+              {
+                "kind": "question"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "eval-collateral-crypto-v2",
+      "topic": "collateral",
+      "question": "Can an SME pledge crypto assets as collateral for a loan?",
+      "answer": {
+        "text": "I couldn't find an approved policy on accepting crypto or digital assets as collateral, so I can't confirm this. Refer the question to Business Banking Credit Risk before discussing it with the client.",
+        "citations": []
+      },
+      "verification": {
+        "explanation": "The reply makes no policy claims. It says plainly that no approved policy covers this, which is what retrieval found.",
+        "headline": "Declines — no policy exists",
+        "retrieved": [],
+        "claims": [],
+        "checks": [
+          {
+            "id": "groundedness",
+            "status": "na",
+            "short": "No policy claims to check",
+            "summary": "The reply makes no factual policy claims.",
+            "evidence": [
+              {
+                "kind": "search"
+              }
+            ]
+          },
+          {
+            "id": "consistency",
+            "status": "pass",
+            "short": "Matches the empty search result",
+            "summary": "Consistent with the empty retrieval result.",
+            "evidence": [
+              {
+                "kind": "search"
+              }
+            ]
+          },
+          {
+            "id": "intent",
+            "status": "pass",
+            "short": "Says plainly there is no policy",
+            "summary": "The reply addresses the question by saying no approved policy covers it, rather than guessing.",
+            "evidence": [
+              {
+                "kind": "question"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "eval-collateral-gold-v1",
+      "topic": "collateral",
+      "question": "Can an SME pledge a gold ETF as collateral for a term loan?",
+      "answer": {
+        "text": "Yes. Gold ETFs are accepted as collateral at a 30% haircut, and the units must be held in a bank custody account.",
+        "citations": []
+      },
+      "verification": {
+        "noSource": true,
+        "explanation": "No approved document covers gold or ETF collateral, and the answer cites nothing. Both claims are unverified.",
+        "headline": "No policy covers this",
+        "retrieved": [],
+        "search": {
+          "documentsSearched": 7,
+          "query": "gold etf collateral haircut custody",
+          "topMatch": 0.17,
+          "threshold": 0.5
+        },
+        "claims": [
+          {
+            "id": "eval-collateral-gold-v1-c1",
+            "start": 5,
+            "end": 58,
+            "status": "no-source",
+            "check": "groundedness",
+            "source": null,
+            "short": "No policy on gold ETF collateral",
+            "reason": "No source found. Retrieval returned no passage above the relevance threshold."
+          },
+          {
+            "id": "eval-collateral-gold-v1-c2",
+            "start": 64,
+            "end": 112,
+            "status": "no-source",
+            "check": "groundedness",
+            "source": null,
+            "short": "Custody rule not found",
+            "reason": "No source found. No approved document mentions custody accounts."
+          }
+        ],
+        "checks": [
+          {
+            "id": "groundedness",
+            "status": "fail",
+            "short": "0 of 2 claims backed",
+            "summary": "0 of 2 claims are supported. No approved passage was retrieved.",
+            "evidence": [
+              {
+                "kind": "search"
+              }
+            ]
+          },
+          {
+            "id": "consistency",
+            "status": "pass",
+            "short": "No contradictions",
+            "summary": "The answer does not contradict itself.",
+            "evidence": [
+              {
+                "kind": "search"
+              }
+            ]
+          },
+          {
+            "id": "intent",
+            "status": "pass",
+            "short": "Answers the question asked",
+            "summary": "The question asks whether gold ETFs are acceptable collateral. The answer addresses that.",
+            "evidence": [
+              {
+                "kind": "question"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "eval-collateral-gold-v2",
+      "topic": "collateral",
+      "question": "Can an SME pledge a gold ETF as collateral for a term loan?",
+      "answer": {
+        "text": "I couldn't find an approved policy on accepting gold or ETF units as collateral, so I can't confirm this. Refer the question to Business Banking Credit Risk.",
+        "citations": []
+      },
+      "verification": {
+        "explanation": "The reply makes no policy claims. It says plainly that no approved policy covers this, which is what retrieval found.",
+        "headline": "Declines — no policy exists",
+        "retrieved": [],
+        "claims": [],
+        "checks": [
+          {
+            "id": "groundedness",
+            "status": "na",
+            "short": "No policy claims to check",
+            "summary": "The reply makes no factual policy claims.",
+            "evidence": [
+              {
+                "kind": "search"
+              }
+            ]
+          },
+          {
+            "id": "consistency",
+            "status": "pass",
+            "short": "Matches the empty search result",
+            "summary": "Consistent with the empty retrieval result.",
+            "evidence": [
+              {
+                "kind": "search"
+              }
+            ]
+          },
+          {
+            "id": "intent",
+            "status": "pass",
+            "short": "Says plainly there is no policy",
+            "summary": "The reply addresses the question by saying no approved policy covers it, rather than guessing.",
+            "evidence": [
+              {
+                "kind": "question"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "EVAL_SET": [
+    {
+      "id": "q-sme-limit",
+      "topic": "sme",
+      "question": "What's the approval limit for a cross-border transfer under the SME lending policy?",
+      "answers": {
+        "v1": "sme-limit",
+        "v2": "eval-sme-limit-v2"
+      }
+    },
+    {
+      "id": "q-sme-cutoff",
+      "topic": "sme",
+      "question": "What's the same-day processing cut-off for SME cross-border transfers?",
+      "answers": {
+        "v1": "eval-sme-cutoff-v1",
+        "v2": "eval-sme-cutoff-v2"
+      }
+    },
+    {
+      "id": "q-kyc-ubo",
+      "topic": "kyc",
+      "question": "What documents do I need to verify the beneficial owners of a new SME client?",
+      "answers": {
+        "v1": "kyc-ubo",
+        "v2": "eval-kyc-ubo-v2"
+      }
+    },
+    {
+      "id": "q-kyc-address",
+      "topic": "kyc",
+      "question": "How recent must a beneficial owner's proof of address be?",
+      "answers": {
+        "v1": "eval-kyc-address-v1",
+        "v2": "eval-kyc-address-v2"
+      }
+    },
+    {
+      "id": "q-fx-override",
+      "topic": "fx",
+      "question": "Can I override the FX rate for a corporate client without approval?",
+      "answers": {
+        "v1": "fx-override",
+        "v2": "eval-fx-override-v2"
+      }
+    },
+    {
+      "id": "q-fx-approver",
+      "topic": "fx",
+      "question": "Who approves an FX rate override above 10 basis points?",
+      "answers": {
+        "v1": "eval-fx-approver-v1",
+        "v2": "eval-fx-approver-v2"
+      }
+    },
+    {
+      "id": "q-fees-waiver",
+      "topic": "fees",
+      "question": "Can a branch manager waive the annual fee on an SME business account?",
+      "answers": {
+        "v1": "fees-waiver",
+        "v2": "eval-fees-waiver-v2"
+      }
+    },
+    {
+      "id": "q-fees-cards",
+      "topic": "fees",
+      "question": "Who handles annual fee reversals for retail credit cards?",
+      "answers": {
+        "v1": "eval-fees-cards-v1",
+        "v2": "eval-fees-cards-v2"
+      }
+    },
+    {
+      "id": "q-collateral-crypto",
+      "topic": "collateral",
+      "question": "Can an SME pledge crypto assets as collateral for a loan?",
+      "answers": {
+        "v1": "collateral-crypto",
+        "v2": "eval-collateral-crypto-v2"
+      }
+    },
+    {
+      "id": "q-collateral-gold",
+      "topic": "collateral",
+      "question": "Can an SME pledge a gold ETF as collateral for a term loan?",
+      "answers": {
+        "v1": "eval-collateral-gold-v1",
+        "v2": "eval-collateral-gold-v2"
+      }
+    }
+  ],
   "CHECKS": [
     {
       "id": "citation",

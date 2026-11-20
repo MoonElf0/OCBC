@@ -62,6 +62,7 @@ export const api = {
   evalInfo: () => call('/eval'),
   evalRun: (split) => call('/eval/run', { method: 'POST', body: { split } }),
   reset: () => call('/admin/reset', { method: 'POST' }),
+  releaseCheck: () => call('/release-check'),
 
   /** Same callbacks as pipeline.verify. Returns a cancel function. */
   verify(answerId, { onCheckStart, onCheckDone, onComplete, onError }) {

@@ -28,6 +28,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import agent, db, evaluation, fixtures, library, pipeline
+from .release_check import compare_versions
 from .freshness import freshness_of
 from .metrics import Metrics
 from .models import get_provider
@@ -604,6 +605,23 @@ def edit_section(doc_id: str, section_id: str, body: LegacySectionIn):
 def metrics():
     data, live = db.metrics_data(conn())
     return {**Metrics(data, db.today(conn()), live).dashboard(), "liveDecisions": live}
+
+
+@app.get("/api/release-check")
+def release_check():
+    """
+    Agent release check: the verifier scores agent v1 and agent v2 on the fixed
+    test set, then the versions are compared. Answers are scripted; retrieval,
+    rule checks, scores and the comparison are computed here.
+    """
+    f = fixtures.load()
+    docs, index = library_docs()
+    today = db.today(conn())
+    ids = [sid for q in f["EVAL_SET"] for sid in q["answers"].values()]
+    results = {sid: verify(fixtures.scenario_by_id(sid), docs, today, index=index) for sid in ids}
+    report = compare_versions(f, docs, results.__getitem__, lambda d: freshness_of(d, docs, today))
+    answers = {sid: {"text": fixtures.scenario_by_id(sid)["answer"]["text"], "result": results[sid]} for sid in ids}
+    return {**report, "answers": answers, "provenance": PROVENANCE}
 
 
 @app.get("/api/eval")
