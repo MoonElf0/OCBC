@@ -19,6 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import agent, db, fixtures
+from .evaluation import compare_versions
 from .freshness import freshness_of
 from .metrics import Metrics
 from .retrieval import Index
@@ -219,6 +220,23 @@ def decide(review_id: str, body: DecisionIn):
 def metrics():
     data, live = db.metrics_data(conn())
     return {**Metrics(data, db.today(conn()), live).dashboard(), "liveDecisions": live}
+
+
+@app.get("/api/evaluation")
+def evaluation():
+    """
+    Agent release check: the live verifier scores agent v1 and agent v2 on the
+    fixed test set, then the versions are compared. Answers are scripted;
+    retrieval, rule checks, scores and the comparison are computed here.
+    """
+    f = fixtures.load()
+    docs, _ = library()
+    today = db.today(conn())
+    ids = [sid for q in f["EVAL_SET"] for sid in q["answers"].values()]
+    results = {sid: run_verify(fixtures.scenario_by_id(sid), None) for sid in ids}
+    report = compare_versions(f, docs, results.__getitem__, lambda d: freshness_of(d, docs, today))
+    answers = {sid: {"text": fixtures.scenario_by_id(sid)["answer"]["text"], "result": results[sid]} for sid in ids}
+    return {**report, "answers": answers, "provenance": PROVENANCE}
 
 
 @app.get("/api/documents")

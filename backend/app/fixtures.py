@@ -29,7 +29,7 @@ def scenarios() -> list[dict]:
 
 def all_scenarios() -> list[dict]:
     f = load()
-    return [*f["SCENARIOS"], f["FALLBACK"], *f["CORRECTIONS"].values()]
+    return [*f["SCENARIOS"], f["FALLBACK"], *f["CORRECTIONS"].values(), *f["EVAL_ANSWERS"]]
 
 
 def scenario_by_id(scenario_id: str) -> dict:
