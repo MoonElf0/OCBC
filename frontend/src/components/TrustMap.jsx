@@ -2,22 +2,36 @@ import { useEffect } from 'react'
 import { X, FileText, CalendarClock, Layers, Quote, ArrowDownToLine, Network, CircleCheck, TriangleAlert, CircleX, GitCompareArrows } from 'lucide-react'
 import { useStore } from '../state/store'
 import { DOCUMENTS } from '../fixtures'
-import { freshnessOf, formatDate } from '../lib/freshness'
+import { freshnessOf, formatDate, monthsBetween } from '../lib/freshness'
 import { scenarioById } from '../lib/pipeline'
 import { CLAIM_STATUS, TONES } from '../lib/status'
 
 // Freshness: red = superseded/overdue, yellow = 6+ months since ratification (review pending), green = recent.
-function fresh(docId) {
-  const f = freshnessOf(docId), d = DOCUMENTS[docId]
+// `ref` is the passage the result carries. In backend mode it names the exact
+// version assessed, so that is what the map shows; demo mode reads the fixtures.
+function fresh(ref) {
+  if (ref.version) {
+    const months = monthsBetween(ref.effectiveFrom)
+    const f = { stale: ref.state !== 'current', state: ref.state, months, note: ref.note }
+    const d = { updated: ref.effectiveFrom, reviewCycleMonths: Math.max(1, monthsBetween(ref.effectiveFrom, ref.reviewDate)) }
+    return grade(f, d)
+  }
+  return grade(freshnessOf(ref.docId), DOCUMENTS[ref.docId])
+}
+
+function grade(f, d) {
   const tone = f.stale ? 'unsupported' : f.months >= 6 ? 'caution' : 'verified'
   const label = f.state === 'superseded' ? 'Outdated · superseded' : f.state === 'overdue' ? 'Outdated · review overdue' : f.months >= 6 ? 'Pending review' : 'Recently ratified'
   const pct = Math.min(100, Math.round((f.months / d.reviewCycleMonths) * 100))
   return { f, d, tone, label, pct, Icon: tone === 'verified' ? CircleCheck : tone === 'caution' ? TriangleAlert : CircleX }
 }
 
+const titleOf = (ref) => ref.title ?? DOCUMENTS[ref.docId]?.title ?? ref.docId
+
 function dependency(c, m) {
-  const retrieved = scenarioById(m.scenarioId).verification.retrieved ?? []
-  if (c.counter) return { tone: 'unsupported', label: 'Conflicting sources', Icon: GitCompareArrows, text: `${DOCUMENTS[c.source.docId].title} and ${DOCUMENTS[c.counter.docId].title} disagree.` }
+  const retrieved = m.result?.retrieved ?? scenarioById(m.scenarioId).verification.retrieved ?? []
+  if (c.counter && c.counter.docId === c.source.docId && c.counter.version === c.source.version) return { tone: 'unsupported', label: 'Contradicted by its source', Icon: GitCompareArrows, text: `${titleOf(c.source)} ${c.source.version ?? ''} states a different figure.` }
+  if (c.counter) return { tone: 'unsupported', label: 'Conflicting sources', Icon: GitCompareArrows, text: `${titleOf(c.source)}${c.source.version ? ` ${c.source.version}` : ''} and ${titleOf(c.counter)}${c.counter.version ? ` ${c.counter.version}` : ''} disagree.` }
   const both = m.citations.includes(c.source.docId) && retrieved.includes(c.source.docId)
   if (both) return { tone: 'verified', label: 'Cross-validated', Icon: Layers, text: 'The agent cited it and the verifier retrieved it independently.' }
   return { tone: 'caution', label: 'Single-source dependency', Icon: Layers, text: 'Only one document backs this claim. If it changes, the claim fails.' }
@@ -41,14 +55,16 @@ function Node({ i, tone, Icon, title, children }) {
   )
 }
 
+// The passage text and version shown are the ones on the result, never re-read from the fixtures.
 const Passage = ({ s, label }) => {
-  const d = DOCUMENTS[s.docId], sec = d.sections.find((x) => x.id === s.section)
+  const d = DOCUMENTS[s.docId]
+  const heading = !s.version ? d?.sections.find((x) => x.id === s.section)?.heading : null
   return (
     <div>
       {label && <div className="text-caption font-medium text-status-unsupported">{label}</div>}
-      <div className="font-medium">{d.title} <span className="text-smoke">{d.version} · {s.docId}</span></div>
-      <div className="text-caption text-carbon">Section {sec.id} · {sec.heading}</div>
-      <p className="mt-1.5 rounded-xl bg-porcelain/70 px-3 py-2 text-caption text-carbon">“{sec.text}”</p>
+      <div className="font-medium">{titleOf(s)} <span className="text-smoke">{s.version ?? d?.version} · {s.docId}</span></div>
+      <div className="text-caption text-carbon">Section {s.section}{heading ? ` · ${heading}` : ''}{s.state && s.state !== 'current' ? ` · ${s.state === 'superseded' ? 'superseded version' : 'review overdue'}` : ''}</div>
+      <p className="mt-1.5 rounded-xl bg-porcelain/70 px-3 py-2 text-caption text-carbon">“{s.passage}”</p>
     </div>
   )
 }
@@ -86,7 +102,7 @@ export default function TrustMap() {
   if (!m?.result) return null
   const claims = m.result.claims.filter((c) => c.source)
   const c = claims.find((x) => x.id === t.claimId) ?? claims[0]
-  const st = CLAIM_STATUS[c.status], fr = fresh(c.source.docId), dep = dependency(c, m)
+  const st = CLAIM_STATUS[c.status], fr = fresh(c.source), dep = dependency(c, m)
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center p-4" role="dialog" aria-modal="true" aria-label="Trust Map">
@@ -117,7 +133,7 @@ export default function TrustMap() {
             </div>
             <div className="mt-1 flex justify-between text-caption text-smoke"><span>Ratified</span><span>Review due after {fr.d.reviewCycleMonths} months</span></div>
             <div className="mt-2 flex flex-wrap gap-3 text-caption text-carbon">
-              <span>? Green: recent</span><span>? Yellow: review pending (6+ months)</span><span>? Red: outdated or superseded</span>
+              <span>Green: recent</span><span>Yellow: review pending (6+ months)</span><span>Red: outdated or superseded</span>
             </div>
           </Node>
           <Node i={c.counter ? 4 : 3} tone={dep.tone} Icon={dep.Icon} title={`Dependency risk · ${dep.label}`}>{dep.text}</Node>

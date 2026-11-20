@@ -1,62 +1,78 @@
-"""The agent release check must match the JS demo, and hold over the API."""
+"""The evaluation harness reports what it recorded, and nothing else."""
 import pytest
 from fastapi.testclient import TestClient
 
-from app import db, fixtures
+from app import db, evaluation, pipeline
 from app import main as api
-from app.assess import assess
-from app.evaluation import compare_versions
-from app.freshness import freshness_of
+from app.models import NoProvider
+from tests.fakes import FakeProvider
 
-F = fixtures.load()
-DOCS, TODAY = F["DOCUMENTS"], F["DEMO_TODAY"]
+DATA = evaluation.load()
 
 
-def approx(x):
-    if isinstance(x, float):
-        return pytest.approx(x, rel=1e-12)
-    if isinstance(x, dict):
-        return {k: approx(v) for k, v in x.items()}
-    if isinstance(x, list):
-        return [approx(v) for v in x]
-    return x
+def test_dataset_size_and_held_out_split():
+    cases = DATA["cases"]
+    assert 30 <= len(cases) <= 50
+    tuning = {c["id"] for c in cases if c["split"] == "tuning"}
+    held = {c["id"] for c in cases if c["split"] == "heldout"}
+    assert tuning and held and not tuning & held and len(tuning | held) == len(cases)
+    cats = {c["category"] for c in cases}
+    for needed in ["correct", "incorrect-figure", "superseded-policy", "invented-citation", "irrelevant-citation",
+                   "missing-evidence", "ambiguous-question", "reviewer-correction", "prompt-injection"]:
+        assert needed in cats, needed
 
 
-def scripted(sid: str) -> dict:
-    return assess(fixtures.scenario_by_id(sid), DOCS, TODAY)
+def test_every_labelled_quote_is_in_its_answer():
+    for c in DATA["cases"]:
+        for cl in c["claims"]:
+            assert pipeline.locate(c["answer"], cl["quote"]), (c["id"], cl["quote"])
+            assert cl["label"] in ("correct", "incorrect", "no-evidence")
+        assert c.get("citation") in ("valid", "weak", "invalid", "missing")
 
 
-def test_comparison_matches_js(golden):
-    got = compare_versions(F, DOCS, scripted, lambda d: freshness_of(d, DOCS, TODAY))
-    assert got == approx(golden["evaluation"])
+def recount(rows):
+    """Independent recount of the headline rates from the recorded rows."""
+    flag = {"conflicting", "unsupported", "insufficient", "no-source"}
+    claims = [c for r in rows for c in r["claims"]]
+    inc = [c for c in claims if c["label"] == "incorrect"]
+    cor = [c for c in claims if c["label"] == "correct"]
+    want = {"valid": "pass", "weak": "warning", "invalid": "fail", "missing": "fail"}
+    return {
+        "detection": (sum(c["predicted"] in flag for c in inc), len(inc)),
+        "falsePositive": (sum(c["predicted"] in flag for c in cor), len(cor)),
+        "citation": (sum(want[r["citationLabel"]] == r["citationPredicted"] for r in rows), len(rows)),
+        "abstention": (sum(c["predicted"] in ("insufficient", "no-source") for c in claims if c["label"] == "no-evidence"),
+                       sum(c["label"] == "no-evidence" for c in claims)),
+    }
 
 
-@pytest.fixture()
-def client(tmp_path, monkeypatch):
-    monkeypatch.setattr(api, "_conn", db.connect(tmp_path / "test.db"))
-    monkeypatch.setattr(api, "_index", None)
-    return TestClient(api.app)
+@pytest.mark.parametrize("provider", [NoProvider(), FakeProvider()], ids=["no-model", "fake-model"])
+def test_metrics_match_recorded_predictions_and_labels(provider):
+    run = evaluation.run(provider, split="all")
+    s = run["summary"]
+    for k, (num, den) in recount(run["cases"]).items():
+        assert (s[k]["numerator"], s[k]["denominator"]) == (num, den), k
+        assert s[k]["rate"] == (num / den if den else None)
+    assert s["latency"]["cases"] == len(run["cases"]) == len(DATA["cases"])
 
 
-def test_api_runs_the_live_verifier_and_agrees_with_the_demo(client, golden):
-    r = client.get("/api/evaluation").json()
-    assert r["provenance"]["retrieval"] == "lexical"
-    for k in ("questions", "topics", "overall", "counts", "release", "notes"):
-        assert r[k] == approx(golden["evaluation"][k]), k
-    q = r["questions"][0]
-    assert set(r["answers"]) >= {q["baseId"], q["candidateId"]}
-    assert r["answers"][q["candidateId"]]["result"]["claims"][0]["retrieval"]["topScore"] > 0
+def test_the_run_says_how_it_was_produced():
+    assert evaluation.run(NoProvider(), "tuning")["mode"] == "rule-based"
+    assert evaluation.run(FakeProvider(), "tuning")["mode"] == "model-based"
 
 
-def test_rule_checks_follow_the_library(client):
-    """Retrieval and rule checks are live: edit the KYC procedure and v2's cross-reference check changes."""
-    def crossref(r, sid):
-        return next(c for c in r["answers"][sid]["result"]["checks"] if c["id"] == "crossref")["status"]
+def test_without_a_model_nothing_is_confirmed_and_nothing_is_guessed():
+    s = evaluation.run(NoProvider(), "all")["summary"]
+    assert s["confirmed"]["numerator"] == 0  # meaning is never confirmed by figures alone
+    assert s["falsePositive"]["numerator"] == 0
 
-    before = client.get("/api/evaluation").json()
-    text = "Identify every beneficial owner who holds 20% or more of the company's shares or voting rights."
-    assert client.put("/api/documents/DOC-KYC-031/sections/§4.1", json={"text": text}).json() == {"ok": True}
-    after = client.get("/api/evaluation").json()
-    assert crossref(before, "eval-kyc-ubo-v2") == "fail"
-    assert crossref(after, "eval-kyc-ubo-v2") == "pass"
-    assert after["answers"]["eval-kyc-ubo-v2"]["result"]["score"] > before["answers"]["eval-kyc-ubo-v2"]["result"]["score"]
+
+def test_runs_are_recorded_through_the_api(tmp_path, monkeypatch):
+    monkeypatch.setattr(api, "_conn", db.connect(tmp_path / "e.db"))
+    monkeypatch.setattr(api, "_provider", NoProvider())
+    c = TestClient(api.app)
+    r = c.post("/api/eval/run", json={"split": "heldout"}).json()
+    assert r["split"] == "heldout" and all(x["split"] == "heldout" for x in r["cases"])
+    info = c.get("/api/eval").json()
+    assert info["runs"][0]["id"] == r["id"] and info["runs"][0]["summary"] == r["summary"]
+    assert info["dataset"]["cases"] == len(DATA["cases"]) and len(info["definitions"]) >= 6

@@ -1,17 +1,33 @@
 import { useEffect, useState } from 'react'
-import { CircleCheck, Pencil, Ban, Clock, CircleSlash, Inbox, MessageSquare } from 'lucide-react'
-import { useStore } from '../state/store'
+import { CircleCheck, Pencil, Ban, Clock, CircleSlash, Inbox, MessageSquare, ShieldCheck, LoaderCircle, UserRound, History } from 'lucide-react'
+import { useStore, DEMO_REVIEWERS } from '../state/store'
 import { REVIEW_HINTS, CORRECTIONS, TOPICS } from '../fixtures'
+import { BACKEND, api } from '../lib/backend'
 import { assess } from '../lib/assess'
 import { scenarioById } from '../lib/pipeline'
 import { CHECKS, REASONS, TONES } from '../lib/status'
-import { freshnessOf, formatDate } from '../lib/freshness'
+import { freshnessOf } from '../lib/freshness'
 import { flagged } from '../lib/view'
 import AnswerText from '../components/AnswerText'
 import { CheckRow } from '../components/ChecksSheet'
 import { SearchRecord } from '../components/Evidence'
-import { Eyebrow, ScoreBadge, Passage, PrimaryButton, ClaimPill } from '../components/ui'
-import { OUTCOME_META } from '../components/Thread'
+import { Eyebrow, ScoreBadge, Passage, PrimaryButton, GhostButton, ClaimPill } from '../components/ui'
+import { OUTCOME_META, formatWhen } from '../components/Thread'
+import { AuditTrail } from '../components/CharacterPanel'
+
+/** What the reviewer sees: the backend sends the stored answer and its assessment; demo mode reads the fixture. */
+function caseOf(q) {
+  const sc = scenarioById(q.scenarioId)
+  const topic = q.topic ?? sc.topic
+  return {
+    sc,
+    question: q.question ?? sc.question,
+    text: q.answerText ?? sc.answer.text,
+    topicName: TOPICS[topic]?.name ?? 'Topic not identified',
+    result: q.result ?? assess(sc.id),
+    submitted: q.kind === 'submitted',
+  }
+}
 
 export default function ReviewQueue() {
   const { state } = useStore()
@@ -48,18 +64,19 @@ export default function ReviewQueue() {
         <ul className="scroll-quiet flex-1 space-y-2 overflow-y-auto p-3">
           {items.length === 0 && <li className="p-4 text-body-sm text-smoke">{tab === 'pending' ? 'Queue is clear.' : 'No decisions yet this session.'}</li>}
           {items.map((q) => {
-            const sc = scenarioById(q.scenarioId)
+            const k = caseOf(q)
             const isSel = selected?.id === q.id
             return (
               <li key={q.id}>
                 <button onClick={() => setSelectedId(q.id)} aria-current={isSel ? 'true' : undefined} className={`w-full rounded-2xl border p-3 text-left transition-colors ${isSel ? 'border-carbon bg-porcelain shadow-md' : 'border-frost hover:border-ash'}`}>
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-caption font-medium text-carbon">{q.id}</span>
-                    <ScoreBadge score={(q.result ?? assess(sc.id)).score} />
+                    <ScoreBadge score={k.result.score} />
                   </div>
-                  <div className="mt-2 line-clamp-2 text-body-sm font-medium text-ink">{sc.question}</div>
+                  <div className="mt-2 line-clamp-2 text-body-sm font-medium text-ink">{k.question}</div>
                   <div className="mt-1 text-caption text-smoke">
-                    {TOPICS[sc.topic].name} · {q.askedAt === 'Just now' ? 'Just now' : formatWhen(q.askedAt)}
+                    {k.submitted ? 'Submitted answer · ' : ''}
+                    {k.topicName} · {q.askedAt === 'Just now' ? 'Just now' : formatWhen(q.askedAt)}
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1">
                     {q.reasons.map((r) => (
@@ -79,11 +96,6 @@ export default function ReviewQueue() {
   )
 }
 
-function formatWhen(iso) {
-  const [d, t] = iso.split('T')
-  return `${formatDate(d)}, ${t}`
-}
-
 function ReasonTag({ id }) {
   const r = REASONS[id]
   return (
@@ -95,8 +107,9 @@ function ReasonTag({ id }) {
 }
 
 function ReviewDetail({ item }) {
-  const sc = scenarioById(item.scenarioId)
-  const v = item.result ?? assess(sc.id) // backend mode sends the stored verification
+  const k = caseOf(item)
+  const sc = k.sc
+  const v = k.result // backend mode sends the stored assessment
   const [focus, setFocus] = useState(null)
   const claims = [...flagged(v.claims), ...v.claims.filter((c) => c.status === 'supported')]
 
@@ -111,13 +124,14 @@ function ReviewDetail({ item }) {
         <header>
           <div className="flex flex-wrap items-center gap-2">
             <Eyebrow>
-              {item.id} · {TOPICS[sc.topic].name}
+              {item.id} · {k.topicName}
+              {k.submitted ? ' · submitted answer' : ''}
             </Eyebrow>
           </div>
           <div className="mt-1 text-caption text-smoke">
             {item.routedBy === 'auto' ? 'Routed automatically by Assessment AI' : 'Escalated by the employee'} · {item.askedBy}
           </div>
-          <h1 className="mt-2 text-subheading font-medium text-ink">{sc.question}</h1>
+          <h1 className="mt-2 text-subheading font-medium text-ink">{k.question}</h1>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {item.reasons.map((r) => (
               <ReasonTag key={r} id={r} />
@@ -135,15 +149,23 @@ function ReviewDetail({ item }) {
             <Eyebrow>Agent answer · click a claim for its evidence</Eyebrow>
             <ScoreBadge score={v.score} />
           </div>
-          <AnswerText text={sc.answer.text} claims={v.claims} activeClaimId={focus} onClaim={jump} />
+          <AnswerText text={k.text} claims={v.claims} activeClaimId={focus} onClaim={jump} />
           <p className="mt-3 max-w-[65ch] text-body-sm text-smoke">{v.explanation}</p>
+          {v.assessment?.partial && (
+            <p className="mt-2 text-body-sm text-carbon">
+              <span className="font-medium text-ink">Partial assessment:</span> {[...new Set(v.assessment.unavailable.map((u) => u.reason))].join(' ')} Model steps not run: {v.assessment.unavailable.map((u) => u.step).join(', ')}.
+            </p>
+          )}
+          {item.assessment?.policyVersions?.length > 0 && (
+            <p className="mt-2 text-caption text-smoke">Assessed against {item.assessment.policyVersions.map((p) => `${p.docId} ${p.version}`).join(', ')}{v.assessment?.asOf ? ` · policy date ${v.assessment.asOf}` : ''}</p>
+          )}
         </div>
 
         <div>
           <Eyebrow className="mb-3">Claims and evidence</Eyebrow>
           <div className="space-y-3">
             {claims.map((c) => (
-              <ClaimEvidence key={c.id} c={c} sc={sc} focused={focus === c.id} search={v.search} />
+              <ClaimEvidence key={c.id} c={c} sc={sc} text={k.text} focused={focus === c.id} search={v.search} />
             ))}
           </div>
         </div>
@@ -156,13 +178,16 @@ function ReviewDetail({ item }) {
         </div>
       </section>
 
-      <Decision item={item} sc={sc} />
+      <Decision item={item} sc={sc} k={k} />
     </div>
   )
 }
 
-function ClaimEvidence({ c, sc, focused, search }) {
-  const f = c.source ? freshnessOf(c.source.docId) : null
+function ClaimEvidence({ c, sc, text, focused, search }) {
+  // The assessed version's own state when the backend sent it; the fixtures otherwise.
+  const f = c.source?.version
+    ? { stale: c.source.state !== 'current', state: c.source.state, supersededBy: { id: String(c.source.supersededBy ?? '').replace('@', ' ') } }
+    : c.source && freshnessOf(c.source.docId)
   return (
     <div id={`flag-${c.id}`} className={`rounded-2xl border p-4 transition-colors ${focused ? 'border-carbon' : 'border-frost'}`}>
       <div className="flex flex-wrap items-center gap-2">
@@ -173,11 +198,11 @@ function ClaimEvidence({ c, sc, focused, search }) {
           </span>
         )}
       </div>
-      <p className="mt-2 text-body-sm font-medium text-ink">“{sc.answer.text.slice(c.start, c.end)}”</p>
+      <p className="mt-2 text-body-sm font-medium text-ink">“{text.slice(c.start, c.end)}”</p>
       <p className="mt-1 text-body-sm text-carbon">{c.reason}</p>
       <div className="mt-3 grid gap-2 md:grid-cols-2">
         {c.source ? (
-          <Passage docId={c.source.docId} section={c.source.section} passage={c.source.passage} />
+          <Passage {...c.source} />
         ) : (
           <div>
             <div className="eyebrow mb-1.5 flex items-center gap-1.5 text-status-unknown">
@@ -186,7 +211,7 @@ function ClaimEvidence({ c, sc, focused, search }) {
             <SearchRecord scenarioId={sc.id} search={search} />
           </div>
         )}
-        {c.counter && <Passage docId={c.counter.docId} section={c.counter.section} passage={c.counter.passage} />}
+        {c.counter && !(c.counter.docId === c.source?.docId && c.counter.section === c.source?.section && c.counter.version === c.source?.version) && <Passage {...c.counter} />}
       </div>
     </div>
   )
@@ -198,49 +223,72 @@ const DECISIONS = [
   { id: 'rejected', label: 'Reject', desc: 'Withdraw the answer. No safe correction exists.', Icon: Ban },
 ]
 
-function Decision({ item, sc }) {
-  const { decide } = useStore()
+function Decision({ item, sc, k }) {
+  const { state, decide } = useStore()
   const hint = REVIEW_HINTS[sc.id] ?? {}
-  const draft = CORRECTIONS[sc.id]
+  const draft = item.kind === 'submitted' ? null : CORRECTIONS[sc.id]
+  const reviewers = state.health?.reviewers ?? DEMO_REVIEWERS
+  const [reviewerId, setReviewerId] = useState(reviewers[0].id)
   const [decision, setDecision] = useState(null)
-  const [text, setText] = useState(sc.answer.text)
+  const [text, setText] = useState(k.text)
   const [note, setNote] = useState('')
   const [ack, setAck] = useState(false)
-  // Approving an answer that carries flags needs an explicit override.
-  const flagCount = (item.result ?? assess(sc.id)).claims.filter((c) => c.status !== 'supported').length
-  const needsAck = decision === 'approved' && flagCount > 0
-  const valid = decision && note.trim().length >= 5 && (decision !== 'corrected' || text.trim() !== sc.answer.text) && (!needsAck || ack)
+  const [check, setCheck] = useState(null) // { text, result } once the correction has been checked
+  const [checking, setChecking] = useState(false)
+  const [sending, setSending] = useState(false)
+  // Approving an answer with flagged or unchecked claims needs an explicit override.
+  const result = k.result
+  const flagCount = result.claims.filter((c) => c.status !== 'supported').length
+  const partial = !!result.assessment?.partial
+  const checked = check && check.text === text.trim() ? check.result : null
+  const correctionFlags = checked ? checked.claims.filter((c) => ['conflicting', 'unsupported', 'insufficient'].includes(c.status)).length : 0
+  const needsAck = (decision === 'approved' && (flagCount > 0 || partial)) || (decision === 'corrected' && correctionFlags > 0)
+  const changed = text.trim() !== k.text.trim()
+  const valid = decision && note.trim().length >= 5 && (decision !== 'corrected' || changed) && (!needsAck || ack) && !sending
 
-  if (item.status === 'resolved') {
-    const o = OUTCOME_META[item.outcome.decision]
-    return (
-      <aside className="self-start rounded-3xl border border-frost bg-porcelain p-6">
-        <Eyebrow>Decision</Eyebrow>
-        <div className={`eyebrow mt-3 flex items-center gap-1.5 ${TONES[o.tone].text}`}>
-          <o.Icon size={14} aria-hidden="true" /> {o.label}
-        </div>
-        {item.outcome.correctedText && <p className="mt-3 text-body-sm text-ink">{item.outcome.correctedText}</p>}
-        <p className="mt-3 text-body-sm text-smoke">Note: {item.outcome.note}</p>
-        {item.outcome.recheck && (
-          <p className="mt-3 flex flex-wrap items-center gap-1.5 text-caption text-carbon">
-            Re-checked by Assessment AI <ScoreBadge score={item.outcome.recheck.result.score} />
-          </p>
-        )}
-        <p className="mt-4 text-caption text-carbon">
-          {item.answerId || item.watchers?.length ? 'Returned to the employee who asked. ' : ''}Feeds the recommendations on the Trends page.
-        </p>
-      </aside>
-    )
+  const runCheck = async () => {
+    setChecking(true)
+    try {
+      const r = await api.preview({ question: k.question, answer: text.trim(), citations: [], asOf: result.assessment?.asOf })
+      setCheck({ text: text.trim(), result: r })
+    } catch {
+      setCheck(null)
+    }
+    setChecking(false)
   }
+
+  const submit = async () => {
+    setSending(true)
+    const r = await decide({ queueId: item.id, decision, note: note.trim(), correctedText: decision === 'corrected' ? text.trim() : null, reviewerId, overrideFlags: needsAck && ack })
+    setSending(false)
+    if (r && !r.ok && r.result) setCheck({ text: text.trim(), result: r.result })
+  }
+
+  if (item.status === 'resolved') return <Resolved item={item} />
 
   return (
     <aside className="scroll-quiet self-start overflow-y-auto rounded-3xl border border-frost bg-porcelain p-6" style={{ maxHeight: '100%' }}>
       <Eyebrow>Your decision</Eyebrow>
-      <fieldset className="mt-3 space-y-2">
+      <label htmlFor="reviewer" className="eyebrow mt-3 block text-smoke">
+        Acting as · simulated identity
+      </label>
+      <div className="mt-1.5 flex items-center gap-2 rounded-2xl border border-frost px-3 py-2">
+        <UserRound size={15} className="shrink-0 text-carbon" aria-hidden="true" />
+        <select id="reviewer" value={reviewerId} onChange={(e) => setReviewerId(e.target.value)} className="min-w-0 flex-1 bg-transparent text-body-sm text-ink focus:outline-none">
+          {reviewers.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.name} (simulated) · {r.role}
+            </option>
+          ))}
+        </select>
+      </div>
+      <p className="mt-1 text-caption text-smoke">Prototype: there is no sign-in. The identity is recorded as simulated.</p>
+
+      <fieldset className="mt-4 space-y-2">
         <legend className="sr-only">Decision</legend>
         {DECISIONS.map((d) => (
           <label key={d.id} className={`flex cursor-pointer items-start gap-3 rounded-2xl border p-3 transition-colors ${decision === d.id ? 'border-carbon bg-bone' : 'border-frost hover:border-ash'}`}>
-            <input type="radio" name="decision" value={d.id} checked={decision === d.id} onChange={() => setDecision(d.id)} className="mt-1 accent-carbon" />
+            <input type="radio" name="decision" value={d.id} checked={decision === d.id} onChange={() => (setDecision(d.id), setAck(false))} className="mt-1 accent-carbon" />
             <span>
               <span className="flex items-center gap-1.5 text-body-sm font-medium text-ink">
                 <d.Icon size={14} aria-hidden="true" /> {d.label}
@@ -264,12 +312,29 @@ function Decision({ item, sc }) {
             )}
           </div>
           <textarea id="corrected" rows={7} value={text} onChange={(e) => setText(e.target.value)} className="w-full resize-none rounded-2xl border border-frost px-3 py-2 text-body-sm text-ink focus:border-ash focus:outline-none" />
-          {draft && text === draft.answer.text ? (
+          {BACKEND ? (
+            <div className="mt-1.5 space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <GhostButton type="button" onClick={runCheck} disabled={!changed || checking} className="py-1.5">
+                  {checking ? <LoaderCircle size={14} className="spin" aria-hidden="true" /> : <ShieldCheck size={14} aria-hidden="true" />} Check this wording
+                </GhostButton>
+                {checked && <ScoreBadge score={checked.score} />}
+              </div>
+              {checked ? (
+                <p className="text-caption text-carbon">
+                  {checked.explanation}
+                  {correctionFlags > 0 ? ' Fix the flagged claims, or confirm the override below.' : ''}
+                </p>
+              ) : (
+                <p className="text-caption text-smoke">Any wording you write is re-verified by Assessment AI when you submit, and stored with its own assessment.</p>
+              )}
+            </div>
+          ) : draft && text === draft.answer.text ? (
             <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-caption text-carbon">
               Assessment AI re-check: <ScoreBadge score={assess(draft.id).score} />
             </p>
           ) : (
-            <p className="mt-1.5 text-caption text-smoke">Your own wording is sent as reviewer-verified; it is not re-scored in this prototype.</p>
+            <p className="mt-1.5 text-caption text-smoke">Demo mode can only re-check the drafted correction. Backend mode re-checks any wording.</p>
           )}
         </div>
       )}
@@ -283,30 +348,80 @@ function Decision({ item, sc }) {
           rows={3}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder={hint.placeholder}
+          placeholder={hint.placeholder ?? 'Explain the decision.'}
           className="mt-1.5 w-full resize-none rounded-2xl border border-frost px-3 py-2 text-body-sm text-ink placeholder:text-ash focus:border-ash focus:outline-none"
         />
-        <p className="mt-1 text-caption text-carbon">The note goes back to the employee and feeds the improvement recommendations.</p>
+        <p className="mt-1 text-caption text-carbon">The note goes back to the employee, is kept in the audit trail and feeds the improvement recommendations.</p>
       </div>
 
       {needsAck && (
         <label className="rise-in mt-4 flex items-start gap-2 rounded-2xl border border-frost bg-bone p-3 text-body-sm text-carbon">
           <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-1 accent-carbon" />
           <span>
-            I have checked the {flagCount} flagged claim{flagCount === 1 ? '' : 's'} and I’m overriding Assessment AI. This override is recorded.
+            {decision === 'approved'
+              ? `I have checked the ${flagCount} flagged or unchecked claim${flagCount === 1 ? '' : 's'}${partial ? ' and the parts Assessment AI could not run' : ''}, and I’m overriding Assessment AI.`
+              : `My correction still has ${correctionFlags} flagged claim${correctionFlags === 1 ? '' : 's'} and I’m sending it anyway.`}{' '}
+            This override is recorded.
           </span>
         </label>
       )}
 
-      <PrimaryButton
-        className="mt-5 w-full"
-        disabled={!valid}
-        onClick={() => decide({ queueId: item.id, decision, note: note.trim(), correctedText: decision === 'corrected' ? text.trim() : null })}
-      >
-        <Inbox size={16} /> Submit decision
+      <PrimaryButton className="mt-5 w-full" disabled={!valid} onClick={submit}>
+        {sending ? <LoaderCircle size={16} className="spin" /> : <Inbox size={16} />} Submit decision
       </PrimaryButton>
-      {!valid && decision && <p className="mt-2 text-caption text-smoke">{note.trim().length < 5 ? 'Add a note explaining the decision.' : needsAck && !ack ? 'Confirm you are overriding the flags.' : 'Edit the answer before sending a correction.'}</p>}
+      {!valid && decision && !sending && <p className="mt-2 text-caption text-smoke">{note.trim().length < 5 ? 'Add a note explaining the decision.' : needsAck && !ack ? 'Confirm the override.' : 'Edit the answer before sending a correction.'}</p>}
     </aside>
   )
 }
 
+/** The recorded decision, with who made it, when, against which assessment, and the audit trail. */
+function Resolved({ item }) {
+  const o = OUTCOME_META[item.outcome.decision]
+  const out = item.outcome
+  const re = out.recheck
+  const [h, setH] = useState(null)
+  useEffect(() => {
+    if (BACKEND && item.answerId) api.history(item.answerId).then(setH, () => {})
+  }, [item.answerId])
+  return (
+    <aside className="scroll-quiet self-start overflow-y-auto rounded-3xl border border-frost bg-porcelain p-6" style={{ maxHeight: '100%' }}>
+      <Eyebrow>Decision</Eyebrow>
+      <div className={`eyebrow mt-3 flex items-center gap-1.5 ${TONES[o.tone].text}`}>
+        <o.Icon size={14} aria-hidden="true" /> {o.label}
+      </div>
+      {out.reviewer && (
+        <p className="mt-2 text-caption text-carbon">
+          {out.reviewer} · {formatWhen(out.at)}
+          {out.override ? ' · overrode Assessment AI’s flags' : ''}
+        </p>
+      )}
+      {out.correctedText && <p className="mt-3 text-body-sm text-ink">{out.correctedText}</p>}
+      <p className="mt-3 text-body-sm text-smoke">Note: {out.note}</p>
+      {re && (
+        <div className="mt-3 rounded-2xl bg-bone p-3">
+          <p className="flex flex-wrap items-center gap-1.5 text-caption text-carbon">
+            Correction re-checked by Assessment AI <ScoreBadge score={re.result.score} />
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {re.result.claims.map((c) => (
+              <ClaimPill key={c.id} status={c.status} />
+            ))}
+          </div>
+          {re.result.assessment?.partial && <p className="mt-2 text-caption text-smoke">Partial assessment: {re.result.assessment.unavailable[0]?.reason}</p>}
+        </div>
+      )}
+      {out.policyVersions?.length > 0 && <p className="mt-3 text-caption text-smoke">Original assessment used {out.policyVersions.map((v) => `${v.docId} ${v.version}`).join(', ')}.</p>}
+      <p className="mt-4 text-caption text-carbon">
+        {item.answerId || item.watchers?.length ? 'Returned to the employee who asked. ' : ''}Feeds the recommendations on the Trends page.
+      </p>
+      {h?.events?.length > 0 && (
+        <div className="mt-4">
+          <div className="eyebrow flex items-center gap-1.5 text-smoke">
+            <History size={12} aria-hidden="true" /> Audit trail
+          </div>
+          <AuditTrail events={h.events} />
+        </div>
+      )}
+    </aside>
+  )
+}

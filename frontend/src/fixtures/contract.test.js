@@ -34,7 +34,8 @@ describe('verification result contract', () => {
 })
 
 describe('backend data export is up to date', () => {
-  const read = (f) => readFileSync(new URL(`backend/data/${f}`, root), 'utf8')
+  // Line endings are normalised: a Windows checkout (core.autocrlf) writes CRLF, the content is the same.
+  const read = (f) => readFileSync(new URL(`backend/data/${f}`, root), 'utf8').replaceAll(String.fromCharCode(13), '')
   it('fixtures.json', () => expect(read('fixtures.json'), 'run: npm run export:fixtures').toBe(buildFixtures()))
   it('golden.json', () => expect(read('golden.json'), 'run: npm run export:fixtures').toBe(buildGolden()))
 })

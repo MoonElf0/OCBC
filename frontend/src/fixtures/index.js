@@ -521,7 +521,7 @@ export const CORRECTIONS = {
 
 // ─── Agent release check: v1 vs v2 on a fixed test set ─────────────────────
 // The same verifier scores both versions on the same questions; the
-// comparison (src/lib/evaluation.js) is computed from those results. Agent v1
+// comparison (src/lib/releaseCheck.js) is computed from those results. Agent v1
 // is the agent in the workspace — its answers to the five demo questions are
 // the SCENARIOS above. Agent v2 is a candidate release that exists only here:
 // it is never used to answer questions in the workspace.

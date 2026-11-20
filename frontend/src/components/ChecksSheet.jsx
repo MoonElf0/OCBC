@@ -72,9 +72,11 @@ export default function ChecksSheet() {
   )
 }
 
-/** How the verdicts and the score are produced — the answer to "how does it work?". */
+/** How the verdicts and the reliability index are produced — the answer to "how does it work?". */
 function Method() {
   const m = SCORE_MODEL
+  const { state } = useStore()
+  const model = state.health?.model
   return (
     <section aria-labelledby="method-title" className="my-5 rounded-2xl bg-bone p-5">
       <h3 id="method-title" className="eyebrow text-carbon">
@@ -87,24 +89,24 @@ function Method() {
         </div>
         <div>
           <dt className="font-medium text-ink">Judge checks</dt>
-          <dd>Groundedness, consistency and intent alignment need judgement. Each verdict must quote the passage it relied on; a verdict without one is discarded. In production the judge would run on a different model from the answering agent, so they don’t share blind spots.</dd>
+          <dd>Groundedness, consistency and intent alignment need judgement. Each verdict must quote the passage it relied on; a verdict whose quote is not in that passage is discarded. Retrieved policy text is treated as evidence only: text in it that reads like an instruction is removed before the judge sees it. The judge should run on a different model from the answering agent, so they don’t share blind spots. When no model is available these checks show “Not run” and the result is marked partial.</dd>
         </div>
         <div>
-          <dt className="font-medium text-ink">Score</dt>
+          <dt className="font-medium text-ink">Reliability index</dt>
           <dd>
-            Up to {m.claimWeight} points for claims (supported counts fully; stale or off-question counts {m.claimCredit.stale * 100}%; unsupported or conflicting counts nothing) plus up to {m.checkWeight} for checks (pass full, warning half). Capped at {m.cap}: the verifier can be wrong too. If no source was found for any claim, capped at {m.noSourceCap}. N/A checks are left out rather than counted as passes. High ≥ 80, Medium ≥ 50.
+            An evidence-based index from 0 to 100, not a probability that the answer is correct and not permission to act. Up to {m.claimWeight} points for claims (supported counts fully; stale or off-question counts {m.claimCredit.stale * 100}%; not checked counts 50%; unsupported, conflicting or without evidence counts nothing) plus up to {m.checkWeight} for checks (pass full, warning half). Capped at {m.cap}: the verifier can be wrong too. If no approved evidence was found for any claim, capped at {m.noSourceCap}. If part of the assessment could not run, capped at 70, so it can never show High. N/A and “Not run” checks are left out rather than counted as passes. High ≥ 80, Medium ≥ 50.
           </dd>
         </div>
         <div>
           <dt className="font-medium text-ink">Routing</dt>
-          <dd>Sent to a reviewer automatically when the score is Low, any claim conflicts with a source, or a high-stakes topic (FX pricing authority, collateral) scores below High. Anything else, the employee can escalate.</dd>
+          <dd>Review is mandatory when the index is Low, a claim conflicts with approved policy, a claim has no approved evidence, the assessment is partial, or the topic is designated high-risk (FX & Treasury, Collateral & Security) — at any index. Only a reviewer’s decision clears it: not a high index, not the Challenger’s clarifying question. Anything else, the employee can escalate.</dd>
         </div>
         <div>
           <dt className="font-medium text-ink">In this prototype</dt>
           <dd>
             {BACKEND
-              ? 'Answers, claim spans and judge verdicts are scripted fixtures. Retrieval, rule checks, scores and routing are computed by the backend from the policy library, and a judge verdict only counts if it cites a passage retrieval returned.'
-              : 'Answers, retrieval results and judge verdicts are scripted fixtures; rule checks and scores are computed in code from them.'}
+              ? `Policy Assistant answers and their judge verdicts are scripted fixtures; retrieval, rule checks, the index and routing are computed by the backend from the versioned policy library. Answers you submit and reviewer corrections run the full pipeline. Model: ${model?.available ? `${model.provider} · ${model.model}` : `none configured, so model steps are reported as not run (${model?.reason ?? 'no provider'})`}.`
+              : 'Answers, retrieval results and judge verdicts are scripted fixtures; rule checks and the index are computed in code from them. Verifying your own answers needs backend mode.'}
           </dd>
         </div>
       </dl>

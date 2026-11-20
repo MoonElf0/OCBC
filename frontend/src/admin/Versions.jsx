@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowRight, ChevronDown, CircleCheck, CircleSlash, Clock, Minus, TriangleAlert, TrendingDown, TrendingUp, GitBranch } from 'lucide-react'
 import { TOPICS } from '../fixtures'
-import { evaluationPayload } from '../lib/evaluation'
+import { evaluationPayload } from '../lib/releaseCheck'
 import { TONES, topicIcon } from '../lib/status'
 import { pct } from '../lib/metrics'
 import { BACKEND, api } from '../lib/backend'
@@ -10,7 +10,7 @@ import { Eyebrow, Pill, ScoreBadge, ClaimPill, IconTile, StatusLabel } from '../
 
 /**
  * Agent release check. Demo mode computes the comparison in the browser from
- * the fixtures; backend mode reads GET /api/evaluation, where the live
+ * the fixtures; backend mode reads GET /api/release-check, where the live
  * verifier (real retrieval + rule checks) scores every answer first.
  */
 function useEvaluation() {
@@ -18,7 +18,7 @@ function useEvaluation() {
   const [remote, setRemote] = useState(null)
   const [failed, setFailed] = useState(false)
   useEffect(() => {
-    if (BACKEND) api.evaluation().then(setRemote, () => setFailed(true))
+    if (BACKEND) api.releaseCheck().then(setRemote, () => setFailed(true))
   }, [])
   return BACKEND ? { data: remote, failed } : { data: demo, failed: false }
 }

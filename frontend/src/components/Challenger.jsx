@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Swords, ShieldCheck, MessageCircleQuestion, Sparkles } from 'lucide-react'
-import { CHALLENGES } from '../lib/challenger'
+import { CHALLENGES, clarification } from '../lib/challenger'
 import { DOCUMENTS } from '../fixtures'
 
-export default function Challenger({ m }) {
+export default function Challenger({ m, reviewRequired = false }) {
   const ch = CHALLENGES[m.scenarioId]
   const [ready, setReady] = useState(false)
   const [picked, setPicked] = useState(null)
@@ -15,6 +15,7 @@ export default function Challenger({ m }) {
   const doc = ch.finding && DOCUMENTS[ch.finding.docId]
   const sec = doc?.sections.find((s) => s.id === ch.finding.section)
   const opt = picked != null ? ch.options[picked] : null
+  const words = clarification(opt ?? ch.options?.[0] ?? { title: '' }, reviewRequired)
 
   return (
     <div className="chal-border pop mx-3 mb-3 rounded-2xl p-4" role="region" aria-label="Challenger agent">
@@ -53,12 +54,13 @@ export default function Challenger({ m }) {
                   </button>
                 ))}
               </div>
-              <p className="mt-2 text-caption text-smoke">Answering here settles it in the chat, so it does not join the reviewer queue.</p>
+              <p className="mt-2 text-caption text-smoke">{words.footer}</p>
             </div>
           ) : (
-            <div className="pop rounded-xl border border-status-verified bg-status-verified-surface p-3">
-              <div className="eyebrow flex items-center gap-1.5 text-status-verified"><Sparkles size={13} aria-hidden="true" /> {opt.title}</div>
+            <div className={`pop rounded-xl border p-3 ${reviewRequired ? 'border-status-caution bg-status-caution-surface' : 'border-status-verified bg-status-verified-surface'}`}>
+              <div className={`eyebrow flex items-center gap-1.5 ${reviewRequired ? 'text-status-caution' : 'text-status-verified'}`}><Sparkles size={13} aria-hidden="true" /> {words.title}</div>
               <p className="mt-1.5 text-body-sm text-ink">{opt.text}</p>
+              {reviewRequired && <p className="mt-1.5 text-caption text-carbon">{words.footer}</p>}
             </div>
           )}
         </div>

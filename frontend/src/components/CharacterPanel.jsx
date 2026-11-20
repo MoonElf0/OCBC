@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, ChevronDown, ThumbsUp, ThumbsDown, Inbox, Clock, CircleSlash, Sparkles, Flag, BookOpen, ListChecks, Maximize2, MessageSquare, Lightbulb, CircleCheck, Search, LoaderCircle } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, ChevronDown, ThumbsUp, ThumbsDown, Inbox, Clock, CircleSlash, Sparkles, Flag, BookOpen, ListChecks, Maximize2, MessageSquare, Lightbulb, CircleCheck, Search, LoaderCircle, CircleDashed, RefreshCw, History } from 'lucide-react'
 import { useStore, useActiveAnswer } from '../state/store'
-import { CHECKS, CHECK_STATUS, CHECK_ICON, CLAIM_STATUS, CLAIM_COUNT_LABEL, TONES, BAND_ICON, bandFor, METHOD_LABEL, topicIcon } from '../lib/status'
+import { CHECKS, CHECK_STATUS, CHECK_ICON, CLAIM_STATUS, CLAIM_COUNT_LABEL, TONES, BAND_ICON, bandFor, METHOD_LABEL, topicIcon, ANSWER_STATES } from '../lib/status'
+import { BACKEND, api } from '../lib/backend'
 import { freshnessOf, formatDate } from '../lib/freshness'
 import { display } from '../lib/rules'
 import { scenarioById } from '../lib/pipeline'
@@ -152,7 +153,7 @@ function Stage({ mood, m, line, settled }) {
   )
 }
 
-const LEGEND = ['supported', 'unsupported', 'conflicting', 'stale', 'off-intent']
+const LEGEND = ['supported', 'unsupported', 'conflicting', 'stale', 'off-intent', 'insufficient', 'unassessed']
 
 function EmptyState() {
   return (
@@ -162,7 +163,7 @@ function EmptyState() {
         <div>
           <h3 className="text-heading-sm font-semibold text-ink">Nothing to check yet</h3>
           <p className="mt-2 max-w-[40ch] text-body-sm text-carbon">
-            Ask a question on the right. I’ll <b className="font-semibold text-ink">score</b> the answer, <b className="font-semibold text-ink">flag</b> weak claims and <b className="font-semibold text-ink">show the source</b>.
+            Ask a question on the right, or paste in an AI answer to verify. I’ll give it a <b className="font-semibold text-ink">reliability index</b>, <b className="font-semibold text-ink">flag</b> weak claims and <b className="font-semibold text-ink">show the source</b>.
           </p>
         </div>
         <div>
@@ -231,9 +232,11 @@ function Overall({ m }) {
       <Stage mood={mood} m={m} line={MOOD_LINE[mood]} settled={!!m.result} />
       <div className="space-y-7 p-6">
         <ScoreCard m={m} />
+        {m.phase === 'done' && <StateCard m={m} />}
         <FlaggedClaims m={m} />
         {m.phase === 'done' && <Sources m={m} sc={sc} />}
         <CheckList m={m} />
+        {BACKEND && m.serverId && m.phase === 'done' && <AssessmentHistory m={m} />}
       </div>
     </div>
   )
@@ -289,7 +292,7 @@ function ScoreCard({ m }) {
           <Icon size={22} strokeWidth={2.25} aria-hidden="true" />
           <span className="leading-tight">
             <span className="block text-body font-semibold">{score == null ? 'No claims' : band.label}</span>
-            <span className="block text-caption font-medium text-carbon">reliability</span>
+            <span className="block text-caption font-medium text-carbon">reliability index</span>
           </span>
         </span>
       </div>
@@ -319,17 +322,20 @@ function ScoreCard({ m }) {
         </div>
       )}
 
+      {result.assessment?.partial && <PartialNotice assessment={result.assessment} />}
+
       <button onClick={() => setWhy((w) => !w)} aria-expanded={why} className="mt-4 inline-flex items-center gap-1 text-body-sm font-medium text-carbon underline-offset-4 hover:text-ink hover:underline">
-        Why this score? <ChevronDown size={16} className={`transition-transform ${why ? 'rotate-180' : ''}`} aria-hidden="true" />
+        How is the reliability index worked out? <ChevronDown size={16} className={`transition-transform ${why ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
       {why && (
         <div className="rise-in mt-2 space-y-2 rounded-2xl bg-bone p-4 text-body-sm text-carbon">
           <p>{result.explanation}</p>
           {result.parts && (
             <p className="text-caption text-smoke">
-              Claims {result.parts.claimPts}/60 + checks {result.parts.checkPts}/40{result.parts.capped ? ` · capped at ${result.parts.cap}${result.parts.cap < 95 ? ' (no source found)' : ''}` : ''}
+              Claims {result.parts.claimPts}/60 + checks {result.parts.checkPts}/40{result.parts.capped ? ` · capped at ${result.parts.cap}${result.parts.capReason ? ` (${result.parts.capReason.replace(/\.$/, '').toLowerCase()})` : result.parts.cap < 95 ? ' (no source found)' : ''}` : ''}
             </p>
           )}
+          <p className="text-caption text-smoke">An evidence-based index of how well approved policy backs this answer. It is not the probability that the answer is correct, and not permission to act. Full method under “Open full evidence”.</p>
         </div>
       )}
       {flags.length === 0 && result.claims.length > 0 && <span className="sr-only">No flagged claims.</span>}
@@ -374,8 +380,19 @@ function FlaggedClaims({ m }) {
   )
 }
 
+/** The passage object the result carries for a document: its exact version, as assessed. */
+function metaFor(m, docId) {
+  const r = m.result
+  if (!r) return null
+  for (const c of r.claims) for (const p of [c.source, c.counter]) if (p?.docId === docId && p.version) return p
+  for (const k of r.checks) for (const p of k.evidence) if (p.docId === docId && p.version) return p
+  return null
+}
+
 function Sources({ m, sc }) {
-  const ids = [...m.citations, ...sc.verification.retrieved.filter((d) => !m.citations.includes(d))]
+  const retrieved = m.result?.retrieved ?? sc.verification.retrieved
+  const cited = [...new Set(m.citations.map((c) => c.toUpperCase().match(/DOC-[A-Z]+-\d+/)?.[0]).filter(Boolean))]
+  const ids = [...cited, ...retrieved.filter((d) => !cited.includes(d))]
   return (
     <section className="rise-in" aria-labelledby="sources-title">
       <SectionHeader Icon={BookOpen} title="Sources" count={ids.length} id="sources-title" />
@@ -390,7 +407,7 @@ function Sources({ m, sc }) {
       ) : (
         <div className="flex flex-col gap-2">
           {ids.map((id) => (
-            <SourceChip key={id} docId={id} tag={m.citations.includes(id) ? null : 'Found by checker'} className="bg-porcelain" />
+            <SourceChip key={id} docId={id} meta={metaFor(m, id)} tag={cited.includes(id) ? null : 'Found by checker'} className="bg-porcelain" />
           ))}
         </div>
       )}
@@ -398,7 +415,7 @@ function Sources({ m, sc }) {
   )
 }
 
-const CHECK_ORDER = { fail: 0, warning: 1, pass: 2, na: 3 }
+const CHECK_ORDER = { fail: 0, warning: 1, unavailable: 2, pass: 3, na: 4 }
 
 function CheckList({ m }) {
   const { dispatch } = useStore()
@@ -410,7 +427,7 @@ function CheckList({ m }) {
     <section aria-labelledby="checks-title-panel">
       <SectionHeader Icon={ListChecks} title="Six checks" id="checks-title-panel">
         {m.result &&
-          ['fail', 'warning'].map((k) => {
+          ['fail', 'warning', 'unavailable'].map((k) => {
             const n = m.checks.filter((x) => x.status === k).length
             if (!n) return null
             const s = CHECK_STATUS[k]
@@ -418,7 +435,7 @@ function CheckList({ m }) {
               <span key={k} className={`inline-flex items-center gap-1 text-body-sm font-semibold ${TONES[s.tone].text}`}>
                 <s.Icon size={16} strokeWidth={2.25} aria-hidden="true" />
                 <span className="text-ink">
-                  {n} {k === 'fail' ? 'failed' : n === 1 ? 'warning' : 'warnings'}
+                  {n} {k === 'fail' ? 'failed' : k === 'unavailable' ? 'not run' : n === 1 ? 'warning' : 'warnings'}
                 </span>
               </span>
             )
@@ -452,7 +469,7 @@ function CheckList({ m }) {
                 <div className="rise-in flex items-center gap-2 px-4 pb-3.5 pl-[46px]">
                   <ArrowRight size={15} className="shrink-0 text-carbon" aria-hidden="true" />
                   <span className="text-body-sm font-medium text-ink">{check.short ?? check.summary}</span>
-                  <span className="ml-auto shrink-0 rounded-xl bg-bone px-2 py-0.5 text-caption text-smoke">{c.method === 'rule' ? 'Rule' : 'AI judge'}</span>
+                  <span className="ml-auto shrink-0 rounded-xl bg-bone px-2 py-0.5 text-caption text-smoke">{c.method === 'rule' ? 'Rule' : check.status === 'unavailable' ? 'AI judge · not run' : 'AI judge'}</span>
                 </div>
               )}
             </li>
@@ -478,21 +495,27 @@ function figureSwap(m, c) {
 
 /** Policy passages for a claim, in one card: current rule first, then the source the claim leaned on. */
 function policyPassages(c) {
-  const f = c.source ? freshnessOf(c.source.docId) : null
+  // The backend's passage carries the state of the exact version it used; demo mode reads the fixtures.
+  const f = c.source?.version
+    ? { state: c.source.state, superseded: c.source.supersededBy, reviewDate: c.source.reviewDate }
+    : c.source && freshnessOf(c.source.docId)
   const out = []
   if (c.counter) out.push({ ...c.counter, tag: { label: c.status === 'conflicting' ? 'The rule' : 'Current policy', tone: null, Icon: BookOpen } })
-  if (c.source) {
+  // The backend may name one passage as both: it is the rule, and it contradicts the answer. Show it once.
+  const same = c.counter && c.source && c.counter.docId === c.source.docId && c.counter.section === c.source.section && c.counter.version === c.source.version
+  if (same) out[0].tag = { label: 'The rule — contradicts the answer', tone: 'unsupported', Icon: CLAIM_STATUS.conflicting.Icon }
+  if (c.source && !same) {
     let tag = null
     let edge = null
-    if (c.nearest) tag = { label: 'Closest match — doesn’t mention this', tone: 'unknown', Icon: Search }
+    if (c.nearest) tag = { label: c.status === 'unassessed' ? 'Closest match — not checked by the model' : 'Closest match — doesn’t mention this', tone: 'unknown', Icon: Search }
     else if (c.status === 'conflicting') {
       tag = { label: 'Contradicts the answer', tone: 'unsupported', Icon: CLAIM_STATUS.conflicting.Icon }
       edge = 'unsupported'
     } else if (f?.state === 'superseded') {
-      tag = { label: `Replaced by ${f.supersededBy.id} on ${formatDate(f.supersededBy.updated)}`, tone: 'caution', Icon: Clock }
+      tag = { label: f.supersededBy ? `Replaced by ${f.supersededBy.id} on ${formatDate(f.supersededBy.updated)}` : `${c.source.version} replaced by ${String(f.superseded ?? 'a newer version').replace('@', ' ')}`, tone: 'caution', Icon: Clock }
       edge = 'caution'
     } else if (f?.state === 'overdue') {
-      tag = { label: `${f.months} months old — review overdue`, tone: 'caution', Icon: Clock }
+      tag = { label: f.reviewDate ? `Review was due ${formatDate(f.reviewDate)} — overdue` : `${f.months} months old — review overdue`, tone: 'caution', Icon: Clock }
       edge = 'caution'
     }
     out.push({ ...c.source, tag, edge })
@@ -587,11 +610,11 @@ function ClaimDetail({ m, claimId }) {
                         </span>
                       )}
                       <p className="text-body text-ink">
-                        <span className="mr-2 rounded-lg bg-porcelain px-1.5 py-0.5 text-caption font-semibold text-carbon">{p.section}</span>“<Bolded text={p.passage} figure={swap?.raw} />”
+                        <span className="mr-2 rounded-xl bg-porcelain px-1.5 py-0.5 text-caption font-semibold text-carbon">{p.section}</span>“<Bolded text={p.passage} figure={swap?.raw} />”
                       </p>
                     </div>
                   ))}
-                <SourceChip docId={docId} className="bg-porcelain" />
+                <SourceChip docId={docId} meta={passages.find((p) => p.docId === docId)} className="bg-porcelain" />
               </div>
             ))}
           </div>
@@ -628,7 +651,7 @@ function Reasoning({ reason, method }) {
 }
 
 function Actions({ m }) {
-  const { escalate, feedback } = useStore()
+  const { escalate, feedback, reverify } = useStore()
   const [composing, setComposing] = useState(false)
   const [note, setNote] = useState('')
   const done = m.phase === 'done'
@@ -639,8 +662,12 @@ function Actions({ m }) {
 
   return (
     <div className="shrink-0 border-t border-frost bg-porcelain px-6 py-4">
-      {m.outcome ? (
+      {m.outcome && m.state !== 'reverify-required' ? (
         <OutcomeLine outcome={m.outcome} />
+      ) : m.state === 'reverify-required' ? (
+        <PrimaryButton onClick={() => reverify(m.id)} className="w-full">
+          <RefreshCw size={16} /> Re-verify against current policy
+        </PrimaryButton>
       ) : m.routed ? (
         <div className="flex items-center gap-3">
           <IconTile Icon={Inbox} />
@@ -706,5 +733,175 @@ function OutcomeLine({ outcome }) {
         <span className="mt-0.5 block">{outcome.note}</span>
       </span>
     </div>
+  )
+}
+
+const STEP_LABEL = {
+  claims: 'Claim extraction — split by sentence instead',
+  judge: 'Whether each passage supports its claim',
+  review: 'Intent and consistency checks',
+}
+
+/** What could not run, said plainly. A partial result is never presented as fully verified. */
+function PartialNotice({ assessment }) {
+  // Each step carries the provider's reason; say each distinct reason once.
+  const reasons = [...new Set(assessment.unavailable.map((u) => u.reason.replace(/^Claims were split by sentence instead of by the model\. /, '')))]
+  return (
+    <div className="mt-4 flex gap-3 rounded-2xl border border-frost bg-bone p-3.5">
+      <CircleDashed size={18} className="mt-0.5 shrink-0 text-status-unknown" aria-hidden="true" />
+      <div className="min-w-0 text-body-sm text-carbon">
+        <div className="font-semibold text-ink">Partial assessment · not fully verified</div>
+        <p className="mt-0.5">Not run by the model:</p>
+        <ul className="ml-4 list-disc">
+          {assessment.unavailable.map((u) => (
+            <li key={u.step}>{STEP_LABEL[u.step] ?? u.step}</li>
+          ))}
+        </ul>
+        <p className="mt-1 text-caption text-smoke">
+          {reasons.join(' ')} The reliability index is capped below High and a reviewer must look at it.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+/** Where the answer is in its life, and the next required action. */
+function StateCard({ m }) {
+  const st = ANSWER_STATES[m.state]
+  if (!st || m.state === 'verifying') return null
+  const t = TONES[st.tone]
+  const ch = m.evidenceChanged
+  return (
+    <section aria-label="Answer status" className="rise-in flex items-start gap-3 rounded-3xl border border-frost bg-porcelain p-4">
+      <IconTile Icon={st.Icon} tone={st.tone} />
+      <div className="min-w-0">
+        <div className={`eyebrow font-semibold ${t.text}`}>{st.label}</div>
+        <p className="mt-0.5 text-body-sm text-ink">{st.next}</p>
+        {ch && (
+          <p className="mt-1 text-caption text-carbon">
+            {ch.usedVersions?.length ? `Assessed against ${ch.usedVersions.join(', ')}. ` : ''}A newer approved version now applies. The original assessment is kept for comparison.
+          </p>
+        )}
+        {m.source === 'submitted' && <p className="mt-1 text-caption text-smoke">Submitted for verification · not written by the Policy Assistant</p>}
+      </div>
+    </section>
+  )
+}
+
+const TRIGGER_LABEL = { initial: 'First assessment', reverify: 'Re-verification', correction: 'Correction check' }
+
+function formatTime(iso) {
+  if (!iso || !iso.includes('T')) return iso ?? ''
+  return new Date(iso).toLocaleString('en-SG', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
+
+/** Every assessment of this answer, oldest first, the latest compared with the one before it. */
+function AssessmentHistory({ m }) {
+  const [h, setH] = useState(null)
+  const [trail, setTrail] = useState(false)
+  useEffect(() => {
+    let live = true
+    api.history(m.serverId).then((x) => live && setH(x), () => live && setH({ failed: true }))
+    return () => {
+      live = false
+    }
+  }, [m.serverId, m.history, m.state, m.outcome])
+  if (!h) return null
+  if (h.failed) return <p className="text-caption text-smoke">Could not load the assessment history.</p>
+  const list = h.assessments
+  const prev = list.length > 1 ? list[list.length - 2] : null
+  const latest = list[list.length - 1]
+  const text = h.answer.text
+  return (
+    <section aria-labelledby="hist-title">
+      <SectionHeader Icon={History} title="Assessment history" count={list.length} id="hist-title" />
+      <ol className="divide-y divide-frost overflow-hidden rounded-2xl border border-frost bg-porcelain">
+        {list.map((a, i) => (
+          <li key={a.id} className="px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-body-sm font-semibold text-ink">
+                {i + 1}. {TRIGGER_LABEL[a.trigger] ?? a.trigger}
+              </span>
+              <ScoreBadge score={a.result.score} />
+              {a.result.assessment?.partial && <span className="text-caption text-smoke">partial</span>}
+              <span className="ml-auto text-caption text-smoke">{formatTime(a.createdAt)}</span>
+            </div>
+            <div className="mt-1 text-caption text-smoke">
+              Policy versions: {a.policyVersions.length ? a.policyVersions.map((v) => `${v.docId} ${v.version}`).join(', ') : 'none used'}
+              {a.result.provenance ? ` · claims ${a.result.provenance.claims}, judge ${a.result.provenance.judgeChecks}` : ''}
+            </div>
+            {a.evidenceChanged && (
+              <div className="mt-1 inline-flex items-center gap-1 text-caption font-medium text-status-caution">
+                <RefreshCw size={12} aria-hidden="true" /> <span className="text-carbon">Evidence changed: {a.evidenceChanged.docId} {a.evidenceChanged.newVersion} approved</span>
+              </div>
+            )}
+          </li>
+        ))}
+      </ol>
+      {prev && <Comparison before={prev} after={latest} text={text} />}
+      {h.events.length > 0 && (
+        <div className="mt-3">
+          <button onClick={() => setTrail((o) => !o)} aria-expanded={trail} className="inline-flex items-center gap-1 text-body-sm font-medium text-carbon underline-offset-4 hover:text-ink hover:underline">
+            Audit trail ({h.events.length}) <ChevronDown size={16} className={`transition-transform ${trail ? 'rotate-180' : ''}`} aria-hidden="true" />
+          </button>
+          {trail && <AuditTrail events={h.events} />}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function Comparison({ before, after, text }) {
+  const key = (c) => `${c.start}:${c.end}`
+  const old = Object.fromEntries(before.result.claims.map((c) => [key(c), c]))
+  const rows = after.result.claims.map((c) => ({ c, was: old[key(c)] }))
+  return (
+    <div className="mt-3 rounded-2xl border border-frost bg-porcelain p-4">
+      <div className="eyebrow text-smoke">Before → after re-verification</div>
+      <ul className="mt-2 space-y-2">
+        {rows.map(({ c, was }) => {
+          const a = was && CLAIM_STATUS[was.status]
+          const b = CLAIM_STATUS[c.status]
+          return (
+            <li key={c.id} className="text-body-sm">
+              <p className="text-ink">“{text.slice(c.start, c.end)}”</p>
+              <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-caption">
+                {a ? (
+                  <span className={`inline-flex items-center gap-1 font-medium ${TONES[a.tone].text}`}>
+                    <a.Icon size={12} aria-hidden="true" /> <span className="text-carbon">{a.label}</span>
+                    {was.source?.version && <span className="text-smoke">({was.source.docId} {was.source.version})</span>}
+                  </span>
+                ) : (
+                  <span className="text-smoke">not a claim before</span>
+                )}
+                <ArrowRight size={12} className="text-carbon" aria-hidden="true" />
+                <span className={`inline-flex items-center gap-1 font-medium ${TONES[b.tone].text}`}>
+                  <b.Icon size={12} aria-hidden="true" /> <span className="text-carbon">{b.label}</span>
+                  {(c.counter ?? c.source)?.version && <span className="text-smoke">({(c.counter ?? c.source).docId} {(c.counter ?? c.source).version})</span>}
+                </span>
+              </p>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
+export function AuditTrail({ events }) {
+  return (
+    <ol className="rise-in mt-2 space-y-1.5 rounded-2xl bg-porcelain p-3 text-caption text-carbon">
+      {events.map((e) => (
+        <li key={e.id} className="flex flex-wrap gap-x-2">
+          <span className="tabular-nums text-smoke">{formatTime(e.at)}</span>
+          <span className="font-medium text-ink">{e.action}</span>
+          <span>
+            by {e.actor}
+            {e.simulated ? ' · simulated identity' : ''}
+          </span>
+          {e.detail?.note && <span className="text-smoke">“{e.detail.note}”</span>}
+        </li>
+      ))}
+    </ol>
   )
 }

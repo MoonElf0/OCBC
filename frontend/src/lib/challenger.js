@@ -37,3 +37,14 @@ export const CHALLENGES = {
   },
   'kyc-ubo': { searched: 4, finding: null, summary: 'Searched 4 documents and 3 edge-case conditions. Nothing contradicts this answer.' },
 }
+
+/**
+ * The Challenger can clarify an answer for the employee, but it never
+ * replaces a mandatory review. When review is required, its outcome titles
+ * say so instead of "no reviewer needed".
+ */
+export function clarification(option, reviewRequired) {
+  if (!reviewRequired) return { title: option.title, footer: 'Answering here settles it in the chat, so it does not join the reviewer queue.' }
+  const head = option.title.split(' · ')[0]
+  return { title: `${head} · reviewer still required`, footer: 'Answering here clarifies it for you. This answer still needs a reviewer’s decision before anyone relies on it.' }
+}

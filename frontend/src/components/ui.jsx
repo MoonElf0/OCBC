@@ -1,4 +1,4 @@
-import { Clock, CalendarDays, FileText, ScanSearch } from 'lucide-react'
+import { Clock, CalendarDays, FileText, ScanSearch, ShieldAlert } from 'lucide-react'
 import { TONES, CLAIM_STATUS, CHECK_STATUS, BAND_ICON, bandFor } from '../lib/status'
 import { freshnessOf } from '../lib/freshness'
 import { DOCUMENTS } from '../fixtures'
@@ -112,25 +112,41 @@ export function SectionHeader({ Icon, title, count, children, id }) {
 }
 
 
-/** Source chip: document icon, title, then freshness led by its own icon. */
-export function SourceChip({ docId, section, tag, className = '' }) {
+/**
+ * What a chip shows about a document. `meta` is the version record the backend
+ * attached to a passage (exactly the version it assessed); without it (demo
+ * mode) the fixture library is read.
+ */
+export function docInfo(docId, meta) {
+  if (meta?.version) {
+    const stale = meta.state && meta.state !== 'current'
+    return { title: meta.title ?? docId, version: meta.version, note: meta.note ?? '', stale, state: meta.state }
+  }
   const doc = DOCUMENTS[docId]
+  if (!doc) return { title: docId, version: null, note: 'Not found in the approved library', stale: false }
   const f = freshnessOf(docId)
-  const Fresh = f.stale ? Clock : CalendarDays
+  return { title: doc.title, version: doc.version, note: f.note, stale: f.stale, state: f.state }
+}
+
+/** Source chip: document icon, title, then freshness led by its own icon. */
+export function SourceChip({ docId, section, tag, meta, className = '' }) {
+  const d = docInfo(docId, meta)
+  const Fresh = d.stale ? Clock : CalendarDays
   return (
     <div className={`flex max-w-full items-center gap-3 rounded-2xl border border-frost bg-bone px-3 py-2.5 ${className}`}>
       <IconTile Icon={FileText} size="sm" className="!bg-bone" />
       <div className="min-w-0 flex-1">
-        <div className="text-body-sm font-semibold text-ink">{doc.title}</div>
+        <div className="text-body-sm font-semibold text-ink">{d.title}</div>
         <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-caption">
           <span className="whitespace-nowrap text-smoke">
-            {doc.id}
-            {section ? ` ${section}` : ''}
+            {docId}
+            {d.version ? ` ${d.version}` : ''}
+            {section ? ` · ${section}` : ''}
           </span>
-          <span className={`inline-flex items-center gap-1 whitespace-nowrap font-medium ${f.stale ? 'text-status-caution' : 'text-smoke'}`}>
+          <span className={`inline-flex items-center gap-1 whitespace-nowrap font-medium ${d.stale ? 'text-status-caution' : 'text-smoke'}`}>
             <Fresh size={13} strokeWidth={2.25} aria-hidden="true" />
-            <span>{f.note.replace('Last updated ', 'Updated ')}</span>
-            {f.stale && <span className="sr-only">(stale source)</span>}
+            <span>{d.note.replace('Last updated ', 'Updated ')}</span>
+            {d.stale && <span className="sr-only">(stale source)</span>}
           </span>
         </div>
       </div>
@@ -144,12 +160,18 @@ export function SourceChip({ docId, section, tag, className = '' }) {
   )
 }
 
-export function Passage({ docId, section, passage, className = '' }) {
+/** A quoted passage with its source. Pass the whole passage object so its version travels with it. */
+export function Passage({ docId, section, passage, screened, className = '', ...meta }) {
   return (
     <figure className={`rounded-2xl bg-bone p-4 ${className}`}>
       <blockquote className="text-body text-ink">“{passage}”</blockquote>
+      {screened && (
+        <p className="mt-2 flex items-center gap-1.5 text-caption text-carbon">
+          <ShieldAlert size={13} className="text-status-caution" aria-hidden="true" /> Instruction-like text in this document was removed and never used as evidence.
+        </p>
+      )}
       <figcaption className="mt-3">
-        <SourceChip docId={docId} section={section} className="bg-porcelain" />
+        <SourceChip docId={docId} section={section} meta={meta} className="bg-porcelain" />
       </figcaption>
     </figure>
   )

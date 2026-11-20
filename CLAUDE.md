@@ -7,9 +7,9 @@ An AI answer-verification layer for OCBC, built for the OCBC × NYP Ignite Innov
 ## Tech stack
 
 - **Frontend:** React + Vite, Tailwind CSS
-- **Backend:** optional. Demo mode (default) is a scripted front-end demo — no server, no API keys, no model calls. Backend mode (`npm run dev:backend`) talks to a FastAPI + SQLite service in `backend/` that computes retrieval, rule checks, scores, routing and the dashboard; answers and judge verdicts are still scripted. See `backend/README.md`
+- **Backend:** optional. Demo mode (default) is a scripted front-end demo — no server, no API keys, no model calls. Backend mode (`npm run dev:backend`) talks to a FastAPI + SQLite service in `backend/` that computes retrieval, rule checks, the reliability index, routing and the dashboard. Policy Assistant answers and their judge verdicts are still scripted; answers submitted through "Verify an answer" and reviewer corrections run the general pipeline (`backend/app/pipeline.py`). Model steps run only when `ASSESSMENT_MODEL_PROVIDER` is set on the server; otherwise they are reported as not run. See `backend/README.md`
 - **Data:** hardcoded fixtures in a single clearly separated module. Synthetic policy documents, scripted answers, scripted verdicts, scripted dashboard numbers
-- **Python:** the backend (`backend/`, FastAPI, stdlib sqlite3, no model calls yet)
+- **Python:** the backend (`backend/`, FastAPI, stdlib sqlite3; the `anthropic` SDK only when a model provider is configured)
 
 Demo mode must start with one command and work offline, with the backend stopped. Do not introduce a second frontend framework or a different CSS approach without asking.
 
@@ -39,7 +39,11 @@ Load it before writing any UI. It defines the full token set (OCBC red, neutrals
 - **Don't add scope the brief rules out:** production deployment, live banking system connections, real customer or transaction data, training a foundation model.
 - **Don't let the fixtures contradict each other.** If the dashboard says a topic has a 32% unsupported-claim rate, the demo answers for that topic must show flags that match. Inconsistent numbers are what a judge spots first.
 - **Don't claim it's live.** Nothing in the interface says real-time, connected, or live — backend mode is labelled "backend mode" and states what is still scripted. The pitch states plainly which parts are scripted, and explains the pipeline design behind it. Getting caught implying otherwise costs more than the feature is worth.
-- **Keep the two modes in step.** Fixture data lives only in `frontend/src/fixtures/index.js`; after changing it or the JS scoring/metrics, run `npm run export:fixtures` and the backend tests. Both modes must satisfy `contract/verification-result.schema.json`.
+- **Keep the two modes in step.** Fixture data lives only in `frontend/src/fixtures/index.js`; after changing it or the JS scoring/metrics, run `npm run export:fixtures` and the backend tests. Both modes must satisfy `contract/verification-result.schema.json`. One exception: the labelled evaluation cases and the extra policy versions they need live in `backend/data/eval_cases.json` — backend-only test data, kept apart so evaluation never depends on the demo database.
+- **Never fill a model step with scripted data.** When no model is available, the steps that need one are marked "Not run", the result is partial, and the reliability index is capped below High.
+- **Mandatory review is never bypassed.** Only a reviewer decision clears "Review required" — not a high index, not feedback, not the Challenger. Reviewer identities are simulated and labelled as such.
+- **Approved policy text is never edited.** A change is a new version (draft → approved); the replaced version is kept as superseded, and assessments that used it are marked for re-verification.
+- **Say "reliability index".** It is an evidence-based index, not a probability of being correct and not permission to act.
 - **Don't use square corners or 0px radius anywhere.** See the radius system in @DESIGN.md.
 
 ## How to run

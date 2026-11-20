@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { ArrowUp, PanelLeft, LoaderCircle, Ban, Pencil, CircleCheck, Inbox, CircleHelp, Flag } from 'lucide-react'
+import { ArrowUp, PanelLeft, LoaderCircle, Ban, Pencil, CircleCheck, CircleHelp, Flag, ShieldCheck, ClipboardPaste } from 'lucide-react'
 import { useStore } from '../state/store'
-import { SCENARIOS } from '../fixtures'
-import { TONES, CHECKS, topicIcon } from '../lib/status'
+import { SCENARIOS, DEMO_TODAY } from '../fixtures'
+import { TONES, CHECKS, topicIcon, ANSWER_STATES } from '../lib/status'
+import { BACKEND } from '../lib/backend'
 import { scenarioById } from '../lib/pipeline'
 import { visibleClaims, checksDone, flagged } from '../lib/view'
 import AnswerText from './AnswerText'
@@ -67,6 +68,15 @@ function AgentAvatar() {
   )
 }
 
+/** A pasted answer was not written by the Policy Assistant, so it doesn't wear its avatar. */
+function SubmittedAvatar() {
+  return (
+    <span className="grid size-8 shrink-0 place-items-center rounded-full border border-frost bg-porcelain text-carbon" aria-hidden="true">
+      <ClipboardPaste size={15} />
+    </span>
+  )
+}
+
 function Welcome() {
   return (
     <div className="flex gap-3">
@@ -105,11 +115,16 @@ function AnswerCard({ m }) {
       aria-current={active ? 'true' : undefined}
       className={`rise-in relative ml-12 max-w-[760px] rounded-3xl border bg-porcelain transition-shadow ${active ? 'border-carbon shadow-md' : 'border-frost'}`}
     >
-      <div className="absolute -left-12 top-0">
-        <AgentAvatar />
-      </div>
+      <div className="absolute -left-12 top-0">{m.source === 'submitted' ? <SubmittedAvatar /> : <AgentAvatar />}</div>
 
       <div className="px-6 pt-5 pb-5">
+        {m.source === 'submitted' && (
+          <div className="mb-2 flex flex-wrap items-center gap-1.5 text-caption font-medium text-carbon">
+            <ClipboardPaste size={13} aria-hidden="true" /> Submitted for verification · not from the Policy Assistant
+            {m.citations.length > 0 && <span className="text-smoke">· cites {m.citations.join(', ')}</span>}
+            {m.asOf && <span className="text-smoke">· policy date {m.asOf}</span>}
+          </div>
+        )}
         {m.outcome?.decision === 'corrected' && <div className="mb-2 text-caption font-semibold text-smoke">Original answer</div>}
         {m.phase === 'thinking' ? (
           <div className="flex items-center gap-2 text-body-sm text-smoke">
@@ -135,7 +150,7 @@ function AnswerCard({ m }) {
       </div>
 
       {settled && <AssessmentStrip m={m} active={active} claims={claims} />}
-      {settled && !m.outcome && <div className="pt-3"><Challenger m={m} /></div>}
+      {settled && !m.outcome && <div className="pt-3"><Challenger m={m} reviewRequired={m.state === 'review-required' || !!m.routed} /></div>}
       {m.outcome && <Outcome outcome={m.outcome} />}
     </article>
   )
@@ -168,11 +183,7 @@ function AssessmentStrip({ m, active, claims }) {
               <CircleCheck size={16} className="text-status-verified" aria-hidden="true" /> No flags
             </span>
           ) : null}
-          {m.routed && !m.outcome && (
-            <span className="inline-flex items-center gap-1.5 text-body-sm font-medium text-carbon">
-              <Inbox size={16} aria-hidden="true" /> In review
-            </span>
-          )}
+          <StateChip state={m.state} />
         </>
       )}
 
@@ -192,6 +203,23 @@ function AssessmentStrip({ m, active, claims }) {
       </span>
     </div>
   )
+}
+
+/** The answer's state: icon, colour and label together, never colour alone. */
+export function StateChip({ state }) {
+  const st = ANSWER_STATES[state]
+  if (!st || state === 'verifying') return null
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-body-sm font-medium ${TONES[st.tone].text}`}>
+      <st.Icon size={16} aria-hidden="true" /> <span className="text-carbon">{st.label}</span>
+    </span>
+  )
+}
+
+export function formatWhen(iso) {
+  if (!iso) return ''
+  if (!iso.includes('T')) return iso
+  return new Date(iso).toLocaleString('en-SG', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 export const OUTCOME_META = {
@@ -227,12 +255,112 @@ function Outcome({ outcome }) {
       <p className="mt-2 text-caption text-carbon">
         <span className="font-medium">Reviewer note:</span> {outcome.note}
       </p>
-      {outcome.correctedText && !re && <p className="mt-1 text-caption text-smoke">Reviewer’s own wording · not re-scored in this prototype.</p>}
+      {outcome.reviewer && (
+        <p className="mt-1 text-caption text-smoke">
+          {outcome.reviewer} · {formatWhen(outcome.at)}
+          {outcome.override ? ' · approved over Assessment AI’s flags' : ''}
+        </p>
+      )}
+      {outcome.correctedText && !re && <p className="mt-1 text-caption text-smoke">Not re-checked. Demo mode can only re-check the drafted correction; backend mode re-checks any wording.</p>}
     </div>
   )
 }
 
 function Composer() {
+  const [mode, setMode] = useState('ask')
+  return (
+    <div className="border-t border-frost px-6 pt-3 pb-4">
+      <div className="mb-3 flex gap-1 rounded-full bg-bone p-1" role="tablist" aria-label="What do you want to do?">
+        {[
+          { id: 'ask', label: 'Ask the Policy Assistant' },
+          { id: 'verify', label: 'Verify an answer' },
+        ].map((t) => (
+          <button key={t.id} role="tab" aria-selected={mode === t.id} onClick={() => setMode(t.id)} className={`flex-1 rounded-full px-3 py-1.5 text-body-sm font-medium transition-colors ${mode === t.id ? 'bg-porcelain text-ink shadow-md' : 'text-smoke hover:text-ink'}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {mode === 'ask' ? <AskComposer /> : <VerifyComposer />}
+    </div>
+  )
+}
+
+const EXAMPLE = {
+  question: 'Can I override the FX rate for a corporate client without approval?',
+  answer: 'Yes. Relationship managers can apply an FX rate override of up to 50 basis points without further approval, as long as the client has an active treasury mandate. Every override must be recorded in the deal ticket with a reason code.',
+  citations: 'DOC-FX-019 §2.1',
+}
+
+/** Paste in a question, an AI-generated answer and its citations; Assessment AI checks it on its own. */
+function VerifyComposer() {
+  const { state, verifyAnswer } = useStore()
+  const [q, setQ] = useState('')
+  const [a, setA] = useState('')
+  const [cites, setCites] = useState('')
+  const [asOf, setAsOf] = useState('')
+  const [sending, setSending] = useState(false)
+  const busy = sending || state.messages.some((m) => m.kind === 'answer' && m.phase !== 'done')
+  const today = state.health?.today ?? DEMO_TODAY
+  const ready = BACKEND && q.trim() && a.trim() && !busy
+
+  const submit = async (e) => {
+    e.preventDefault()
+    if (!ready) return
+    setSending(true)
+    const citations = cites.split(/[,;\n]+/).map((c) => c.trim()).filter(Boolean)
+    const ok = await verifyAnswer({ question: q.trim(), answer: a.trim(), citations, asOf: asOf || null })
+    setSending(false)
+    if (ok) {
+      setQ('')
+      setA('')
+      setCites('')
+    }
+  }
+  const field = 'w-full rounded-2xl border border-frost bg-porcelain px-3 py-2 text-body-sm text-ink placeholder:text-smoke focus:border-ash focus:outline-none disabled:bg-bone'
+
+  return (
+    <form onSubmit={submit} className="space-y-2" aria-describedby="verify-help">
+      {!BACKEND && (
+        <p className="rounded-2xl bg-bone p-3 text-body-sm text-carbon">
+          Checking an answer you paste in runs the backend’s verification pipeline, which this offline demo does not have. Start backend mode with <code className="rounded-xl bg-porcelain px-1.5 py-0.5 text-caption">npm run dev:backend</code>.
+        </p>
+      )}
+      <div className="grid gap-2 md:grid-cols-[1fr_170px]">
+        <div>
+          <label htmlFor="v-q" className="eyebrow text-smoke">Original question</label>
+          <input id="v-q" value={q} onChange={(e) => setQ(e.target.value)} disabled={!BACKEND} placeholder="What the employee asked" className={`mt-1 ${field}`} />
+        </div>
+        <div>
+          <label htmlFor="v-date" className="eyebrow text-smoke">Policy date</label>
+          <input id="v-date" type="date" value={asOf || today} max="2100-12-31" onChange={(e) => setAsOf(e.target.value)} disabled={!BACKEND} className={`mt-1 ${field}`} />
+        </div>
+      </div>
+      <div>
+        <label htmlFor="v-a" className="eyebrow text-smoke">AI-generated answer</label>
+        <textarea id="v-a" rows={3} value={a} onChange={(e) => setA(e.target.value)} disabled={!BACKEND} placeholder="Paste the answer to check" className={`mt-1 resize-none ${field}`} />
+      </div>
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="min-w-[220px] flex-1">
+          <label htmlFor="v-c" className="eyebrow text-smoke">Citations given with it <span className="normal-case tracking-normal">(optional)</span></label>
+          <input id="v-c" value={cites} onChange={(e) => setCites(e.target.value)} disabled={!BACKEND} placeholder="e.g. DOC-FX-019 §2.1, DOC-SME-104" className={`mt-1 ${field}`} />
+        </div>
+        <button type="submit" disabled={!ready} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-carbon px-5 text-body-sm font-medium text-white transition-colors hover:bg-ink disabled:bg-frost disabled:text-smoke">
+          {sending ? <LoaderCircle size={16} className="spin" aria-hidden="true" /> : <ShieldCheck size={16} aria-hidden="true" />} Verify answer
+        </button>
+      </div>
+      <p id="verify-help" className="flex flex-wrap items-center gap-x-3 text-caption text-smoke">
+        <span>Assessment AI extracts the claims, finds its own evidence in the approved library for that date, and checks the citations. The library text is treated as evidence, never as instructions.</span>
+        {BACKEND && (
+          <button type="button" onClick={() => (setQ(EXAMPLE.question), setA(EXAMPLE.answer), setCites(EXAMPLE.citations))} className="font-medium text-carbon underline underline-offset-4 hover:text-ink">
+            Fill in an example
+          </button>
+        )}
+      </p>
+    </form>
+  )
+}
+
+function AskComposer() {
   const { state, askQuestion } = useStore()
   const [value, setValue] = useState('')
   const typing = useRef(null)
@@ -264,7 +392,7 @@ function Composer() {
   }
 
   return (
-    <div className="border-t border-frost px-6 pt-3 pb-4">
+    <div>
       <div className={`scroll-quiet mb-3 flex gap-2 p-0.5 ${asked.size ? "flex-nowrap overflow-x-auto" : "flex-wrap"}`} role="group" aria-label="Suggested questions">
         {SCENARIOS.map((s) => (
           <button

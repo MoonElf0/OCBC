@@ -6,7 +6,7 @@ import { assess } from '../lib/assess'
 import { figures } from '../lib/rules'
 import { topicStats, recommendations } from '../lib/metrics'
 import { matchScenario } from '../lib/agent'
-import { compareVersions, changeOf, summarise } from '../lib/evaluation'
+import { compareVersions, changeOf, summarise } from '../lib/releaseCheck'
 
 const JUDGE = new Set(CHECKS.filter((c) => c.method === 'judge').map((c) => c.id))
 const ALL = [...SCENARIOS, FALLBACK, ...Object.values(CORRECTIONS), ...EVAL_ANSWERS]

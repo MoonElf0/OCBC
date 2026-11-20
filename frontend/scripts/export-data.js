@@ -14,7 +14,7 @@ import * as F from '../src/fixtures/index.js'
 import { assess, SCORE_MODEL } from '../src/lib/assess.js'
 import { CHECKS } from '../src/lib/status.js'
 import { overallStats, weeklySeries, topicTable, recommendations } from '../src/lib/metrics.js'
-import { compareVersions } from '../src/lib/evaluation.js'
+import { compareVersions } from '../src/lib/releaseCheck.js'
 
 // A paraphrase per scenario, so the free-text path is covered too.
 const PARAPHRASE = 'free text question that is not the scripted one'
