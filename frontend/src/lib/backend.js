@@ -28,6 +28,7 @@ export const api = {
   reviews: () => call('/reviews'),
   decide: (reviewId, body) => call(`/reviews/${reviewId}/decision`, { method: 'POST', body }),
   metrics: () => call('/metrics'),
+  evaluation: () => call('/evaluation'),
 
   /** Same callbacks as pipeline.verify. Returns a cancel function. */
   verify(answerId, { onCheckStart, onCheckDone, onComplete, onError }) {

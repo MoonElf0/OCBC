@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { UserRound, MessageSquare, Inbox, ChartLine, Check, Sun, Moon } from 'lucide-react'
+import { UserRound, MessageSquare, Inbox, ChartLine, Check, Sun, Moon, GitBranch } from 'lucide-react'
 import { getTheme, applyTheme } from '../lib/theme'
 import { useStore } from '../state/store'
 import { CharacterMark } from './Character'
@@ -10,6 +10,7 @@ const LINKS = {
   admin: [
     { id: 'review', label: 'Review queue' },
     { id: 'trends', label: 'Trends' },
+    { id: 'versions', label: 'Agent versions', short: 'Versions' },
   ],
 }
 
@@ -39,7 +40,7 @@ export default function TopNav() {
 
   return (
     <nav className="h-16 shrink-0 bg-obsidian-bar text-white">
-      <div className="mx-auto flex h-full max-w-[1560px] items-center gap-8 px-6">
+      <div className="mx-auto flex h-full max-w-[1560px] items-center gap-6 px-6 xl:gap-8">
         <div className="flex items-center gap-2.5">
           <span className="grid size-8 place-items-center rounded-full bg-white/10">
             <CharacterMark size={22} />
@@ -56,7 +57,14 @@ export default function TopNav() {
               aria-current={state.view === l.id ? 'page' : undefined}
               className={`relative flex h-full items-center gap-2 whitespace-nowrap text-body-sm font-medium transition-colors ${state.view === l.id ? 'text-white' : 'text-ash hover:text-white'}`}
             >
-              {l.label}
+              {l.short ? (
+                <>
+                  <span className="xl:hidden">{l.short}</span>
+                  <span className="hidden xl:inline">{l.label}</span>
+                </>
+              ) : (
+                l.label
+              )}
               {l.id === 'review' && pending > 0 && <span className="rounded-full bg-white/15 px-1.5 text-caption tabular-nums">{pending}</span>}
               {state.view === l.id && <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-ocbc-red" />}
             </button>
@@ -71,7 +79,8 @@ export default function TopNav() {
             {BACKEND ? 'Prototype · synthetic data · backend mode' : 'Prototype · synthetic data only'}
           </span>
           {admin && (
-            <button onClick={() => go('workspace')} className="whitespace-nowrap rounded-full border border-white/25 px-4 py-1.5 text-body-sm font-medium text-white hover:border-white/60">
+            // Below xl the role menu's "Employee workspace" item does this job, so the nav fits.
+            <button onClick={() => go('workspace')} className="hidden whitespace-nowrap rounded-full border border-white/25 px-4 py-1.5 text-body-sm font-medium text-white hover:border-white/60 xl:inline-flex">
               Back to workspace
             </button>
           )}
@@ -105,6 +114,7 @@ export default function TopNav() {
                 <div className="eyebrow px-3 pt-2 pb-1 text-smoke">Admin</div>
                 <MenuItem Icon={Inbox} label="Reviewer queue" sub={`${pending} pending`} active={state.view === 'review'} onClick={() => go('review')} />
                 <MenuItem Icon={ChartLine} label="Trends dashboard" sub="Reliability over 12 weeks" active={state.view === 'trends'} onClick={() => go('trends')} />
+                <MenuItem Icon={GitBranch} label="Agent versions" sub="Release check: v1 vs v2" active={state.view === 'versions'} onClick={() => go('versions')} />
               </div>
             )}
           </div>
