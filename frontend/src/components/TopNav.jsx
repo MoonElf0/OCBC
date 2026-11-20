@@ -1,10 +1,11 @@
-import { MessageSquare, Inbox, ChartLine, ShieldCheck, ClipboardPaste, Library, FlaskConical, GitBranch, Sun, Moon } from 'lucide-react'
+import { MessageSquare, Inbox, ChartLine, ShieldCheck, ClipboardPaste, Library, FlaskConical, GitBranch, PanelsTopLeft, Sun, Moon } from 'lucide-react'
 import { useStore } from '../state/store'
 import { BACKEND } from '../lib/backend'
 import { useTheme } from '../lib/theme'
 
 const LINKS = [
   { id: 'workspace', label: 'Assistant', Icon: MessageSquare },
+  { id: 'classic', label: 'Classic', Icon: PanelsTopLeft },
   { id: 'verify', label: 'Verify answer', Icon: ClipboardPaste },
   { id: 'review', label: 'Review queue', Icon: Inbox },
   { id: 'library', label: 'Library', Icon: Library },

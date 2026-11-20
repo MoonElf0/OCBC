@@ -23,7 +23,7 @@ const EXAMPLE = {
 
 export default function VerifyAnswerPage() {
   const { state } = useStore()
-  const submitted = state.messages.filter((m) => m.kind === 'answer' && m.source === 'submitted').reverse()
+  const submitted = state.messages.filter((m) => m.kind === 'answer' && m.source === 'submitted' && m.origin !== 'classic').reverse()
 
   return (
     <section aria-labelledby="va-title" className="relative flex min-h-0 min-w-0 flex-1 flex-col">

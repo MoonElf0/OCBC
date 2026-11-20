@@ -35,10 +35,14 @@ export function reviewReasons(result, highStakes) {
 const freshChecks = () => CHECKS.map(() => ({ status: 'queued' }))
 
 const initial = {
-  view: 'workspace', // 'workspace' | 'verify' | 'review' | 'library' | 'trends' | 'evaluation' | 'versions'
+  view: 'workspace', // 'workspace' | 'classic' | 'verify' | 'review' | 'library' | 'trends' | 'evaluation' | 'versions'
   messages: [],
   paneId: null, // answer the verify pane is open for; null = pane closed
   focusClaimId: null, // claim the employee last clicked, in chat or pane
+  // Classic assistant page (character panel + thread). Its messages live in
+  // state.messages tagged origin: 'classic', so the review queue and reviewer
+  // outcomes work across both pages.
+  classic: { activeId: null, panel: { mode: 'overall' }, pinned: false, offerId: null, checksOpen: false },
   queue: REVIEW_QUEUE_SEED.map((q) => ({ ...q, status: 'pending' })),
   liveDecisions: [],
   unreadOutcomes: 0,
@@ -49,6 +53,10 @@ const initial = {
   health: null, // backend mode: model status, review rules, simulated reviewers
 }
 
+const isClassic = (m) => m?.origin === 'classic'
+const latestClassicId = (messages) => [...messages].reverse().find((m) => m.kind === 'answer' && isClassic(m))?.id ?? null
+const setClassic = (state, patch) => ({ ...state, classic: { ...state.classic, ...patch } })
+
 function updateMsg(state, id, patch) {
   return { ...state, messages: state.messages.map((m) => (m.id === id ? { ...m, ...(typeof patch === 'function' ? patch(m) : patch) } : m)) }
 }
@@ -56,14 +64,16 @@ function updateMsg(state, id, patch) {
 function reducer(state, a) {
   switch (a.type) {
     case 'view':
-      return { ...state, view: a.view, toast: null, unreadOutcomes: a.view === 'workspace' ? 0 : state.unreadOutcomes }
+      return { ...state, view: a.view, toast: null, classic: { ...state.classic, checksOpen: false }, unreadOutcomes: a.view === 'workspace' || a.view === 'classic' ? 0 : state.unreadOutcomes }
 
     case 'ask': {
-      const user = { id: `u${a.id}`, kind: 'user', text: a.question, source: a.source ?? 'asked' }
+      const origin = a.origin ?? 'assistant' // which page asked: 'assistant' | 'classic'
+      const user = { id: `u${a.id}`, kind: 'user', text: a.question, source: a.source ?? 'asked', origin }
       const answer = {
         id: `a${a.id}`,
         serverId: a.reply.answerId ?? null, // backend mode: the stored answer's id
         kind: 'answer',
+        origin,
         source: a.source ?? 'asked', // 'asked' (Policy Assistant) | 'submitted' (pasted in to verify)
         state: 'verifying',
         asOf: a.reply.asOf ?? null,
@@ -79,7 +89,11 @@ function reducer(state, a) {
         routed: null,
         outcome: null,
       }
-      return { ...state, messages: [...state.messages, user, answer] }
+      const next = { ...state, messages: [...state.messages, user, answer] }
+      if (origin !== 'classic') return next
+      // Classic page: the newest answer becomes active, unless the user is examining another one.
+      if (state.classic.pinned && state.classic.activeId) return next
+      return setClassic(next, { activeId: answer.id, panel: { mode: 'overall' }, offerId: null, checksOpen: false })
     }
 
     case 'stream':
@@ -88,12 +102,12 @@ function reducer(state, a) {
     case 'streamed':
       return updateMsg(state, a.id, (m) => ({ shown: m.text.length, phase: 'answered' }))
 
-    case 'verifyStart':
-      return {
-        ...updateMsg(state, a.id, (m) => ({ phase: 'verifying', checks: freshChecks(), prevScore: m.result ? m.result.score : undefined, result: null, runs: m.runs + 1 })),
-        paneId: a.id,
-        focusClaimId: null,
-      }
+    case 'verifyStart': {
+      const s = updateMsg(state, a.id, (m) => ({ phase: 'verifying', checks: freshChecks(), prevScore: m.result ? m.result.score : undefined, result: null, runs: m.runs + 1 }))
+      // The classic page has its own side panel; only the assistant page opens the verify pane.
+      if (isClassic(s.messages.find((m) => m.id === a.id))) return s
+      return { ...s, paneId: a.id, focusClaimId: null }
+    }
 
     case 'checkStart':
       return updateMsg(state, a.id, (m) => ({ checks: m.checks.map((c, i) => (i === a.i ? { status: 'running' } : c)) }))
@@ -104,6 +118,8 @@ function reducer(state, a) {
     case 'verified': {
       let s = updateMsg(state, a.id, { phase: 'done', result: a.result, verifiedAt: Date.now() })
       const msg = s.messages.find((m) => m.id === a.id)
+      // Classic page: offer the newest answer if the user is looking at an older one.
+      if (isClassic(msg) && s.classic.activeId !== a.id && a.id === latestClassicId(s.messages)) s = setClassic(s, { offerId: a.id })
       if (msg.prevScore !== undefined) {
         const same = msg.prevScore === a.result.score
         s = updateMsg(s, a.id, { rerun: { same, from: msg.prevScore } })
@@ -140,6 +156,24 @@ function reducer(state, a) {
 
     case 'health':
       return { ...state, health: a.health }
+
+    // Classic page: which answer (and claim) its side panel describes.
+    case 'select': {
+      const latest = latestClassicId(state.messages)
+      return setClassic(state, {
+        activeId: a.id,
+        panel: a.claimId ? { mode: 'claim', claimId: a.claimId } : { mode: 'overall' },
+        pinned: a.id !== latest || !!a.claimId,
+        offerId: a.id === state.classic.offerId ? null : state.classic.offerId,
+        checksOpen: false,
+      })
+    }
+
+    case 'overall':
+      return setClassic(state, { panel: { mode: 'overall' }, pinned: state.classic.activeId !== latestClassicId(state.messages) })
+
+    case 'checks':
+      return setClassic(state, { checksOpen: a.open })
 
     case 'closePane':
       return { ...state, paneId: null, focusClaimId: null }
@@ -272,6 +306,7 @@ export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initial)
   const cancels = useRef([])
   const running = useRef({})
+  const verifyRef = useRef(null)
   const nextId = useRef(1)
   const stateRef = useRef(state)
   stateRef.current = state
@@ -305,7 +340,7 @@ export function StoreProvider({ children }) {
     [fail],
   )
 
-  const askQuestion = useCallback(async (question) => {
+  const askQuestion = useCallback(async (question, { origin = 'assistant' } = {}) => {
     const id = nextId.current++
     let reply
     try {
@@ -313,14 +348,18 @@ export function StoreProvider({ children }) {
     } catch {
       return fail('Could not get an answer.')
     }
-    dispatch({ type: 'ask', id, question, reply })
+    dispatch({ type: 'ask', id, question, reply, origin })
     const answerId = `a${id}`
-    // Brief "thinking" beat, then stream the answer. Verification waits for the employee.
+    // Brief "thinking" beat, then stream the answer. On the assistant page
+    // verification waits for the employee; the classic page verifies at once.
     const t = setTimeout(() => {
       const stop = streamText(
         reply.text,
         (shown) => dispatch({ type: 'stream', id: answerId, shown }),
-        () => dispatch({ type: 'streamed', id: answerId }),
+        () => {
+          dispatch({ type: 'streamed', id: answerId })
+          if (origin === 'classic') verifyRef.current({ id: answerId, scenarioId: reply.scenarioId, serverId: reply.answerId ?? null, question })
+        },
       )
       cancels.current.push(stop)
     }, 420)
@@ -397,8 +436,10 @@ export function StoreProvider({ children }) {
    * answer and its citations. Backend mode only — the scripted demo has no
    * pipeline that can read arbitrary text.
    */
+  verifyRef.current = verifyAnswer
+
   const submitAnswer = useCallback(
-    async ({ question, answer, citations, asOf }) => {
+    async ({ question, answer, citations, asOf }, { origin = 'assistant' } = {}) => {
       const id = nextId.current++
       let reply
       try {
@@ -407,10 +448,10 @@ export function StoreProvider({ children }) {
         fail(e.fromServer ? `${e.message}` : 'Could not submit the answer.')
         return false
       }
-      dispatch({ type: 'ask', id, question, reply, source: 'submitted' })
+      dispatch({ type: 'ask', id, question, reply, source: 'submitted', origin })
       // Already written: show it at once, then let the checks resolve.
       dispatch({ type: 'streamed', id: `a${id}` })
-      verifyAnswer({ id: `a${id}`, scenarioId: reply.scenarioId, serverId: reply.answerId, question })
+      verifyAnswer({ id: `a${id}`, scenarioId: reply.scenarioId, serverId: reply.answerId, question, origin })
       return true
     },
     [fail, verifyAnswer],
@@ -436,6 +477,27 @@ export function usePaneAnswer() {
 
 // The admin review screen still asks for "the active answer".
 export const useActiveAnswer = usePaneAnswer
+
+/**
+ * The classic assistant page sees the store as it was before the redesign:
+ * only its own messages, its panel state at the top level, and verifyAnswer
+ * meaning "verify a pasted answer". Queue, decisions and toasts are shared.
+ */
+export function useClassicStore() {
+  const store = useStore()
+  const { state } = store
+  return {
+    ...store,
+    state: { ...state, ...state.classic, messages: state.messages.filter(isClassic) },
+    askQuestion: (q) => store.askQuestion(q, { origin: 'classic' }),
+    verifyAnswer: (x) => store.submitAnswer(x, { origin: 'classic' }),
+  }
+}
+
+export function useClassicActive() {
+  const { state } = useStore()
+  return state.messages.find((m) => m.id === state.classic.activeId) ?? null
+}
 
 export { bandFor }
 

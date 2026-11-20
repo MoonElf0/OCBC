@@ -10,6 +10,8 @@ import Evaluation from './admin/Evaluation'
 import Versions from './admin/Versions'
 import TrustMap from './components/TrustMap'
 import Pitch from './pitch/Pitch'
+import ClassicPanel from './classic/CharacterPanel'
+import ClassicThread from './classic/Thread'
 
 export default function App() {
   const { state } = useStore()
@@ -31,6 +33,13 @@ export default function App() {
           <div className="mx-auto flex h-full max-w-[1440px] gap-4 px-2 pt-2 pb-2 lg:px-4 lg:pt-4 lg:pb-4">
             <VerifyAnswerPage />
             {paneOn('verify') && <VerifyPane />}
+          </div>
+        )}
+        {state.view === 'classic' && (
+          // The pre-redesign assistant: character panel + thread, checks run as soon as the answer lands.
+          <div className="mx-auto grid h-full max-w-[1560px] grid-cols-1 gap-6 px-2 py-2 lg:grid-cols-[minmax(440px,38%)_1fr] lg:grid-rows-[minmax(0,1fr)] lg:px-4 lg:py-4">
+            <ClassicPanel />
+            <ClassicThread />
           </div>
         )}
         {state.view === 'review' && <ReviewQueue />}

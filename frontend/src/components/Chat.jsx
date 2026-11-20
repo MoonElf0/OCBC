@@ -13,7 +13,7 @@ export default function Chat() {
   const scroller = useRef(null)
   const stick = useRef(true)
   // Answers pasted in on the Verify answer page live there, not in the chat.
-  const messages = state.messages.filter((m) => m.source !== 'submitted')
+  const messages = state.messages.filter((m) => m.source !== 'submitted' && m.origin !== 'classic')
   const last = messages[messages.length - 1]
   const empty = messages.length === 0
 
