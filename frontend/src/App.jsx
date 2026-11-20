@@ -1,4 +1,5 @@
 import { useStore } from './state/store'
+import { useLibrary } from './lib/library'
 import TopNav from './components/TopNav'
 import CharacterPanel from './components/CharacterPanel'
 import Thread from './components/Thread'
@@ -9,6 +10,7 @@ import Pitch from './pitch/Pitch'
 
 export default function App() {
   const { state } = useStore()
+  useLibrary() // backend mode: re-render when the server's policy library changes
   return (
     <div className="flex h-full flex-col">
       <TopNav />

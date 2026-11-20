@@ -1,7 +1,7 @@
 import { Clock, CalendarDays, FileText, ScanSearch } from 'lucide-react'
 import { TONES, CLAIM_STATUS, CHECK_STATUS, BAND_ICON, bandFor } from '../lib/status'
 import { freshnessOf } from '../lib/freshness'
-import { DOCUMENTS } from '../fixtures'
+import { documentById } from '../lib/library'
 
 export function PrimaryButton({ children, className = '', ...props }) {
   return (
@@ -114,7 +114,7 @@ export function SectionHeader({ Icon, title, count, children, id }) {
 
 /** Source chip: document icon, title, then freshness led by its own icon. */
 export function SourceChip({ docId, section, tag, className = '' }) {
-  const doc = DOCUMENTS[docId]
+  const doc = documentById(docId)
   const f = freshnessOf(docId)
   const Fresh = f.stale ? Clock : CalendarDays
   return (

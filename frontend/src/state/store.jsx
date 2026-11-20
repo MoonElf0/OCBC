@@ -6,6 +6,7 @@ import { assess } from '../lib/assess'
 import { bandFor, CHECKS } from '../lib/status'
 import { freshnessOf } from '../lib/freshness'
 import { BACKEND, api } from '../lib/backend'
+import { refreshLibrary } from '../lib/library'
 
 // UI state. In demo mode this is the only state and nothing persists past a
 // refresh. In backend mode the server is the record for answers, the review
@@ -249,9 +250,12 @@ export function StoreProvider({ children }) {
     api.reviews().then((queue) => dispatch({ type: 'queue', queue }), () => fail('Could not load the review queue.'))
   }, [fail])
 
-  // Backend mode: the review queue lives on the server.
+  // Backend mode: the review queue and the policy library live on the server.
   useEffect(() => {
-    if (BACKEND) refreshQueue()
+    if (BACKEND) {
+      refreshQueue()
+      refreshLibrary()
+    }
   }, [refreshQueue])
 
   const askQuestion = useCallback(async (question) => {
@@ -279,6 +283,7 @@ export function StoreProvider({ children }) {
             onComplete: (result, routed) => {
               dispatch({ type: 'verified', id: answerId, result, server: BACKEND, routed })
               if (routed) refreshQueue()
+              refreshLibrary() // the library may have been edited since the last answer
             },
             onError: () => fail('Verification stopped.'),
           })

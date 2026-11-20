@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CircleCheck, Pencil, Ban, Clock, CircleSlash, Inbox, MessageSquare } from 'lucide-react'
+import { CircleCheck, Pencil, Ban, Clock, CircleSlash, Inbox, MessageSquare, FileDown, LoaderCircle } from 'lucide-react'
 import { useStore } from '../state/store'
 import { REVIEW_HINTS, CORRECTIONS, TOPICS } from '../fixtures'
 import { assess } from '../lib/assess'
@@ -10,7 +10,9 @@ import { flagged } from '../lib/view'
 import AnswerText from '../components/AnswerText'
 import { CheckRow } from '../components/ChecksSheet'
 import { SearchRecord } from '../components/Evidence'
-import { Eyebrow, ScoreBadge, Passage, PrimaryButton, ClaimPill } from '../components/ui'
+import { Eyebrow, ScoreBadge, Passage, PrimaryButton, GhostButton, ClaimPill } from '../components/ui'
+import { useTrustReport } from '../components/TrustReport'
+import { traceOfReview } from '../lib/trace'
 import { OUTCOME_META } from '../components/Thread'
 
 export default function ReviewQueue() {
@@ -99,6 +101,7 @@ function ReviewDetail({ item }) {
   const v = item.result ?? assess(sc.id) // backend mode sends the stored verification
   const [focus, setFocus] = useState(null)
   const claims = [...flagged(v.claims), ...v.claims.filter((c) => c.status === 'supported')]
+  const [exporting, downloadReport] = useTrustReport()
 
   const jump = (c) => {
     setFocus(c.id)
@@ -109,10 +112,14 @@ function ReviewDetail({ item }) {
     <div className="scroll-quiet grid min-h-0 grid-cols-1 gap-6 overflow-y-auto xl:grid-cols-[1fr_300px] xl:overflow-visible">
       <section className="scroll-quiet space-y-6 rounded-3xl border border-frost bg-porcelain p-6 xl:min-h-0 xl:overflow-y-auto">
         <header>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <Eyebrow>
               {item.id} · {TOPICS[sc.topic].name}
             </Eyebrow>
+            <GhostButton onClick={() => downloadReport(traceOfReview(item, sc, v))} disabled={exporting}>
+              {exporting ? <LoaderCircle size={16} className="spin" aria-hidden="true" /> : <FileDown size={16} aria-hidden="true" />}
+              {exporting ? 'Preparing PDF…' : 'Download Trust Report'}
+            </GhostButton>
           </div>
           <div className="mt-1 text-caption text-smoke">
             {item.routedBy === 'auto' ? 'Routed automatically by Assessment AI' : 'Escalated by the employee'} · {item.askedBy}

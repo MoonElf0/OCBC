@@ -1,5 +1,6 @@
 // Deterministic freshness check. Plain code, no model.
-import { DEMO_TODAY, DOCUMENTS } from '../fixtures'
+import { DEMO_TODAY } from '../fixtures'
+import { documentById } from './library'
 
 export function monthsBetween(fromIso, toIso = DEMO_TODAY) {
   const a = new Date(fromIso + 'T00:00:00')
@@ -21,11 +22,11 @@ export function formatDate(iso) {
 
 /** @returns {{ state: 'current'|'superseded'|'overdue', stale: boolean, months: number, note: string, supersededBy?: object }} */
 export function freshnessOf(docId) {
-  const doc = DOCUMENTS[docId]
+  const doc = documentById(docId)
   const months = monthsBetween(doc.updated)
   const updated = `Last updated ${ageLabel(months)}`
   if (doc.supersededBy) {
-    const by = DOCUMENTS[doc.supersededBy]
+    const by = documentById(doc.supersededBy)
     return { state: 'superseded', stale: true, months, note: `${updated} · superseded`, supersededBy: by }
   }
   if (months > doc.reviewCycleMonths) {

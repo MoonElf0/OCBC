@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Swords, ShieldCheck, MessageCircleQuestion, Sparkles } from 'lucide-react'
 import { CHALLENGES } from '../lib/challenger'
-import { DOCUMENTS } from '../fixtures'
+import { documentById } from '../lib/library'
 
 export default function Challenger({ m }) {
   const ch = CHALLENGES[m.scenarioId]
@@ -12,7 +12,7 @@ export default function Challenger({ m }) {
     return () => clearTimeout(t)
   }, [])
   if (!ch || m.phase !== 'done') return null
-  const doc = ch.finding && DOCUMENTS[ch.finding.docId]
+  const doc = ch.finding && documentById(ch.finding.docId)
   const sec = doc?.sections.find((s) => s.id === ch.finding.section)
   const opt = picked != null ? ch.options[picked] : null
 
