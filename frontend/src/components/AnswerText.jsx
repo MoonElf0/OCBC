@@ -5,7 +5,11 @@ import { CLAIM_STATUS, TONES, severityFor } from '../lib/status'
  * offset. The original text is never modified: spans are cut from it.
  * With `highlight` off, claims render as plain text.
  */
-export default function AnswerText({ text, shown = text.length, claims = [], activeClaimId, pulseId, onClaim, streaming, highlight = true, idPrefix }) {
+/**
+ * `vocab="status"` labels flags with their claim status (Conflicting, Stale source…)
+ * instead of the employee-facing severity words; `numbers` maps claim id → badge number.
+ */
+export default function AnswerText({ text, shown = text.length, claims = [], activeClaimId, pulseId, onClaim, streaming, highlight = true, idPrefix, vocab = 'severity', numbers }) {
   const visible = text.slice(0, shown)
   const sorted = highlight ? [...claims].sort((a, b) => a.start - b.start) : []
   const parts = []
@@ -23,7 +27,7 @@ export default function AnswerText({ text, shown = text.length, claims = [], act
       {parts.map((p, i) => {
         if (!p.claim) return <span key={i}>{p.text}</span>
         const sev = severityFor(p.claim.status)
-        const s = { ...CLAIM_STATUS[p.claim.status], Icon: sev.Icon, label: sev.label }
+        const s = vocab === 'status' ? CLAIM_STATUS[p.claim.status] : { ...CLAIM_STATUS[p.claim.status], Icon: sev.Icon, label: sev.label }
         const t = TONES[sev.tone]
         // Supported claims stay quiet: plain text with a small check, so flags stand out.
         if (p.claim.status === 'supported') {
@@ -42,7 +46,7 @@ export default function AnswerText({ text, shown = text.length, claims = [], act
               ? {
                   role: 'button',
                   tabIndex: 0,
-                  'aria-label': `${s.label} claim: ${p.text}. Show in verification panel.`,
+                  'aria-label': `${s.label} claim: ${p.text}. ${vocab === 'status' ? 'Show its evidence.' : 'Show in verification panel.'}`,
                   onClick: () => onClaim(p.claim),
                   onKeyDown: (e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onClaim(p.claim)),
                 }
@@ -51,6 +55,11 @@ export default function AnswerText({ text, shown = text.length, claims = [], act
             className={`claim claim-reveal ${pulseId === p.claim.id ? 'claim-pulse' : ''} ${onClaim ? '' : 'claim-static'} ${t.surface} ${t.border} ${t.text}`}
             style={{ animationDelay: `${i * 70}ms` }}
           >
+            {numbers?.[p.claim.id] != null && (
+              <span className="mr-1 inline-grid size-[18px] -translate-y-px place-items-center rounded-full bg-ink align-middle text-[11px] leading-none font-semibold text-white tabular-nums" aria-hidden="true">
+                {numbers[p.claim.id]}
+              </span>
+            )}
             <s.Icon size={14} strokeWidth={2.5} aria-hidden="true" className="mr-1 inline-block -translate-y-px align-middle" />
             <span className="text-ink">{p.text}</span>
           </span>

@@ -292,3 +292,111 @@ html.theme-fade, html.theme-fade * { transition: background-color 300ms, color 3
 @keyframes chal { to { background-position: 0 0, 300% 0; } }
 @keyframes growx { from { transform: scaleX(0); } }
 .growx { transform-origin: left; animation: growx 900ms 300ms ease-out both; }
+
+/* -- Review Queue: translucent glass surfaces over soft red swooshes -- */
+.rq-glass {
+  background:
+    radial-gradient(120% 60% at 0 0, rgb(255 255 255 / 0.5), transparent 60%),
+    linear-gradient(155deg, rgb(255 255 255 / 0.55), rgb(255 245 247 / 0.32));
+  backdrop-filter: blur(28px) saturate(170%);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  border: 1px solid rgb(255 255 255 / 0.75);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 0 0 1px rgb(120 20 35 / 0.06), 0 30px 60px -32px rgb(120 20 35 / 0.28), 0 2px 8px -4px rgb(20 20 30 / 0.05);
+}
+.rq-card {
+  background:
+    radial-gradient(120% 70% at 0 0, rgb(255 255 255 / 0.45), transparent 60%),
+    linear-gradient(155deg, rgb(255 255 255 / 0.5), rgb(255 245 247 / 0.3));
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1.5px solid rgb(255 255 255 / 0.7);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.85), 0 0 0 1px rgb(120 20 35 / 0.06), 0 14px 30px -22px rgb(120 20 35 / 0.3);
+  transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+}
+.rq-card:hover { background: rgb(255 255 255 / 0.66); transform: translateY(-1px); }
+.rq-card-selected,
+.rq-card-selected:hover {
+  background: rgb(255 255 255 / 0.78);
+  border-color: var(--color-ocbc-red);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 0 0 4px rgb(228 0 43 / 0.08), 0 18px 36px -20px rgb(228 0 43 / 0.35);
+  transform: none;
+}
+.rq-tile {
+  background: linear-gradient(160deg, rgb(255 255 255 / 0.75), rgb(255 240 242 / 0.5));
+  border: 1px solid rgb(255 255 255 / 0.85);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 4px 12px -8px rgb(120 20 35 / 0.2);
+}
+.rq-inset {
+  background: rgb(255 255 255 / 0.5);
+  border: 1px solid rgb(255 255 255 / 0.8);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 1px 2px rgb(20 20 30 / 0.03);
+}
+.rq-field,
+.rq-input {
+  background: rgb(255 255 255 / 0.6);
+  border: 1px solid rgb(255 255 255 / 0.85);
+  box-shadow: inset 0 1px 2px rgb(20 20 30 / 0.04);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.rq-field:focus-within,
+.rq-input:focus {
+  outline: none;
+  border-color: rgb(228 0 43 / 0.45);
+  box-shadow: 0 0 0 3px rgb(228 0 43 / 0.1);
+}
+.rq-input-invalid { border-color: color-mix(in srgb, var(--color-status-unsupported) 60%, transparent); }
+.rq-outline {
+  background: rgb(255 255 255 / 0.55);
+  border: 1.5px solid rgb(20 20 30 / 0.12);
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+.rq-outline:hover { background: rgb(255 255 255 / 0.85); border-color: rgb(20 20 30 / 0.28); }
+.rq-footer {
+  position: sticky;
+  bottom: 0;
+  border-radius: 0 0 24px 24px;
+  background: rgb(255 255 255 / 0.62);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-top: 1px solid rgb(255 255 255 / 0.8);
+  box-shadow: 0 -12px 24px -20px rgb(120 20 35 / 0.25);
+}
+.rq-swoosh {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 9999px;
+}
+.rq-swoosh-a {
+  width: 1100px; height: 1100px; left: -420px; bottom: -560px;
+  background: radial-gradient(circle, transparent 54%, rgb(228 0 43 / 0.55) 57%, rgb(255 110 130 / 0.3) 63%, transparent 70%);
+  filter: blur(6px);
+}
+.rq-swoosh-b {
+  width: 900px; height: 900px; right: -420px; top: -560px;
+  background: radial-gradient(circle, transparent 52%, rgb(255 140 155 / 0.35) 58%, rgb(228 0 43 / 0.18) 64%, transparent 70%);
+  filter: blur(10px);
+}
+@keyframes rq-ring { from { stroke-dasharray: 0 200; } }
+.rq-ring { animation: rq-ring 900ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes rq-dot { 50% { box-shadow: 0 0 0 4px rgb(228 0 43 / 0.15); } }
+.rq-dot { animation: rq-dot 1.8s ease-in-out infinite; }
+@media (prefers-reduced-transparency: reduce) {
+  .rq-glass, .rq-card, .rq-tile, .rq-inset { background: #ffffff; backdrop-filter: none; -webkit-backdrop-filter: none; }
+}
+html.dark .rq-glass { background: linear-gradient(155deg, rgb(30 30 34 / 0.72), rgb(20 20 24 / 0.55)); border-color: rgb(255 255 255 / 0.08); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 30px 60px -30px rgb(0 0 0 / 0.6); }
+html.dark .rq-card { background: rgb(30 30 34 / 0.55); border-color: rgb(255 255 255 / 0.08); box-shadow: none; }
+html.dark .rq-card:hover { background: rgb(40 40 46 / 0.7); }
+html.dark .rq-card-selected { background: rgb(44 30 34 / 0.8); border-color: var(--color-ocbc-red); }
+html.dark .rq-tile, html.dark .rq-inset, html.dark .rq-field, html.dark .rq-input, html.dark .rq-outline, html.dark .rq-footer { background: rgb(255 255 255 / 0.04); border-color: rgb(255 255 255 / 0.09); box-shadow: none; }
+
+/* High-contrast page header: ink panel with a faint OCBC glow (decoration, not an action). */
+.rq-hero {
+  background:
+    radial-gradient(55% 140% at 100% 0%, rgb(228 0 43 / 0.38), transparent 62%),
+    radial-gradient(45% 120% at 0% 100%, rgb(228 0 43 / 0.14), transparent 70%),
+    linear-gradient(135deg, #17171c 0%, #2a2c31 100%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08), 0 30px 60px -30px rgb(80 10 25 / 0.55);
+}
+@keyframes rq-grow { from { flex-grow: 0; } }
+.rq-grow { animation: rq-grow 700ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+@media (prefers-reduced-motion: reduce) { .rq-grow, .rq-ring { animation: none; } }

@@ -340,7 +340,7 @@ export const SCENARIOS = [
       claims: [
         { quote: 'A branch manager can waive account service fees of up to SGD 500 per account per year', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 3'), short: 'Right limit, but the source is overdue for review', reason: 'Matches the source, but the source is 22 months old and overdue for its annual review. The limit may have changed.' },
         { quote: 'Waivers above SGD 500 need approval from the area head', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 4'), short: 'Right rule, but the source is overdue for review', reason: 'Matches the source, but the source is overdue for review.' },
-        { quote: 'For retail credit cards, annual fee reversals are handled by the Cards Service team', status: 'off-intent', check: 'intent', source: passageOf('DOC-CRD-022', '§7.2'), short: 'About retail cards, not what you asked', reason: 'Accurate, but it answers a different question: you asked about SME business accounts, not retail credit cards.' },
+        { quote: 'For retail credit cards, annual fee reversals are handled by the Cards Service team', status: 'off-intent', check: 'intent', source: passageOf('DOC-CRD-022', '§7.2'), short: 'About retail cards, not what you asked', reason: 'Accurate, but it answers a different question: the question was about SME business accounts, not retail credit cards.' },
       ],
       checks: [
         { id: 'groundedness', status: 'pass', short: 'All 3 claims match a source', summary: '3 of 3 claims match a source passage. 2 of them rest on a document overdue for review.', evidence: [passageOf('DOC-OPS-045', 'Row 3'), passageOf('DOC-OPS-045', 'Row 4'), passageOf('DOC-CRD-022', '§7.2')] },
@@ -413,7 +413,7 @@ export const FALLBACK = {
 export const REVIEW_QUEUE_SEED = [
   { id: 'RQ-1041', scenarioId: 'fx-override', askedBy: 'Relationship Manager · Corporate Banking', askedAt: '2026-10-07T09:12', routedBy: 'auto', reasons: ['low-confidence', 'conflicting', 'high-stakes'] },
   { id: 'RQ-1039', scenarioId: 'collateral-crypto', askedBy: 'Relationship Manager · Business Banking', askedAt: '2026-10-06T16:40', routedBy: 'auto', reasons: ['low-confidence', 'no-source', 'high-stakes'] },
-  { id: 'RQ-1036', scenarioId: 'fees-waiver', askedBy: 'Branch Service Lead · Tampines', askedAt: '2026-10-06T11:05', routedBy: 'employee', reasons: ['employee', 'stale'] },
+  { id: 'RQ-1036', scenarioId: 'fees-waiver', askedBy: 'Branch Service Lead · Tampines', askedAt: '2026-10-06T11:05', routedBy: 'employee', reasons: ['employee', 'stale'], note: 'Is the SGD 500 waiver limit still current? The answer also talks about retail credit cards, but my client has an SME business account.' },
 ]
 
 // What a reviewer's decision on each scenario is filed under, plus a draft
