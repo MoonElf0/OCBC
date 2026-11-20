@@ -8,22 +8,19 @@ import { freshnessOf } from '../lib/freshness'
 
 // Local state only. Nothing persists past a refresh.
 
+const freshChecks = () => CHECKS.map(() => ({ status: 'queued' }))
+
 const initial = {
   view: 'workspace', // 'workspace' | 'review' | 'trends'
   messages: [],
-  activeId: null,
-  panel: { mode: 'overall' }, // or { mode: 'claim', claimId }
-  pinned: false, // true while the user is examining a specific older answer or claim
-  offerId: null, // newer answer offered while the user is pinned
-  checksOpen: false,
+  paneId: null, // answer the verify pane is open for; null = pane closed
+  focusClaimId: null, // claim the employee last clicked, in chat or pane
   queue: REVIEW_QUEUE_SEED.map((q) => ({ ...q, status: 'pending' })),
   liveDecisions: [],
   unreadOutcomes: 0,
   toast: null,
   seq: 1042,
 }
-
-const latestAnswerId = (messages) => [...messages].reverse().find((m) => m.kind === 'answer')?.id ?? null
 
 function updateMsg(state, id, patch) {
   return { ...state, messages: state.messages.map((m) => (m.id === id ? { ...m, ...(typeof patch === 'function' ? patch(m) : patch) } : m)) }
@@ -32,7 +29,7 @@ function updateMsg(state, id, patch) {
 function reducer(state, a) {
   switch (a.type) {
     case 'view':
-      return { ...state, view: a.view, checksOpen: false, toast: null, unreadOutcomes: a.view === 'workspace' ? 0 : state.unreadOutcomes }
+      return { ...state, view: a.view, toast: null, unreadOutcomes: a.view === 'workspace' ? 0 : state.unreadOutcomes }
 
     case 'ask': {
       const user = { id: `u${a.id}`, kind: 'user', text: a.question }
@@ -44,25 +41,28 @@ function reducer(state, a) {
         text: a.reply.text,
         citations: a.reply.citations,
         shown: 0,
-        phase: 'thinking', // thinking → streaming → verifying → done
-        checks: CHECKS.map(() => ({ status: 'queued' })),
+        phase: 'thinking', // thinking → streaming → answered → (verifying → done)
+        checks: freshChecks(),
         result: null,
+        runs: 0, // how many times this answer has been verified
         routed: null,
-        feedback: null,
         outcome: null,
       }
-      const next = { ...state, messages: [...state.messages, user, answer] }
-      // The newest answer becomes active — unless the user is examining another one.
-      // Offered once verified (see 'verified'), not while it's still being written.
-      if (state.pinned && state.activeId) return next
-      return { ...next, activeId: answer.id, panel: { mode: 'overall' }, offerId: null, checksOpen: false }
+      return { ...state, messages: [...state.messages, user, answer] }
     }
 
     case 'stream':
       return updateMsg(state, a.id, { shown: a.shown, phase: 'streaming' })
 
     case 'streamed':
-      return updateMsg(state, a.id, (m) => ({ shown: m.text.length, phase: 'verifying' }))
+      return updateMsg(state, a.id, (m) => ({ shown: m.text.length, phase: 'answered' }))
+
+    case 'verifyStart':
+      return {
+        ...updateMsg(state, a.id, (m) => ({ phase: 'verifying', checks: freshChecks(), prevScore: m.result ? m.result.score : undefined, result: null, runs: m.runs + 1 })),
+        paneId: a.id,
+        focusClaimId: null,
+      }
 
     case 'checkStart':
       return updateMsg(state, a.id, (m) => ({ checks: m.checks.map((c, i) => (i === a.i ? { status: 'running' } : c)) }))
@@ -71,9 +71,14 @@ function reducer(state, a) {
       return updateMsg(state, a.id, (m) => ({ checks: m.checks.map((c, i) => (i === a.i ? a.check : c)) }))
 
     case 'verified': {
-      let s = updateMsg(state, a.id, { phase: 'done', result: a.result })
-      if (s.activeId !== a.id && a.id === latestAnswerId(s.messages)) s = { ...s, offerId: a.id }
+      let s = updateMsg(state, a.id, { phase: 'done', result: a.result, verifiedAt: Date.now() })
       const msg = s.messages.find((m) => m.id === a.id)
+      if (msg.prevScore !== undefined) {
+        const same = msg.prevScore === a.result.score
+        s = updateMsg(s, a.id, { rerun: { same, from: msg.prevScore } })
+        s = { ...s, toast: { text: same ? 'Re-verified. The policy library has not changed, so the result is the same.' : `Re-verified. Score moved from ${msg.prevScore} to ${a.result.score}.` } }
+      }
+      if (msg.routed) return s // a re-run never files a second review
       const sc = scenarioById(msg.scenarioId)
       // Routing rule: a Low score, any conflicting claim, or a high-stakes
       // topic scored below High goes to a reviewer without the employee asking.
@@ -92,27 +97,14 @@ function reducer(state, a) {
       return s
     }
 
-    case 'select': {
-      // User chose which answer the panel describes.
-      const latest = latestAnswerId(state.messages)
-      return {
-        ...state,
-        activeId: a.id,
-        panel: a.claimId ? { mode: 'claim', claimId: a.claimId } : { mode: 'overall' },
-        pinned: a.id !== latest || !!a.claimId,
-        offerId: a.id === state.offerId ? null : state.offerId,
-        checksOpen: false,
-      }
-    }
+    case 'openPane':
+      return { ...state, paneId: a.id, focusClaimId: a.claimId ?? null }
 
-    case 'overall':
-      return { ...state, panel: { mode: 'overall' }, pinned: state.activeId !== latestAnswerId(state.messages) }
+    case 'closePane':
+      return { ...state, paneId: null, focusClaimId: null }
 
-    case 'checks':
-      return { ...state, checksOpen: a.open }
-
-    case 'feedback':
-      return updateMsg(state, a.id, (m) => ({ feedback: m.feedback === a.value ? null : a.value }))
+    case 'focusClaim':
+      return { ...state, focusClaimId: a.claimId, focusNonce: (state.focusNonce ?? 0) + 1 }
 
     case 'escalate': {
       const msg = state.messages.find((m) => m.id === a.id)
@@ -127,7 +119,7 @@ function reducer(state, a) {
       const joined = s.messages.find((m) => m.id === a.id).routed.joined
       return {
         ...s,
-        toast: { text: joined ? 'Joined a review already open for this question. The outcome will appear here.' : 'Sent to a reviewer. The outcome will appear on this answer.' },
+        toast: { text: joined ? 'A reviewer already has this question. Their decision will appear here too.' : 'Sent to a reviewer. Their decision will appear on this answer.' },
       }
     }
 
@@ -200,6 +192,7 @@ const Ctx = createContext(null)
 export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initial)
   const cancels = useRef([])
+  const running = useRef({})
   const nextId = useRef(1)
 
   useEffect(() => () => cancels.current.forEach((c) => c()), [])
@@ -209,25 +202,33 @@ export function StoreProvider({ children }) {
     const reply = ask(question)
     dispatch({ type: 'ask', id, question, reply })
     const answerId = `a${id}`
-    // Brief "thinking" beat, then stream the answer, then stream verification in.
+    // Brief "thinking" beat, then stream the answer. Verification waits for the employee.
     const t = setTimeout(() => {
-      const stopStream = streamText(
+      const stop = streamText(
         reply.text,
         (shown) => dispatch({ type: 'stream', id: answerId, shown }),
-        () => {
-          dispatch({ type: 'streamed', id: answerId })
-          const stopVerify = verify(reply.scenarioId, {
-            question,
-            onCheckStart: (i) => dispatch({ type: 'checkStart', id: answerId, i }),
-            onCheckDone: (i, check) => dispatch({ type: 'checkDone', id: answerId, i, check }),
-            onComplete: (result) => dispatch({ type: 'verified', id: answerId, result }),
-          })
-          cancels.current.push(stopVerify)
-        },
+        () => dispatch({ type: 'streamed', id: answerId }),
       )
-      cancels.current.push(stopStream)
-    }, 260)
+      cancels.current.push(stop)
+    }, 420)
     cancels.current.push(() => clearTimeout(t))
+  }, [])
+
+  /** Run (or re-run) the verifier on one answer. Opens the pane on it. */
+  const verifyAnswer = useCallback((m) => {
+    running.current[m.id]?.()
+    dispatch({ type: 'verifyStart', id: m.id })
+    const stop = verify(m.scenarioId, {
+      question: m.question,
+      onCheckStart: (i) => dispatch({ type: 'checkStart', id: m.id, i }),
+      onCheckDone: (i, check) => dispatch({ type: 'checkDone', id: m.id, i, check }),
+      onComplete: (result) => {
+        delete running.current[m.id]
+        dispatch({ type: 'verified', id: m.id, result })
+      },
+    })
+    running.current[m.id] = stop
+    cancels.current.push(stop)
   }, [])
 
   useEffect(() => {
@@ -236,16 +237,19 @@ export function StoreProvider({ children }) {
     return () => clearTimeout(t)
   }, [state.toast])
 
-  return <Ctx.Provider value={{ state, dispatch, askQuestion }}>{children}</Ctx.Provider>
+  return <Ctx.Provider value={{ state, dispatch, askQuestion, verifyAnswer }}>{children}</Ctx.Provider>
 }
 
 export function useStore() {
   return useContext(Ctx)
 }
 
-export function useActiveAnswer() {
+export function usePaneAnswer() {
   const { state } = useStore()
-  return state.messages.find((m) => m.id === state.activeId) ?? null
+  return state.messages.find((m) => m.id === state.paneId) ?? null
 }
+
+// The admin review screen still asks for "the active answer".
+export const useActiveAnswer = usePaneAnswer
 
 export { bandFor }

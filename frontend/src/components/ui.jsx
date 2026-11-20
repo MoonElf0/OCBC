@@ -1,5 +1,5 @@
 import { Clock, CalendarDays, FileText, ScanSearch } from 'lucide-react'
-import { TONES, CLAIM_STATUS, CHECK_STATUS, BAND_ICON, bandFor } from '../lib/status'
+import { TONES, CLAIM_STATUS, CHECK_STATUS, BAND_ICON, VERDICT, bandFor } from '../lib/status'
 import { freshnessOf } from '../lib/freshness'
 import { DOCUMENTS } from '../fixtures'
 
@@ -79,7 +79,7 @@ export function ScoreBadge({ score, className = '' }) {
         <>
           <span className="text-ink tabular-nums">{score} / 100</span>
           <span aria-hidden="true">·</span>
-          {band.label}
+          {VERDICT[band.id].tag}
         </>
       )}
     </span>

@@ -11,7 +11,7 @@ import AnswerText from '../components/AnswerText'
 import { CheckRow } from '../components/ChecksSheet'
 import { SearchRecord } from '../components/Evidence'
 import { Eyebrow, ScoreBadge, Passage, PrimaryButton, ClaimPill } from '../components/ui'
-import { OUTCOME_META } from '../components/Thread'
+import { OUTCOME_META } from '../lib/status'
 
 export default function ReviewQueue() {
   const { state } = useStore()

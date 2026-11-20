@@ -8,7 +8,7 @@
  *                  passage retrieved for the same point
  */
 import { DOCUMENTS } from '../fixtures'
-import { freshnessOf, ageLabel } from './freshness'
+import { freshnessOf, ageLabel, formatDate } from './freshness'
 
 // "SGD 250,000" → "250000", "2:30 pm" → "2:30", "25%" → "25"
 export function figures(text) {
@@ -29,7 +29,7 @@ export function citationCheck(answer, claims) {
       : { id: 'citation', status: 'na', short: 'Nothing cited, nothing claimed', summary: 'No documents cited and no claims made.', evidence: [{ kind: 'search' }] }
   }
   const missing = cited.filter((id) => !DOCUMENTS[id])
-  if (missing.length) return { id: 'citation', status: 'fail', short: 'Cited document doesn’t exist', summary: `Cited ${missing.join(', ')} does not exist in the approved library.`, evidence: [] }
+  if (missing.length) return { id: 'citation', status: 'fail', short: 'A cited document doesn’t exist', summary: `Cited ${missing.join(', ')} does not exist in the approved library.`, evidence: [] }
 
   const checked = claims.filter((c) => c.source && cited.includes(c.source.docId))
   const mismatched = checked.filter((c) => {
@@ -43,7 +43,7 @@ export function citationCheck(answer, claims) {
     return {
       id: 'citation',
       status: 'fail',
-      short: `Says ${said} — source says ${display(c.source.passage)}`,
+      short: `Cited source says ${display(c.source.passage)}, not ${said}`,
       summary: `${c.source.docId} exists, but the answer cites it for ${said} and the passage says ${display(c.source.passage)}.`,
       evidence: mismatched.map((m) => passageRef(m.source)),
     }
@@ -70,7 +70,7 @@ export function freshnessCheck(answer, claims) {
     return {
       id: 'freshness',
       status: 'fail',
-      short: `Source replaced by ${by.id}`,
+      short: `Cited source was replaced on ${formatDate(by.updated)}`,
       summary: `${r.id} was last updated ${ageLabel(r.months)} and has been superseded by ${by.id}.`,
       evidence: [{ docId: by.id, section: pointer.id, passage: pointer.text }],
     }
@@ -82,7 +82,7 @@ export function freshnessCheck(answer, claims) {
     return {
       id: 'freshness',
       status: 'warning',
-      short: `Source ${r.months} months old — review overdue`,
+      short: `Source is ${r.months} months old and overdue for review`,
       summary: `${r.id} was last updated ${ageLabel(r.months)}, past its ${doc.reviewCycleMonths}-month review cycle. It has not been superseded.`,
       evidence: used ? [passageRef(used)] : [],
     }
@@ -112,7 +112,7 @@ export function crossrefCheck(answer, claims) {
   return {
     id: 'crossref',
     status: conflict ? 'fail' : 'warning',
-    short: `Says ${display(answer.text.slice(d.c.start, d.c.end))} — policy says ${display(d.c.counter.passage)}`,
+    short: `Current policy says ${display(d.c.counter.passage)}`,
     summary: `The answer states ${display(answer.text.slice(d.c.start, d.c.end))}; the current approved source (${d.c.counter.docId} ${d.c.counter.section}) states ${display(d.c.counter.passage)}.`,
     evidence: diffs.map((x) => passageRef(x.c.counter)),
   }

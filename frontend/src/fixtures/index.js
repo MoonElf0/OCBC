@@ -76,7 +76,7 @@ export const DOCUMENTS = {
   },
   'DOC-KYC-031': {
     id: 'DOC-KYC-031',
-    title: 'Customer Due Diligence Procedures — SME',
+    title: 'Customer Due Diligence Procedures (SME)',
     version: 'v3.1',
     topic: 'kyc',
     owner: 'Financial Crime Compliance',
@@ -195,8 +195,9 @@ export const SCENARIOS = [
     },
     verification: {
       explanation:
-        'Two of three claims match current policy. The SGD 250,000 limit comes only from a circular that was superseded in May 2026 — the current standard sets SGD 200,000. Confirm the limit before acting on it.',
+        'Two of three claims match current policy. The SGD 250,000 limit comes only from a circular that was superseded in May 2026. The current standard sets SGD 200,000. Confirm the limit before acting on it.',
       headline: 'Confirm the limit before acting',
+      guidance: 'The current limit is SGD 200,000. Anything above it needs Credit Committee approval.',
       retrieved: ['DOC-SME-112'],
       claims: [
         {
@@ -205,7 +206,7 @@ export const SCENARIOS = [
           check: 'freshness',
           source: passageOf('DOC-SME-087', '§2'),
           counter: passageOf('DOC-SME-112', '§3.1'),
-          short: 'SGD 250k is outdated — now SGD 200k',
+          short: 'SGD 250k is outdated. It is now SGD 200k',
           reason: 'No current approved source supports SGD 250,000. The only passage stating it is in a superseded circular, so it counts as unsupported rather than conflicting: the agent copied its source faithfully, but the source is no longer approved. The current standard sets SGD 200,000.',
         },
         {
@@ -225,7 +226,7 @@ export const SCENARIOS = [
       ],
       checks: [
         { id: 'groundedness', status: 'warning', short: '1 claim rests on a replaced circular', summary: '2 of 3 claims are supported by a current approved source. 1 claim rests only on a superseded document.', evidence: [passageOf('DOC-SME-087', '§2'), passageOf('DOC-SME-104', '§5.2'), passageOf('DOC-SME-112', '§3.4')] },
-        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'The answer does not contradict itself. The limit discrepancy is reported under cross-referencing.', evidence: [passageOf('DOC-SME-104', '§5.1')] },
+        { id: 'consistency', status: 'pass', short: 'Doesn’t contradict itself', summary: 'The answer does not contradict itself. The limit discrepancy is reported under cross-referencing.', evidence: [passageOf('DOC-SME-104', '§5.1')] },
         { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'The question asks for an approval limit. The answer states a limit and the escalation path above it.', evidence: [{ kind: 'question' }] },
       ],
     },
@@ -247,6 +248,7 @@ export const SCENARIOS = [
     verification: {
       explanation: 'All four claims match the current Customer Due Diligence Procedures, updated seven months ago. No conflicts with other approved documents.',
       headline: 'Safe to use',
+      guidance: 'Safe to use as written. Every requirement matches the current procedure.',
       retrieved: [],
       claims: [
         { quote: 'each beneficial owner holding 25% or more of the company', status: 'supported', check: 'groundedness', source: passageOf('DOC-KYC-031', '§4.1'), reason: 'Matches the 25% ownership threshold.' },
@@ -256,7 +258,7 @@ export const SCENARIOS = [
       ],
       checks: [
         { id: 'groundedness', status: 'pass', short: 'All 4 claims backed by policy', summary: '4 of 4 claims are supported by an approved source.', evidence: [passageOf('DOC-KYC-031', '§4.1'), passageOf('DOC-KYC-031', '§4.2'), passageOf('DOC-KYC-031', '§4.3'), passageOf('DOC-KYC-031', '§4.4')] },
-        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'The answer does not contradict itself or another approved document.', evidence: [passageOf('DOC-KYC-031', '§4.4')] },
+        { id: 'consistency', status: 'pass', short: 'Doesn’t contradict itself', summary: 'The answer does not contradict itself or another approved document.', evidence: [passageOf('DOC-KYC-031', '§4.4')] },
         { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'The question asks which documents are needed. The answer lists them.', evidence: [{ kind: 'question' }] },
       ],
     },
@@ -277,8 +279,9 @@ export const SCENARIOS = [
     },
     verification: {
       explanation:
-        'The answer contradicts its own cited source. The FX guidelines cap relationship-manager overrides at 10 basis points — not 50 — and nothing in the library mentions a treasury-mandate exception. Do not act on this answer.',
+        'The answer contradicts its own cited source. The FX guidelines cap relationship-manager overrides at 10 basis points, not 50, and nothing in the library mentions a treasury-mandate exception. Do not act on this answer.',
       headline: 'Don’t act on this answer',
+      guidance: 'Don’t rely on this answer. Policy allows overrides up to 10 bps; above that, get the Treasury desk head’s approval first.',
       retrieved: [],
       claims: [
         {
@@ -287,7 +290,7 @@ export const SCENARIOS = [
           check: 'consistency',
           source: passageOf('DOC-FX-019', '§2.2'),
           counter: passageOf('DOC-FX-019', '§2.1'),
-          short: 'Says 50 bps — policy caps it at 10 bps',
+          short: 'Says 50 bps, but policy caps it at 10 bps',
           reason: 'The guideline caps relationship-manager overrides at 10 basis points. Anything above needs prior approval from the Treasury desk head.',
         },
         {
@@ -309,7 +312,7 @@ export const SCENARIOS = [
       ],
       checks: [
         { id: 'groundedness', status: 'fail', short: 'Only 1 of 3 claims backed', summary: '1 of 3 claims is supported. 1 conflicts with the source and 1 has no supporting passage.', evidence: [passageOf('DOC-FX-019', '§2.1'), passageOf('DOC-FX-019', '§3.1')] },
-        { id: 'consistency', status: 'fail', short: 'Says no approval — policy requires it', summary: 'The answer says no approval is needed; the cited guideline says approval is required above 10 bps.', evidence: [passageOf('DOC-FX-019', '§2.2')] },
+        { id: 'consistency', status: 'fail', short: 'Says no approval needed, but policy requires it', summary: 'The answer says no approval is needed; the cited guideline says approval is required above 10 bps.', evidence: [passageOf('DOC-FX-019', '§2.2')] },
         { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'The question asks whether approval is needed. The answer addresses that directly.', evidence: [{ kind: 'question' }] },
       ],
     },
@@ -332,15 +335,16 @@ export const SCENARIOS = [
       explanation:
         'The waiver limits match the Fee Waiver Authority Matrix, but that document is 22 months old and past its 12-month review. The last sentence answers a question about retail cards that was not asked.',
       headline: 'Right limits, outdated source',
+      guidance: 'The SGD 500 limit matches the matrix, but the matrix is overdue for review. Confirm with Branch Operations before waiving.',
       retrieved: [],
       claims: [
-        { quote: 'A branch manager can waive account service fees of up to SGD 500 per account per year', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 3'), short: 'SGD 500 limit — source overdue for review', reason: 'Matches the source, but the source is 22 months old and overdue for its annual review. The limit may have changed.' },
-        { quote: 'Waivers above SGD 500 need approval from the area head', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 4'), short: 'Area-head rule — source overdue', reason: 'Matches the source, but the source is overdue for review.' },
-        { quote: 'For retail credit cards, annual fee reversals are handled by the Cards Service team', status: 'off-intent', check: 'intent', source: passageOf('DOC-CRD-022', '§7.2'), short: 'About retail cards — not what you asked', reason: 'Accurate, but it answers a different question: you asked about SME business accounts, not retail credit cards.' },
+        { quote: 'A branch manager can waive account service fees of up to SGD 500 per account per year', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 3'), short: 'Right limit, but the source is overdue for review', reason: 'Matches the source, but the source is 22 months old and overdue for its annual review. The limit may have changed.' },
+        { quote: 'Waivers above SGD 500 need approval from the area head', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 4'), short: 'Right rule, but the source is overdue for review', reason: 'Matches the source, but the source is overdue for review.' },
+        { quote: 'For retail credit cards, annual fee reversals are handled by the Cards Service team', status: 'off-intent', check: 'intent', source: passageOf('DOC-CRD-022', '§7.2'), short: 'About retail cards, not what you asked', reason: 'Accurate, but it answers a different question: you asked about SME business accounts, not retail credit cards.' },
       ],
       checks: [
         { id: 'groundedness', status: 'pass', short: 'All 3 claims match a source', summary: '3 of 3 claims match a source passage. 2 of them rest on a document overdue for review.', evidence: [passageOf('DOC-OPS-045', 'Row 3'), passageOf('DOC-OPS-045', 'Row 4'), passageOf('DOC-CRD-022', '§7.2')] },
-        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'The answer does not contradict itself or another approved document.', evidence: [passageOf('DOC-OPS-045', 'Row 4')] },
+        { id: 'consistency', status: 'pass', short: 'Doesn’t contradict itself', summary: 'The answer does not contradict itself or another approved document.', evidence: [passageOf('DOC-OPS-045', 'Row 4')] },
         { id: 'intent', status: 'warning', short: 'Last sentence is off-topic', summary: 'The question is about an SME business account. The final sentence answers a nearby question about retail credit cards.', evidence: [{ kind: 'question' }, passageOf('DOC-CRD-022', '§7.2')] },
       ],
     },
@@ -364,6 +368,7 @@ export const SCENARIOS = [
       explanation:
         'No approved document covers crypto or digital-asset collateral, and the answer cites nothing. Every claim here is unverified. Treat it as unknown until a reviewer confirms policy.',
       headline: 'No policy covers this',
+      guidance: 'Treat crypto collateral as not permitted until a reviewer confirms policy.',
       retrieved: [],
       search: { documentsSearched: 7, query: 'crypto digital asset collateral haircut custodian', topMatch: 0.21, threshold: 0.6 },
       claims: [
@@ -373,7 +378,7 @@ export const SCENARIOS = [
       ],
       checks: [
         { id: 'groundedness', status: 'fail', short: '0 of 3 claims backed', summary: '0 of 3 claims are supported. No approved passage was retrieved.', evidence: [{ kind: 'search' }] },
-        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'The answer does not contradict itself.', evidence: [{ kind: 'search' }] },
+        { id: 'consistency', status: 'pass', short: 'Doesn’t contradict itself', summary: 'The answer does not contradict itself.', evidence: [{ kind: 'search' }] },
         { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'The question asks whether crypto is acceptable collateral. The answer addresses that.', evidence: [{ kind: 'question' }] },
       ],
     },
@@ -445,7 +450,7 @@ export const CORRECTIONS = {
       ],
       checks: [
         { id: 'groundedness', status: 'pass', short: 'All 3 claims backed', summary: '3 of 3 claims are supported by a current approved source.', evidence: [passageOf('DOC-SME-112', '§3.1'), passageOf('DOC-SME-104', '§5.2'), passageOf('DOC-SME-112', '§3.4')] },
-        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-SME-112', '§3.1')] },
+        { id: 'consistency', status: 'pass', short: 'Doesn’t contradict itself', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-SME-112', '§3.1')] },
         { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'States the limit asked for and the escalation path.', evidence: [{ kind: 'question' }] },
       ],
     },
@@ -469,7 +474,7 @@ export const CORRECTIONS = {
       ],
       checks: [
         { id: 'groundedness', status: 'pass', short: 'All 3 claims backed', summary: '3 of 3 claims are supported.', evidence: [passageOf('DOC-FX-019', '§2.1'), passageOf('DOC-FX-019', '§2.2')] },
-        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with the guideline.', evidence: [passageOf('DOC-FX-019', '§2.2')] },
+        { id: 'consistency', status: 'pass', short: 'Doesn’t contradict itself', summary: 'No contradiction with the guideline.', evidence: [passageOf('DOC-FX-019', '§2.2')] },
         { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'Answers whether approval is needed.', evidence: [{ kind: 'question' }] },
       ],
     },
@@ -484,15 +489,15 @@ export const CORRECTIONS = {
     },
     verification: {
       explanation: 'The off-topic sentence is gone. The limits still rest on a matrix that is overdue for review, so the score stays Medium until Branch Operations confirms it.',
-      headline: 'Fixed — source still overdue',
+      headline: 'Fixed, but the source is still overdue',
       retrieved: [],
       claims: [
-        { quote: 'A branch manager can waive account service fees of up to SGD 500 per account per year', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 3'), short: 'SGD 500 limit — source overdue for review', reason: 'Matches the source, which is overdue for review.' },
-        { quote: 'waivers above SGD 500 need approval from the area head', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 4'), short: 'Area-head rule — source overdue', reason: 'Matches the source, which is overdue for review.' },
+        { quote: 'A branch manager can waive account service fees of up to SGD 500 per account per year', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 3'), short: 'Right limit, but the source is overdue for review', reason: 'Matches the source, which is overdue for review.' },
+        { quote: 'waivers above SGD 500 need approval from the area head', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 4'), short: 'Right rule, but the source is overdue for review', reason: 'Matches the source, which is overdue for review.' },
       ],
       checks: [
         { id: 'groundedness', status: 'pass', short: 'Both claims match a source', summary: '2 of 2 claims match a source passage.', evidence: [passageOf('DOC-OPS-045', 'Row 3'), passageOf('DOC-OPS-045', 'Row 4')] },
-        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-OPS-045', 'Row 4')] },
+        { id: 'consistency', status: 'pass', short: 'Doesn’t contradict itself', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-OPS-045', 'Row 4')] },
         { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'Answers only about the SME business account asked about.', evidence: [{ kind: 'question' }] },
       ],
     },
