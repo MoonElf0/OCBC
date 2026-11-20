@@ -4603,6 +4603,22 @@
         "priority": "High"
       },
       {
+        "id": "doc-DOC-REM-014",
+        "kind": "retire-document",
+        "topic": "fees",
+        "docId": "DOC-REM-014",
+        "affected": 158,
+        "unit": "claims",
+        "title": "Retire DOC-REM-014 from the retrieval index",
+        "detail": "Remittance Fee Schedule 2025 was superseded by DOC-REM-019 but is still being retrieved, so the agent keeps quoting its old figures. Redirect it to Remittance Fee Schedule 2026.",
+        "evidence": [
+          "Fees & Charges stale-source rate 16% (158 of 972 claims)",
+          "0 of 46 Fees & Charges reviews corrected an answer resting on it"
+        ],
+        "today": 0,
+        "priority": "Medium"
+      },
+      {
         "id": "gap-collateral",
         "kind": "add-source",
         "topic": "collateral",
@@ -4630,7 +4646,7 @@
           "Conflicting-claim rate 10% (82 claims)"
         ],
         "today": 0,
-        "priority": "Medium"
+        "priority": "Low"
       },
       {
         "id": "prompt-off-intent-fees",
@@ -4682,6 +4698,22 @@
         "priority": "High"
       },
       {
+        "id": "doc-DOC-REM-014",
+        "kind": "retire-document",
+        "topic": "fees",
+        "docId": "DOC-REM-014",
+        "affected": 158,
+        "unit": "claims",
+        "title": "Retire DOC-REM-014 from the retrieval index",
+        "detail": "Remittance Fee Schedule 2025 was superseded by DOC-REM-019 but is still being retrieved, so the agent keeps quoting its old figures. Redirect it to Remittance Fee Schedule 2026.",
+        "evidence": [
+          "Fees & Charges stale-source rate 16% (158 of 972 claims)",
+          "0 of 46 Fees & Charges reviews corrected an answer resting on it"
+        ],
+        "today": 0,
+        "priority": "Medium"
+      },
+      {
         "id": "gap-collateral",
         "kind": "add-source",
         "topic": "collateral",
@@ -4709,7 +4741,7 @@
           "Conflicting-claim rate 10% (82 claims)"
         ],
         "today": 1,
-        "priority": "Medium"
+        "priority": "Low"
       },
       {
         "id": "prompt-off-intent-fees",

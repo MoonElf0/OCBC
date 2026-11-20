@@ -49,11 +49,38 @@ holds demo data. Collections: `policy_versions`, `topics`, `weekly_counts`,
 `POST /api/admin/reset`. Teammates sharing one cluster should each set their
 own `MONGODB_DB`, or one person's reset wipes everyone's demo state.
 
+## Model provider (Qwen)
+
+Claim extraction, the judge and the answer-level review need a model. Without
+one they show "Not run" and the result is partial. To use Qwen (Alibaba Cloud
+Model Studio, Singapore endpoint):
+
+```bash
+.venv/bin/pip install -r requirements-model.txt
+```
+
+Then in `backend/.env`:
+
+```
+ASSESSMENT_MODEL_PROVIDER=qwen
+ASSESSMENT_MODEL=qwen3.8-flash
+DASHSCOPE_API_KEY=sk-...
+```
+
+For the Policy Assistant to answer questions outside the scripted set, also set
+`AGENT_MODEL_PROVIDER=qwen` and `AGENT_MODEL=qwen4-max` (its own setting, separate
+from the verifier's model).
+
+Restart uvicorn and check `GET /api/health` → `model.available: true`. The
+key stays on the server; nothing is sent to the browser. Any bad, cut-off or
+off-schema model reply is treated as "Not run", never guessed. `anthropic` is
+also supported (`ANTHROPIC_API_KEY`).
+
 ## What is computed and what is still scripted
 
 | Step | Backend mode | Replaced in phase 4 by |
 |---|---|---|
-| Agent answer | scripted (`app/agent.py`) | retrieval agent + LLM |
+| Agent answer | scripted for the suggested questions; other questions: retrieval + Qwen when `AGENT_MODEL_PROVIDER=qwen` (`app/agent.py`) | unchanged |
 | Claim spans | scripted | LLM extractor; offsets found by code, never by the model |
 | Retrieval | **computed**: IDF-weighted term coverage over the library (`app/retrieval.py`) | + embeddings (hybrid) |
 | Judge verdicts (groundedness, consistency, intent) | scripted | LLM judge |

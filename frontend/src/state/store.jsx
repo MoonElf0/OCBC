@@ -25,6 +25,7 @@ export function reviewReasons(result, highStakes) {
   const reasons = []
   if (result.band?.id === 'low') reasons.push('low-confidence')
   if (claims.some((c) => c.status === 'conflicting')) reasons.push('conflicting')
+  if (claims.some((c) => c.status === 'unsupported')) reasons.push('unsupported')
   if (result.noSource || claims.some((c) => c.status === 'no-source' || c.status === 'insufficient')) reasons.push('no-source')
   if (result.assessment?.partial) reasons.push('partial')
   if (highStakes && claims.length) reasons.push('high-stakes')
@@ -72,6 +73,7 @@ function reducer(state, a) {
         asOf: a.reply.asOf ?? null,
         question: a.question,
         scenarioId: a.reply.scenarioId,
+        writtenBy: a.reply.writtenBy ?? 'scripted', // backend mode: 'scripted' or the answering model's id
         text: a.reply.text,
         citations: a.reply.citations,
         shown: 0,

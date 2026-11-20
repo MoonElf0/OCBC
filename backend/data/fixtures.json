@@ -164,6 +164,188 @@
           "text": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
         }
       ]
+    },
+    "DOC-DEP-210": {
+      "id": "DOC-DEP-210",
+      "title": "Savings Account Terms — Retail",
+      "version": "v3.0",
+      "topic": "fees",
+      "owner": "Deposits Product Office",
+      "updated": "2026-02-10",
+      "reviewCycleMonths": 12,
+      "supersededBy": null,
+      "sections": [
+        {
+          "id": "§2.1",
+          "heading": "Minimum balance",
+          "text": "A standard savings account requires an average daily balance of SGD 1,000 in each calendar month."
+        },
+        {
+          "id": "§2.2",
+          "heading": "Fall-below fee",
+          "text": "A fall-below fee of SGD 2 is charged for any month in which the average daily balance is under SGD 1,000. The fee is waived for account holders aged 21 and below."
+        },
+        {
+          "id": "§3.1",
+          "heading": "Interest",
+          "text": "Interest is calculated on the end-of-day balance and credited monthly on the last business day of the month."
+        },
+        {
+          "id": "§4.1",
+          "heading": "Dormant accounts",
+          "text": "An account with no customer-initiated transaction for 24 months is classified as dormant."
+        }
+      ]
+    },
+    "DOC-KYC-040": {
+      "id": "DOC-KYC-040",
+      "title": "Retail Account Opening Procedures",
+      "version": "v2.2",
+      "topic": "kyc",
+      "owner": "Financial Crime Compliance",
+      "updated": "2026-04-21",
+      "reviewCycleMonths": 12,
+      "supersededBy": null,
+      "sections": [
+        {
+          "id": "§2.1",
+          "heading": "Eligibility",
+          "text": "Individual accounts may be opened by applicants aged 16 and above. Applicants under 18 need a parent or guardian as a joint signatory."
+        },
+        {
+          "id": "§3.1",
+          "heading": "Identity documents — citizens and residents",
+          "text": "Singapore citizens and permanent residents must provide their NRIC to open an account."
+        },
+        {
+          "id": "§3.2",
+          "heading": "Identity documents — foreigners",
+          "text": "Foreign applicants must provide a passport, a valid employment or student pass, and proof of residential address dated within the last three months."
+        },
+        {
+          "id": "§4.1",
+          "heading": "Initial deposit",
+          "text": "An initial deposit of SGD 500 must be made within 30 days of the account being opened."
+        },
+        {
+          "id": "§5.1",
+          "heading": "Politically exposed persons",
+          "text": "An applicant identified as a politically exposed person needs senior management approval before the account is opened."
+        }
+      ]
+    },
+    "DOC-SME-130": {
+      "id": "DOC-SME-130",
+      "title": "SME Loan Repayment and Restructuring Guidelines",
+      "version": "v1.4",
+      "topic": "sme",
+      "owner": "Business Banking Credit Risk",
+      "updated": "2026-01-15",
+      "reviewCycleMonths": 12,
+      "supersededBy": null,
+      "sections": [
+        {
+          "id": "§2.1",
+          "heading": "Grace period",
+          "text": "A loan repayment received within 7 calendar days of its due date is not treated as late."
+        },
+        {
+          "id": "§2.2",
+          "heading": "Late payment fee",
+          "text": "After the grace period, a late payment fee of 2% of the overdue instalment is charged, subject to a minimum of SGD 50."
+        },
+        {
+          "id": "§3.1",
+          "heading": "Early repayment",
+          "text": "A borrower may repay a term loan in full early by giving 30 days' written notice. A prepayment fee of 1.5% of the amount repaid applies during the first two years of the loan."
+        },
+        {
+          "id": "§4.1",
+          "heading": "Restructuring",
+          "text": "A request to restructure an SME loan must be approved by the Business Banking Credit Committee."
+        }
+      ]
+    },
+    "DOC-CRD-031": {
+      "id": "DOC-CRD-031",
+      "title": "Card Dispute Handling Procedure",
+      "version": "v2.1",
+      "topic": "fees",
+      "owner": "Cards & Payments",
+      "updated": "2026-08-03",
+      "reviewCycleMonths": 12,
+      "supersededBy": null,
+      "sections": [
+        {
+          "id": "§2.1",
+          "heading": "Time limit",
+          "text": "A customer must raise a card transaction dispute within 60 days of the statement date."
+        },
+        {
+          "id": "§2.2",
+          "heading": "Provisional credit",
+          "text": "For a dispute above SGD 100, a provisional credit is posted within 10 business days while the case is investigated."
+        },
+        {
+          "id": "§3.1",
+          "heading": "Suspected fraud",
+          "text": "A suspected fraudulent transaction must be reported immediately, and the card is blocked before the dispute is logged."
+        },
+        {
+          "id": "§4.1",
+          "heading": "Resolution",
+          "text": "Card disputes are resolved within 90 days of being logged."
+        }
+      ]
+    },
+    "DOC-REM-014": {
+      "id": "DOC-REM-014",
+      "title": "Remittance Fee Schedule 2025",
+      "version": "v1.0",
+      "topic": "fees",
+      "owner": "Retail Payments",
+      "updated": "2025-01-06",
+      "reviewCycleMonths": 12,
+      "supersededBy": "DOC-REM-019",
+      "sections": [
+        {
+          "id": "§1",
+          "heading": "Online remittance",
+          "text": "Overseas remittances made through online banking are charged a flat fee of SGD 10 per transaction."
+        },
+        {
+          "id": "§2",
+          "heading": "Branch remittance",
+          "text": "Overseas remittances made at a branch are charged SGD 30 per transaction."
+        }
+      ]
+    },
+    "DOC-REM-019": {
+      "id": "DOC-REM-019",
+      "title": "Remittance Fee Schedule 2026",
+      "version": "v2.0",
+      "topic": "fees",
+      "owner": "Retail Payments",
+      "updated": "2026-03-30",
+      "reviewCycleMonths": 12,
+      "supersededBy": null,
+      "sections": [
+        {
+          "id": "§1",
+          "heading": "Online remittance",
+          "text": "Overseas remittances made through online banking are charged a flat fee of SGD 5 per transaction. This replaces the SGD 10 fee in DOC-REM-014."
+        },
+        {
+          "id": "§2",
+          "heading": "Branch remittance",
+          "text": "Overseas remittances made at a branch are charged SGD 25 per transaction."
+        },
+        {
+          "id": "§3",
+          "heading": "Daily limit",
+          "text": "Online overseas remittances are limited to SGD 50,000 per customer per day."
+        }
+      ]
     }
   },
   "TOPICS": {

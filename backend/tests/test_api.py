@@ -36,7 +36,7 @@ def ask_and_verify(client, q):
 def test_ask_returns_the_agent_answer_only(client):
     a = client.post("/api/ask", json={"question": SME_Q}).json()
     assert a["scenarioId"] == "sme-limit" and a["answerId"].startswith("ANS-")
-    assert set(a) == {"answerId", "scenarioId", "text", "citations"}
+    assert set(a) == {"answerId", "scenarioId", "text", "citations", "writtenBy"} and a["writtenBy"] == "scripted"
 
 
 def test_verify_streams_checks_in_order_then_a_valid_result(client, schema_validator):
@@ -61,12 +61,16 @@ def test_low_score_is_routed_without_the_employee_asking(client):
 
 def test_escalate_then_correct_feeds_the_dashboard(client):
     a, events = ask_and_verify(client, SME_Q)
-    assert events[-1][1]["routed"] is None  # Medium, not high-stakes: not auto-routed
+    # Medium, not high-stakes, but one claim is unsupported: review is mandatory.
+    auto = events[-1][1]["routed"]
+    assert auto["by"] == "auto" and events[-1][1]["state"] == "review-required"
     before = client.get("/api/metrics").json()
+    # The employee's escalation joins that review and adds their note.
     esc = client.post(f"/api/answers/{a['answerId']}/escalate", json={"note": "Limit looks old"}).json()
     rid = esc["routed"]["queueId"]
+    assert rid == auto["queueId"]
     item = next(r for r in esc["queue"] if r["id"] == rid)
-    assert item["reasons"] == ["employee", "unsupported", "stale"]
+    assert item["reasons"] == ["unsupported", "employee", "stale"]
     assert item["note"] == "Limit looks old" and item["question"] == SME_Q
 
     draft = fixtures.load()["CORRECTIONS"]["sme-limit"]["answer"]["text"]

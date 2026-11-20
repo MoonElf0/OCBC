@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { ArrowUp, PanelLeft, LoaderCircle, Ban, Pencil, CircleCheck, CircleHelp, Flag, ShieldCheck, ClipboardPaste } from 'lucide-react'
+import { ArrowUp, PanelLeft, LoaderCircle, Ban, Pencil, CircleCheck, CircleHelp, Flag, ShieldCheck, ClipboardPaste, Bot } from 'lucide-react'
 import { useStore } from '../state/store'
 import { SCENARIOS, DEMO_TODAY } from '../fixtures'
 import { TONES, CHECKS, topicIcon, ANSWER_STATES } from '../lib/status'
@@ -123,6 +123,12 @@ function AnswerCard({ m }) {
             <ClipboardPaste size={13} aria-hidden="true" /> Submitted for verification · not from the Policy Assistant
             {m.citations.length > 0 && <span className="text-smoke">· cites {m.citations.join(', ')}</span>}
             {m.asOf && <span className="text-smoke">· policy date {m.asOf}</span>}
+          </div>
+        )}
+        {m.source === 'asked' && m.writtenBy && m.writtenBy !== 'scripted' && (
+          <div className="mb-2 flex flex-wrap items-center gap-1.5 text-caption font-medium text-carbon">
+            <Bot size={13} aria-hidden="true" /> Written by {m.writtenBy} from the synthetic policy library
+            {m.citations.length > 0 && <span className="text-smoke">· cites {m.citations.join(', ')}</span>}
           </div>
         )}
         {m.outcome?.decision === 'corrected' && <div className="mb-2 text-caption font-semibold text-smoke">Original answer</div>}
@@ -440,7 +446,11 @@ function AskComposer() {
           <ArrowUp size={18} />
         </button>
       </form>
-      <p className="mt-2 text-caption text-smoke">Scripted prototype · answers come from a fixed set of synthetic policy questions.</p>
+      <p className="mt-2 text-caption text-smoke">
+        {state.health?.agent?.available
+          ? `Backend mode · suggested questions are scripted; other questions are answered by ${state.health.agent.model} from synthetic policies.`
+          : 'Scripted prototype · answers come from a fixed set of synthetic policy questions.'}
+      </p>
     </div>
   )
 }
