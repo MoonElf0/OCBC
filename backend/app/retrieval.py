@@ -63,6 +63,7 @@ class Unit:
     """One sentence of one section -- the unit retrieval scores."""
 
     doc_id: str
+    key: str  # library key: the doc id, or "DOC-X@v1.2" for a versioned library
     section: str
     text: str  # the sentence
     passage: str  # the whole section text
@@ -73,16 +74,16 @@ class Index:
     def __init__(self, docs: dict):
         self.docs = docs
         self.units: list[Unit] = []
-        for d in docs.values():
+        for key, d in docs.items():
             for s in d["sections"]:
                 # Sentences first, whole section last: on a tie the single
                 # sentence wins, so its figures are the ones compared.
                 sents = _SENT.split(s["text"])
                 for sent in [*sents, *([s["text"]] if len(sents) > 1 else [])]:
-                    self.units.append(Unit(d["id"], s["id"], sent, s["text"], frozenset(terms(sent + " " + s["heading"]))))
-        n = len({(u.doc_id, u.section, u.text) for u in self.units})
+                    self.units.append(Unit(d["id"], key, s["id"], sent, s["text"], frozenset(terms(sent + " " + s["heading"]))))
+        n = len({(u.key, u.section, u.text) for u in self.units})
         df: dict[str, int] = {}
-        for u in {(u.doc_id, u.section, u.text): u for u in self.units}.values():
+        for u in {(u.key, u.section, u.text): u for u in self.units}.values():
             for t in u.terms:
                 df[t] = df.get(t, 0) + 1
         self.n = n
@@ -103,8 +104,8 @@ class Index:
         best: dict[tuple, dict] = {}
         for u in self.units:
             s = self.coverage(q, u.terms)
-            key = (u.doc_id, u.section)
-            if s > best.get(key, {"score": -1})["score"]:
-                best[key] = {"docId": u.doc_id, "section": u.section, "passage": u.passage, "sentence": u.text, "score": round(s, 3)}
+            slot = (u.key, u.section)
+            if s > best.get(slot, {"score": -1})["score"]:
+                best[slot] = {"docId": u.doc_id, "key": u.key, "section": u.section, "passage": u.passage, "sentence": u.text, "score": round(s, 3)}
         hits = sorted(best.values(), key=lambda h: -h["score"])
         return [h for h in hits[:k] if h["score"] > 0]

@@ -1,11 +1,14 @@
-import { MessageSquare, Inbox, ChartLine, ShieldCheck } from 'lucide-react'
+import { MessageSquare, Inbox, ChartLine, ShieldCheck, ClipboardPaste, Library, FlaskConical } from 'lucide-react'
 import { useStore } from '../state/store'
 import { BACKEND } from '../lib/backend'
 
 const LINKS = [
   { id: 'workspace', label: 'Assistant', Icon: MessageSquare },
+  { id: 'verify', label: 'Verify answer', Icon: ClipboardPaste },
   { id: 'review', label: 'Review queue', Icon: Inbox },
+  { id: 'library', label: 'Library', Icon: Library },
   { id: 'trends', label: 'Trends', Icon: ChartLine },
+  { id: 'evaluation', label: 'Evaluation', Icon: FlaskConical },
 ]
 
 export default function TopNav() {
@@ -30,11 +33,13 @@ export default function TopNav() {
                 key={l.id}
                 role="tab"
                 aria-selected={active}
+                aria-label={l.id === 'review' && pending > 0 ? `${l.label}, ${pending} pending` : l.label}
+                title={l.label}
                 onClick={() => dispatch({ type: 'view', view: l.id })}
-                className={`relative inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-body-sm font-medium whitespace-nowrap transition-all sm:px-4 ${active ? 'bg-white text-ink shadow-sm' : 'text-smoke hover:text-ink'}`}
+                className={`relative inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-body-sm font-medium whitespace-nowrap transition-all xl:px-4 ${active ? 'bg-white text-ink shadow-sm' : 'text-smoke hover:text-ink'}`}
               >
                 <l.Icon size={15} aria-hidden="true" />
-                <span className="hidden sm:inline">{l.label}</span>
+                <span className="hidden lg:inline">{l.label}</span>
                 {l.id === 'review' && pending > 0 && <span className="rounded-full bg-ink px-1.5 text-[12px] font-semibold text-white tabular-nums">{pending}</span>}
                 {l.id === 'workspace' && state.unreadOutcomes > 0 && <span className="size-2 rounded-full bg-ocbc-red" aria-label="Reviewer outcome waiting" />}
               </button>
@@ -43,8 +48,8 @@ export default function TopNav() {
         </div>
 
         <span
-          className="hidden items-center gap-1.5 rounded-full bg-black/[0.04] px-3 py-1 text-caption whitespace-nowrap text-carbon md:inline-flex"
-          title={BACKEND ? 'Connected to the backend: retrieval, rule checks, scores, routing, the review queue and the dashboard come from the server. Answers and judge verdicts are still scripted.' : 'Offline demo: everything runs in this browser tab and nothing is saved.'}
+          className="hidden items-center gap-1.5 rounded-full bg-black/[0.04] px-3 py-1 text-caption whitespace-nowrap text-carbon xl:inline-flex"
+          title={BACKEND ? 'Backend mode: retrieval, rule checks, the reliability index, routing and the dashboard are computed by the backend. Policy Assistant answers and their judge verdicts are scripted; submitted answers and corrections run the pipeline, with model steps only if a provider is configured.' : 'Offline demo: everything runs in this browser tab and nothing is saved.'}
         >
           <span className={`size-1.5 rounded-full ${BACKEND ? 'bg-status-verified' : 'bg-smoke'}`} aria-hidden="true" />
           {BACKEND ? 'Backend' : 'Offline demo'}

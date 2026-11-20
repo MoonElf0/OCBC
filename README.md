@@ -6,7 +6,9 @@ An employee asks a banking policy question. A simple answering agent (the **Poli
 
 > **Two systems, never one.** The Policy Assistant answers. Assessment AI audits it. The answering agent is kept simple on purpose. Its job is to be wrong sometimes, so the verifier has something to catch.
 
-> **This is a scripted demo.** There is no server, no model calls and no live data. Every document, answer, verdict and dashboard figure is synthetic and lives in one fixture module. The data follows the shape a real pipeline would return, so a live agent and verifier could be plugged in behind the same interfaces.
+> **Two modes.** *Demo mode* (default) is a scripted, offline front-end demo: every document, answer, verdict and dashboard figure is synthetic and lives in one fixture module. *Backend mode* adds a FastAPI + SQLite service that verifies **any** answer you paste in, re-verifies reviewer corrections, keeps policy versions and an audit trail, and measures itself on labelled cases. Model steps (claim extraction, support judge, intent) run only when a model provider is configured on the server; without one they are reported as **not run** and the result is marked partial — never filled in from scripts. All data is synthetic.
+
+> **Reliability index.** The 0–100 figure is an evidence-based index of how well approved policy backs an answer. It is not the probability that the answer is correct, and not permission to perform a banking action.
 
 ---
 
@@ -26,6 +28,40 @@ npm run dev          # http://localhost:5173
 | `npm run preview` | Serves the built bundle locally |
 
 No env vars, no API keys, no backend. It works offline, with the Inter font bundled through `@fontsource`.
+
+### Backend mode
+
+```bash
+cd backend
+python -m venv .venv && .venv/bin/pip install -r requirements-dev.txt   # Windows: .venv\Scripts\pip
+.venv/bin/uvicorn app.main:app --port 8000
+# optional, for model-based checks:
+#   pip install -r requirements-model.txt
+#   export ASSESSMENT_MODEL_PROVIDER=anthropic ANTHROPIC_API_KEY=...
+cd ../frontend && npm run dev:backend      # http://localhost:5173, /api proxied to :8000
+```
+
+See [`backend/README.md`](backend/README.md) for the configuration, the API, and exactly which steps are computed, model-based or scripted.
+
+## Backend-mode features
+
+- **Verify an answer** (workspace composer → "Verify an answer"): paste the original question, an AI-generated answer, any citations, and the policy date. Assessment AI extracts the claims, locates them in the answer by code, retrieves its own evidence from the policy versions in force on that date, checks citations (exist, right section, current, relevant), freshness, conflicting figures and support, screens retrieved text for injected instructions, and returns supported / conflicting / unsupported / insufficient-evidence / not-checked verdicts with reasons and exact passages. The checks resolve one at a time in the same panel as scripted answers.
+- **Mandatory review and answer states**: Under verification · Review required · No review required · Approved · Corrected · Rejected · Evidence changed — re-verification required. Review is mandatory for a Low index, conflicting evidence, insufficient evidence, a partial assessment, or a designated high-risk topic (at any index). Only a reviewer's decision clears it; the Challenger's clarifying question never does.
+- **Reviewer corrections in any wording** are re-verified by the same pipeline (the reviewer can check the wording before sending) and stored as their own answer with their own assessment. Decisions record the simulated reviewer identity, note, override, real timestamps and the policy versions the original assessment used. Every assessment is kept; the panel shows the history, a before/after comparison and the audit trail.
+- **Knowledge library** (admin): every policy document with version, owner, status (draft / approved / superseded), effective and review dates, and the version it replaces. Approved text is never edited — a change is a draft that is approved. Approving it marks every answer that relied on the replaced version "Evidence changed — re-verification required", keeping the original result for comparison.
+- **Evaluation** (admin): 41 labelled synthetic cases (14 tuning, 27 held-out) covering correct claims, wrong amounts / percentages / limits, superseded policies, invented and irrelevant citations, missing evidence, ambiguous questions, reviewer corrections and prompt injection. Shows detection rate, false-positive rate, correct claims confirmed, citation validity, appropriate abstention, review routing, injection containment and latency — each with numerator, denominator and definition, counted from the recorded predictions. Runs are labelled rule-based or model-based.
+
+## Presentation walkthrough (backend mode)
+
+Reset first: `curl -X POST localhost:8000/api/admin/reset` (or delete `backend/data/assessment.db`).
+
+1. **New answer.** Workspace → *Verify an answer* → *Fill in an example* → *Verify answer*. The answer appears first; six checks resolve.
+2. **Flagged claim.** The 50 bps claim is *Conflicting* (policy says 10 bps, DOC-FX-019 v2.3 §2.1); the mandate condition has *Insufficient evidence*. State: *Review required* (Low index, conflicting evidence, high-risk topic; partial if no model). Click *See details* and the Trust Map chips.
+3. **Human review.** Role menu → *Reviewer queue* → the new item. Pick *Correct*, write your own wording, *Check this wording* to see it re-verified, add a note, submit as the simulated reviewer.
+4. **Rewritten answer checked again.** Back in the workspace the answer shows *Corrected* with the reviewer's text, its own index, who decided and when.
+5. **Policy update.** Verify a correct answer (e.g. "Relationship managers may apply FX rate overrides of up to 10 basis points.", citing DOC-FX-019). Role menu → *Knowledge library* → FX Rate Override Guidelines → *Draft a new version* (change 10 to 25 bps in §2.1 and §2.2, add a change note) → *Approve v2.4*. The notice lists the affected answers; v2.3 stays, superseded.
+6. **Affected answer reassessed.** *Re-verify from the workspace* → the answer shows *Evidence changed* → *Re-verify against current policy*. The 10 bps claim now rests on a replaced version; the history shows both assessments and the before/after comparison.
+7. Optional: role menu → *Evaluation* → *Run evaluation* (held-out).
 
 ---
 
@@ -197,7 +233,9 @@ Replace these and the UI stays the same:
 
 ## Tests
 
-`npm test` checks that the fixtures are consistent with each other:
+`cd backend && .venv/bin/python -m pytest -q` covers the backend: parity with the JS demo, retrieval, the general pipeline (offsets, figures, superseded versions, citations, missing evidence, honest partial state without a model, judge-quote guard, prompt-injection screening, policy dates), the review workflow (arbitrary corrections re-verified, mandatory review not bypassable, simulated identities, history kept), policy versions and change impact, and the evaluation metrics (recounted from the recorded predictions).
+
+`npm test` checks that the fixtures are consistent with each other, that every status the contract allows has an icon and a label, and the demo-mode review rules:
 
 - Claim offsets are valid, don't overlap and point into the answer text
 - Every cited passage appears word for word in its source document

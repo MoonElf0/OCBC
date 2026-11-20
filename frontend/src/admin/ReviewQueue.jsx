@@ -12,6 +12,8 @@ import {
   FileStack,
   FileText,
   Flag,
+  History,
+  LoaderCircle,
   Hash,
   Inbox,
   ListChecks,
@@ -23,10 +25,12 @@ import {
   ShieldCheck,
   Sparkles,
   User,
+  UserRound,
   Users,
   X,
 } from 'lucide-react'
-import { useStore } from '../state/store'
+import { useStore, DEMO_REVIEWERS } from '../state/store'
+import { BACKEND, api } from '../lib/backend'
 import { REVIEW_HINTS, CORRECTIONS, TOPICS, DEMO_TODAY, DOCUMENTS } from '../fixtures'
 import { assess } from '../lib/assess'
 import { scenarioById } from '../lib/pipeline'
@@ -35,12 +39,37 @@ import { freshnessOf, formatDate } from '../lib/freshness'
 import { flagged } from '../lib/view'
 import AnswerText from '../components/AnswerText'
 import { SearchRecord } from '../components/Evidence'
-import { ScoreBadge, ClaimPill, CheckPill, IconTile, SectionHeader } from '../components/ui'
+import { ScoreBadge, ClaimPill, CheckPill, IconTile, SectionHeader, docInfo } from '../components/ui'
+import { AuditTrail, PartialNotice, formatWhen } from '../components/lifecycle'
 
 // Demo clock for "2m ago" labels. Fixed so relative times never drift between takes.
 const DEMO_NOW = new Date(`${DEMO_TODAY}T09:14`)
 
 const resultOf = (q) => q.result ?? assess(q.scenarioId)
+
+/**
+ * What the reviewer sees. Backend mode sends the stored answer and its
+ * assessment (and submitted answers have no scenario); demo mode reads the fixture.
+ */
+function caseOf(q) {
+  const sc = scenarioById(q.scenarioId)
+  const topic = q.topic ?? sc.topic
+  return {
+    sc,
+    topic,
+    question: q.question ?? sc.question,
+    text: q.answerText ?? sc.answer.text,
+    topicName: TOPICS[topic]?.name ?? 'Topic not identified',
+    submitted: q.kind === 'submitted',
+  }
+}
+
+/** Freshness of a passage: the assessed version's own state when the backend sent it, the fixture library otherwise. */
+function freshnessOfPassage(p) {
+  if (p.version && p.state) return { state: p.state, stale: p.state !== 'current', supersededBy: p.supersededBy ? { id: String(p.supersededBy).replace('@', ' ') } : null }
+  if (!DOCUMENTS[p.docId]) return { state: 'unknown', stale: false }
+  return freshnessOf(p.docId)
+}
 
 function ago(askedAt) {
   if (askedAt === 'Just now') return 'Just now'
@@ -61,12 +90,11 @@ const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`
 
 /** Every document a set of claims leans on, with its freshness. */
 function sourcesOf(claims) {
-  const ids = new Set()
+  const byId = new Map()
   for (const c of claims) {
-    if (c.source?.docId) ids.add(c.source.docId)
-    if (c.counter?.docId) ids.add(c.counter.docId)
+    for (const p of [c.source, c.counter]) if (p?.docId && !byId.has(p.docId)) byId.set(p.docId, p)
   }
-  return [...ids].map((id) => ({ id, ...freshnessOf(id) }))
+  return [...byId.entries()].map(([id, p]) => ({ id, ...freshnessOfPassage(p) }))
 }
 
 export default function ReviewQueue() {
@@ -80,8 +108,8 @@ export default function ReviewQueue() {
       .filter((i) => i.status === tab)
       .filter((i) => {
         if (!q) return true
-        const sc = scenarioById(i.scenarioId)
-        return [sc.question, i.id, TOPICS[sc.topic]?.name, i.askedBy].some((s) => s?.toLowerCase().includes(q))
+        const k = caseOf(i)
+        return [k.question, i.id, k.topicName, i.askedBy].some((s) => s?.toLowerCase().includes(q))
       })
       .sort(ORDER[tab])
   }, [state.queue, tab, query])
@@ -289,9 +317,9 @@ function ReasonChip({ id }) {
 }
 
 function QueueCard({ item, selected, onSelect }) {
-  const sc = scenarioById(item.scenarioId)
+  const k = caseOf(item)
   const v = resultOf(item)
-  const TopicIcon = topicIcon(sc.topic)
+  const TopicIcon = topicIcon(k.topic)
   const o = item.status === 'resolved' ? OUTCOME_META[item.outcome.decision] : null
   // The score already says "low confidence"; the chips say why.
   const reasons = item.reasons.filter((r) => r !== 'low-confidence')
@@ -308,11 +336,11 @@ function QueueCard({ item, selected, onSelect }) {
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-1.5 text-caption text-smoke">
             <TopicIcon size={13} aria-hidden="true" />
-            <span className="truncate">{TOPICS[sc.topic]?.name}</span>
+            <span className="truncate">{k.submitted ? 'Submitted answer' : k.topicName}</span>
             <span aria-hidden="true">·</span>
             <span className="shrink-0">{ago(item.askedAt)}</span>
           </span>
-          <span className="mt-1 line-clamp-3 text-body font-semibold leading-snug text-ink sm:line-clamp-2">{sc.question}</span>
+          <span className="mt-1 line-clamp-3 text-body font-semibold leading-snug text-ink sm:line-clamp-2">{k.question}</span>
           {o ? (
             <span className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
               <span className={`inline-flex items-center gap-1.5 text-caption font-semibold ${TONES[o.tone].text}`}>
@@ -340,7 +368,8 @@ function QueueCard({ item, selected, onSelect }) {
 /* ─── Case detail ──────────────────────────────────────────────────────── */
 
 function ReviewDetail({ item, onDecided }) {
-  const sc = scenarioById(item.scenarioId)
+  const k = caseOf(item)
+  const sc = k.sc
   const v = resultOf(item)
   const [focus, setFocus] = useState(null)
   const flags = [...flagged(v.claims)].sort((a, b) => severityOf(a.status) - severityOf(b.status))
@@ -356,7 +385,7 @@ function ReviewDetail({ item, onDecided }) {
   return (
     <div id="rq-case" className="rise-in grid scroll-mt-4 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       <article className="min-w-0 space-y-6" aria-labelledby="rq-question">
-        <CaseHeader item={item} sc={sc} />
+        <CaseHeader item={item} k={k} />
         {/* Narrow screens: the score sits right under the question, not below every claim. */}
         <div className="lg:hidden">
           <ScoreCard v={v} flags={flags} />
@@ -368,7 +397,7 @@ function ReviewDetail({ item, onDecided }) {
             <StatusLegend claims={v.claims} />
           </SectionHeader>
           <div className="rq-inset rounded-2xl p-5">
-            <AnswerText text={sc.answer.text} claims={v.claims} activeClaimId={focus} onClaim={jump} vocab="status" numbers={numbers} />
+            <AnswerText text={k.text} claims={v.claims} activeClaimId={focus} onClaim={jump} vocab="status" numbers={numbers} />
           </div>
           {flags.length > 0 && <p className="mt-2 text-caption text-smoke">Numbers match the flagged claims below. Select one to jump to its source.</p>}
           <div className="mt-4 flex gap-3 rounded-2xl bg-black/[0.03] p-4">
@@ -376,8 +405,19 @@ function ReviewDetail({ item, onDecided }) {
             <div>
               <div className="text-caption font-semibold text-ink">Assessment AI summary</div>
               <p className="mt-0.5 text-body-sm text-carbon">{v.explanation}</p>
+              {item.assessment?.policyVersions?.length > 0 && (
+                <p className="mt-1.5 text-caption text-smoke">
+                  Assessed against {item.assessment.policyVersions.map((p) => `${p.docId} ${p.version}`).join(', ')}
+                  {v.assessment?.asOf ? ` · policy date ${v.assessment.asOf}` : ''}
+                </p>
+              )}
             </div>
           </div>
+          {v.assessment?.partial && (
+            <div className="mt-3">
+              <PartialNotice assessment={v.assessment} />
+            </div>
+          )}
         </section>
 
         <section aria-labelledby="rq-claims">
@@ -387,7 +427,7 @@ function ReviewDetail({ item, onDecided }) {
           ) : (
             <div className="space-y-4">
               {flags.map((c, i) => (
-                <ClaimCard key={c.id} n={i + 1} c={c} sc={sc} focused={focus === c.id} search={v.search} sameSearchAs={c.source || c.id === firstNoSource ? null : numbers[firstNoSource]} />
+                <ClaimCard key={c.id} n={i + 1} c={c} sc={sc} text={k.text} focused={focus === c.id} search={v.search} sameSearchAs={c.source || c.id === firstNoSource ? null : numbers[firstNoSource]} />
               ))}
             </div>
           )}
@@ -401,7 +441,7 @@ function ReviewDetail({ item, onDecided }) {
         <div className="hidden lg:block">
           <ScoreCard v={v} flags={flags} />
         </div>
-        <Decision item={item} sc={sc} flags={flags} onDecided={onDecided} />
+        <Decision item={item} sc={sc} k={k} v={v} flags={flags} onDecided={onDecided} />
       </aside>
     </div>
   )
@@ -416,9 +456,9 @@ function MetaItem({ Icon, children }) {
   )
 }
 
-function CaseHeader({ item, sc }) {
+function CaseHeader({ item, k }) {
   const pending = item.status === 'pending'
-  const TopicIcon = topicIcon(sc.topic)
+  const TopicIcon = topicIcon(k.topic)
   return (
     <header className="rq-glass rounded-3xl p-6 lg:p-7">
       <div className="flex flex-wrap items-center gap-2">
@@ -444,7 +484,7 @@ function CaseHeader({ item, sc }) {
         <div className="min-w-0">
           <div className="text-caption font-semibold tracking-[0.06em] text-smoke uppercase">Question asked</div>
           <h2 id="rq-question" className="mt-1 text-[26px] leading-tight font-semibold tracking-[-0.02em] text-ink [text-wrap:pretty]">
-            {sc.question}
+            {k.question}
           </h2>
         </div>
       </div>
@@ -459,7 +499,8 @@ function CaseHeader({ item, sc }) {
       )}
       <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-black/[0.06] pt-4">
         <MetaItem Icon={User}>{item.askedBy}</MetaItem>
-        <MetaItem Icon={TopicIcon}>{TOPICS[sc.topic]?.name}</MetaItem>
+        <MetaItem Icon={TopicIcon}>{k.topicName}</MetaItem>
+        {k.submitted && <MetaItem Icon={FileText}>Submitted for verification · not from the Policy Assistant</MetaItem>}
         <MetaItem Icon={Route}>{item.routedBy === 'auto' ? 'Sent here automatically by Assessment AI' : 'Escalated by the employee'}</MetaItem>
         {item.watchers?.length ? <MetaItem Icon={Users}>{1 + item.watchers.length} employees waiting</MetaItem> : null}
       </div>
@@ -527,7 +568,7 @@ function WhyFlagged({ item, v }) {
               {sources.map((s) => (
                 <li key={s.id} className="flex items-center gap-2 text-caption">
                   <FileText size={14} className="shrink-0 text-smoke" aria-hidden="true" />
-                  <span className="min-w-0 flex-1 truncate font-medium text-ink" title={DOCUMENTS[s.id]?.title}>
+                  <span className="min-w-0 flex-1 truncate font-medium text-ink" title={docInfo(s.id).title}>
                     {s.id}
                   </span>
                   {s.stale ? (
@@ -588,10 +629,12 @@ function PanelLabel({ Icon, children }) {
   )
 }
 
-function ClaimCard({ n, c, sc, focused, search, sameSearchAs }) {
+function ClaimCard({ n, c, sc, text, focused, search, sameSearchAs }) {
   const s = CLAIM_STATUS[c.status]
   const t = TONES[s.tone]
-  const ctx = sentenceAround(sc.answer.text, c.start, c.end)
+  const ctx = sentenceAround(text, c.start, c.end)
+  // The backend may name one passage as both the rule and the contradiction: show it once.
+  const sameAsSource = c.counter && c.source && c.counter.docId === c.source.docId && c.counter.section === c.source.section && c.counter.version === c.source.version
   // The pill already names the status; don't say it twice ("No source found. No source found…").
   const reason = c.reason.toLowerCase().startsWith(`${s.label.toLowerCase()}.`) ? c.reason.slice(s.label.length + 1).trim() : c.reason
   return (
@@ -617,7 +660,7 @@ function ClaimCard({ n, c, sc, focused, search, sameSearchAs }) {
           {c.source ? (
             <div className="space-y-3">
               <Evidence source={c.source} />
-              {c.counter && <Evidence source={c.counter} label="Also relevant" />}
+              {c.counter && !sameAsSource && <Evidence source={c.counter} label="Also relevant" />}
             </div>
           ) : (
             <div>
@@ -639,8 +682,9 @@ function ClaimCard({ n, c, sc, focused, search, sameSearchAs }) {
 
 function Evidence({ source, label }) {
   const [open, setOpen] = useState(false)
-  const doc = DOCUMENTS[source.docId]
-  const f = freshnessOf(source.docId)
+  const info = docInfo(source.docId, source)
+  const doc = DOCUMENTS[source.docId] ?? { id: source.docId, title: info.title, version: info.version }
+  const f = freshnessOfPassage(source)
   const section = doc.sections?.find((x) => x.id === source.section)
   return (
     <div>
@@ -653,7 +697,8 @@ function Evidence({ source, label }) {
           <div className="text-body-sm font-semibold text-ink">{doc.title}</div>
           <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-smoke">
             <span>
-              {doc.id} {source.section} · {doc.version}
+              {doc.id} {source.section}
+              {(source.version ?? doc.version) ? ` · ${source.version ?? doc.version}` : ''}
             </span>
             {!f.stale && (
               <span className="inline-flex items-center gap-1 font-medium text-status-verified">
@@ -661,9 +706,11 @@ function Evidence({ source, label }) {
               </span>
             )}
           </div>
-          <div className="mt-0.5 text-caption text-smoke">
-            Owner: {doc.owner} · Updated {formatDate(doc.updated)}
-          </div>
+          {doc.owner && (
+            <div className="mt-0.5 text-caption text-smoke">
+              Owner: {doc.owner} · Updated {formatDate(doc.updated)}
+            </div>
+          )}
         </div>
       </div>
       {f.stale && (
@@ -672,12 +719,15 @@ function Evidence({ source, label }) {
           <span>
             <span className="font-semibold text-status-caution">Stale source · </span>
             {f.state === 'superseded'
-              ? `Superseded by ${f.supersededBy.id} (${f.supersededBy.title}).`
-              : `Reviewed every ${doc.reviewCycleMonths} months; last updated ${f.months} months ago (${f.months - doc.reviewCycleMonths} overdue). No newer version on file.`}
+              ? `Superseded by ${f.supersededBy?.id ?? 'a newer version'}${f.supersededBy?.title ? ` (${f.supersededBy.title})` : ''}.`
+              : f.months != null && doc.reviewCycleMonths
+                ? `Reviewed every ${doc.reviewCycleMonths} months; last updated ${f.months} months ago (${f.months - doc.reviewCycleMonths} overdue). No newer version on file.`
+                : 'This version is past its review date.'}
           </span>
         </div>
       )}
       <blockquote className="mt-2.5 rounded-xl border-l-[3px] border-carbon/25 bg-white/70 px-3.5 py-2.5 text-body-sm text-ink dark:bg-white/[0.04]">“{source.passage}”</blockquote>
+      {source.screened && <p className="mt-1.5 text-caption text-carbon">Instruction-like text in this document was removed and never used as evidence.</p>}
       {section && (
         <>
           <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="mt-2 inline-flex items-center gap-1 rounded-lg py-1 text-caption font-medium text-carbon hover:text-ink">
@@ -702,7 +752,7 @@ function Evidence({ source, label }) {
 
 function ChecksGrid({ v }) {
   const rows = CHECKS.map((meta) => ({ meta, check: v.checks.find((c) => c.id === meta.id) })).filter((r) => r.check)
-  const tally = ['pass', 'warning', 'fail', 'na']
+  const tally = ['pass', 'warning', 'fail', 'unavailable', 'na']
     .map((s) => ({ s, n: rows.filter((r) => r.check.status === s).length }))
     .filter((x) => x.n)
   return (
@@ -794,44 +844,58 @@ const DECISIONS = {
   rejected: { label: 'Reject', verb: 'Confirm rejection', desc: 'Withdraw it. No safe correction exists.', Icon: Ban },
 }
 
-function Decision({ item, sc, flags, onDecided }) {
+function Decision({ item, sc, k, v, flags, onDecided }) {
   const flagCount = flags.length
-  const { decide } = useStore()
+  const { state, decide } = useStore()
   const hint = REVIEW_HINTS[sc.id] ?? {}
-  const draft = CORRECTIONS[sc.id]
+  const draft = k.submitted ? null : CORRECTIONS[sc.id]
+  const reviewers = state.health?.reviewers ?? DEMO_REVIEWERS
+  const [reviewerId, setReviewerId] = useState(reviewers[0].id)
   const [decision, setDecision] = useState(null)
-  const [text, setText] = useState(sc.answer.text)
+  const [text, setText] = useState(k.text)
   const [note, setNote] = useState('')
   const [ack, setAck] = useState(false)
   const [tried, setTried] = useState(false)
+  const [check, setCheck] = useState(null) // backend: { text, result } once a correction has been checked
+  const [checking, setChecking] = useState(false)
+  const [sending, setSending] = useState(false)
 
-  if (item.status === 'resolved') {
-    const o = OUTCOME_META[item.outcome.decision]
-    return (
-      <section className={`rq-glass space-y-3 rounded-3xl border-l-4 p-5 ${TONES[o.tone].border}`} aria-label="Decision">
-        <div className={`flex items-center gap-2 text-body font-semibold ${TONES[o.tone].text}`}>
-          <o.Icon size={18} aria-hidden="true" /> {o.label}
-        </div>
-        {item.outcome.correctedText && <p className="rq-inset rounded-2xl p-3 text-body-sm text-ink">{item.outcome.correctedText}</p>}
-        <p className="text-body-sm text-carbon">
-          <span className="font-semibold text-ink">Note:</span> {item.outcome.note}
-        </p>
-        {item.outcome.recheck && (
-          <p className="flex flex-wrap items-center gap-1.5 text-caption text-carbon">
-            Re-checked by Assessment AI <ScoreBadge score={item.outcome.recheck.result.score} />
-          </p>
-        )}
-        <p className="text-caption text-smoke">{item.answerId || item.watchers?.length ? 'Returned to the employee who asked. ' : ''}Feeds the recommendations on the Trends page.</p>
-      </section>
-    )
+  if (item.status === 'resolved') return <Resolved item={item} />
+
+  const partial = !!v.assessment?.partial
+  const changed = text.trim() !== k.text.trim()
+  const checked = check && check.text === text.trim() ? check.result : null
+  const correctionFlags = checked ? checked.claims.filter((c) => ['conflicting', 'unsupported', 'insufficient'].includes(c.status)).length : 0
+  const needsAck = (decision === 'approved' && (flagCount > 0 || partial)) || (decision === 'corrected' && correctionFlags > 0)
+  const noteOk = note.trim().length >= 5
+  const textOk = decision !== 'corrected' || changed
+  const valid = decision && noteOk && textOk && (!needsAck || ack) && !sending
+  const problem = !decision ? 'Choose an outcome first.' : !noteOk ? `A note is required to ${DECISIONS[decision].label.toLowerCase()}.` : !textOk ? 'Edit the answer before sending a correction.' : needsAck && !ack ? 'Confirm the override.' : null
+  const d = decision ? DECISIONS[decision] : null
+
+  const runCheck = async () => {
+    setChecking(true)
+    try {
+      const r = await api.preview({ question: k.question, answer: text.trim(), citations: [], asOf: v.assessment?.asOf })
+      setCheck({ text: text.trim(), result: r })
+    } catch {
+      setCheck(null)
+    }
+    setChecking(false)
   }
 
-  const needsAck = decision === 'approved' && flagCount > 0
-  const noteOk = note.trim().length >= 5
-  const textOk = decision !== 'corrected' || text.trim() !== sc.answer.text
-  const valid = decision && noteOk && textOk && (!needsAck || ack)
-  const problem = !decision ? 'Choose an outcome first.' : !noteOk ? `A note is required to ${DECISIONS[decision].label.toLowerCase()}.` : !textOk ? 'Edit the answer before sending a correction.' : needsAck && !ack ? 'Confirm you are overriding the flags.' : null
-  const d = decision ? DECISIONS[decision] : null
+  const submit = async () => {
+    if (!valid) return setTried(true)
+    setSending(true)
+    const r = await decide({ queueId: item.id, decision, note: note.trim(), correctedText: decision === 'corrected' ? text.trim() : null, reviewerId, overrideFlags: needsAck && ack })
+    setSending(false)
+    if (r && !r.ok) {
+      // The backend refused (e.g. a correction it re-checked still has flags): show why.
+      if (r.result) setCheck({ text: text.trim(), result: r.result })
+      return
+    }
+    onDecided?.(item.id, decision)
+  }
 
   return (
     <section className="rq-glass space-y-4 rounded-3xl p-5" aria-labelledby="rq-decision">
@@ -840,6 +904,23 @@ function Decision({ item, sc, flags, onDecided }) {
           Your decision
         </h2>
         <p className="mt-0.5 text-caption text-smoke">Your note goes back to the employee who asked.</p>
+      </div>
+
+      <div>
+        <label htmlFor="reviewer" className="text-caption font-semibold text-carbon">
+          Acting as · simulated identity
+        </label>
+        <div className="rq-input mt-1.5 flex items-center gap-2 rounded-2xl px-3 py-2">
+          <UserRound size={15} className="shrink-0 text-carbon" aria-hidden="true" />
+          <select id="reviewer" value={reviewerId} onChange={(e) => setReviewerId(e.target.value)} className="min-w-0 flex-1 bg-transparent text-body-sm text-ink focus:outline-none">
+            {reviewers.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name} (simulated) · {r.role}
+              </option>
+            ))}
+          </select>
+        </div>
+        <p className="mt-1 text-caption text-smoke">Prototype: there is no sign-in. The identity is recorded as simulated.</p>
       </div>
 
       <div className="grid gap-2" role="radiogroup" aria-label="Outcome">
@@ -881,7 +962,24 @@ function Decision({ item, sc, flags, onDecided }) {
             )}
           </div>
           <textarea id="corrected" rows={7} value={text} onChange={(e) => setText(e.target.value)} className="rq-input w-full resize-y rounded-2xl px-3.5 py-2.5 text-body-sm text-ink" />
-          {draft && text === draft.answer.text ? (
+          {BACKEND ? (
+            <div className="mt-1.5 space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={runCheck} disabled={!changed || checking} className="rq-outline inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-caption font-semibold text-carbon disabled:opacity-50">
+                  {checking ? <LoaderCircle size={14} className="spin" aria-hidden="true" /> : <ShieldCheck size={14} aria-hidden="true" />} Check this wording
+                </button>
+                {checked && <ScoreBadge score={checked.score} />}
+              </div>
+              {checked ? (
+                <p className="text-caption text-carbon">
+                  {checked.explanation}
+                  {correctionFlags > 0 ? ' Fix the flagged claims, or confirm the override below.' : ''}
+                </p>
+              ) : (
+                <p className="text-caption text-smoke">Any wording you write is re-verified by Assessment AI when you submit, and stored with its own assessment.</p>
+              )}
+            </div>
+          ) : draft && text === draft.answer.text ? (
             <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-caption text-carbon">
               Assessment AI re-check: <ScoreBadge score={assess(draft.id).score} />
               <span className="basis-full text-smoke">
@@ -890,7 +988,7 @@ function Decision({ item, sc, flags, onDecided }) {
               </span>
             </p>
           ) : (
-            <p className="mt-1.5 text-caption text-smoke">Your own wording is sent as reviewer-verified; it is not re-scored in this prototype.</p>
+            <p className="mt-1.5 text-caption text-smoke">Demo mode can only re-check the drafted correction. Backend mode re-checks any wording.</p>
           )}
         </div>
       )}
@@ -917,7 +1015,10 @@ function Decision({ item, sc, flags, onDecided }) {
         <label className="flex items-start gap-2.5 rounded-2xl border border-status-caution/30 bg-status-caution-surface p-3 text-body-sm text-carbon">
           <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-1 accent-carbon" />
           <span>
-            I have checked the {plural(flagCount, 'flagged claim')} and I’m overriding Assessment AI. This override is recorded.
+            {decision === 'approved'
+              ? `I have checked the ${plural(flagCount, 'flagged or unchecked claim')}${partial ? ' and the parts Assessment AI could not run' : ''}, and I’m overriding Assessment AI.`
+              : `My correction still has ${plural(correctionFlags, 'flagged claim')} and I’m sending it anyway.`}{' '}
+            This override is recorded.
           </span>
         </label>
       )}
@@ -928,18 +1029,65 @@ function Decision({ item, sc, flags, onDecided }) {
         </p>
       )}
       <button
-        onClick={() => {
-          if (!valid) return setTried(true)
-          decide({ queueId: item.id, decision, note: note.trim(), correctedText: decision === 'corrected' ? text.trim() : null })
-          onDecided?.(item.id, decision)
-        }}
-        disabled={!decision}
+        onClick={submit}
+        disabled={!decision || sending}
         className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-body font-medium transition-colors ${decision ? 'bg-ocbc-red text-white shadow-md hover:bg-ocbc-red-deep' : 'cursor-not-allowed bg-black/[0.06] text-smoke'}`}
       >
-        {d ? <d.Icon size={17} aria-hidden="true" /> : <ArrowUp size={17} aria-hidden="true" />}
+        {sending ? <LoaderCircle size={17} className="spin" aria-hidden="true" /> : d ? <d.Icon size={17} aria-hidden="true" /> : <ArrowUp size={17} aria-hidden="true" />}
         {d ? d.verb : 'Choose an outcome'}
       </button>
       {decision && !valid && !tried && <p className="-mt-2 text-center text-caption text-smoke">{problem}</p>}
+    </section>
+  )
+}
+
+/** The recorded decision: who made it, when, against which assessment, and the audit trail. */
+function Resolved({ item }) {
+  const out = item.outcome
+  const o = OUTCOME_META[out.decision]
+  const re = out.recheck
+  const [h, setH] = useState(null)
+  useEffect(() => {
+    if (BACKEND && item.answerId) api.history(item.answerId).then(setH, () => {})
+  }, [item.answerId])
+  return (
+    <section className={`rq-glass space-y-3 rounded-3xl border-l-4 p-5 ${TONES[o.tone].border}`} aria-label="Decision">
+      <div className={`flex items-center gap-2 text-body font-semibold ${TONES[o.tone].text}`}>
+        <o.Icon size={18} aria-hidden="true" /> {o.label}
+      </div>
+      {out.reviewer && (
+        <p className="text-caption text-carbon">
+          {out.reviewer} · {formatWhen(out.at)}
+          {out.override ? ' · overrode Assessment AI’s flags' : ''}
+        </p>
+      )}
+      {out.correctedText && <p className="rq-inset rounded-2xl p-3 text-body-sm text-ink">{out.correctedText}</p>}
+      <p className="text-body-sm text-carbon">
+        <span className="font-semibold text-ink">Note:</span> {out.note}
+      </p>
+      {re && (
+        <div className="rq-inset rounded-2xl p-3">
+          <p className="flex flex-wrap items-center gap-1.5 text-caption text-carbon">
+            Correction re-checked by Assessment AI <ScoreBadge score={re.result.score} />
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {re.result.claims.map((c) => (
+              <ClaimPill key={c.id} status={c.status} />
+            ))}
+          </div>
+          {re.result.assessment?.partial && <p className="mt-2 text-caption text-smoke">Partial assessment: {re.result.assessment.unavailable[0]?.reason}</p>}
+        </div>
+      )}
+      {out.policyVersions?.length > 0 && <p className="text-caption text-smoke">Original assessment used {out.policyVersions.map((pv) => `${pv.docId} ${pv.version}`).join(', ')}.</p>}
+      <p className="text-caption text-smoke">{item.answerId || item.watchers?.length ? 'Returned to the employee who asked. ' : ''}Feeds the recommendations on the Trends page.</p>
+      {h?.events?.length > 0 && (
+        <div>
+          <div className="flex items-center gap-1.5 text-caption font-semibold text-smoke">
+            <History size={12} aria-hidden="true" /> Audit trail
+          </div>
+          <AuditTrail events={h.events} />
+        </div>
+      )}
     </section>
   )
 }

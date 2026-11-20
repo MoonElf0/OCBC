@@ -12,8 +12,10 @@ export default function Chat() {
   const { state } = useStore()
   const scroller = useRef(null)
   const stick = useRef(true)
-  const last = state.messages[state.messages.length - 1]
-  const empty = state.messages.length === 0
+  // Answers pasted in on the Verify answer page live there, not in the chat.
+  const messages = state.messages.filter((m) => m.source !== 'submitted')
+  const last = messages[messages.length - 1]
+  const empty = messages.length === 0
 
   // Follow new content only while the reader is already at the bottom.
   const onScroll = () => {
@@ -23,16 +25,16 @@ export default function Chat() {
   useLayoutEffect(() => {
     const el = scroller.current
     if (el && stick.current) el.scrollTop = el.scrollHeight
-  }, [state.messages.length, last?.shown, last?.phase, last?.outcome])
+  }, [messages.length, last?.shown, last?.phase, last?.outcome])
   useEffect(() => {
     stick.current = true
-  }, [state.messages.length])
+  }, [messages.length])
 
   return (
     <section aria-label="Policy Assistant chat" className="relative flex min-h-0 min-w-0 flex-1 flex-col">
       <div ref={scroller} onScroll={onScroll} className="scroll-quiet min-h-0 flex-1 overflow-y-auto">
         <div className={`mx-auto w-full max-w-[780px] px-4 sm:px-6 ${empty ? 'flex min-h-full flex-col py-8' : 'space-y-7 pt-8 pb-6'}`}>
-          {empty ? <Welcome /> : state.messages.map((m) => (m.kind === 'user' ? <UserBubble key={m.id} text={m.text} /> : <AnswerBubble key={m.id} m={m} />))}
+          {empty ? <Welcome /> : messages.map((m) => (m.kind === 'user' ? <UserBubble key={m.id} text={m.text} /> : <AnswerBubble key={m.id} m={m} />))}
         </div>
       </div>
       <Composer compact={!empty} />
@@ -152,7 +154,7 @@ function AnswerBubble({ m }) {
 }
 
 /** One button per answer: verify, watch it run, then toggle the pane. */
-function VerifyButton({ m, open }) {
+export function VerifyButton({ m, open }) {
   const { dispatch, verifyAnswer } = useStore()
   const verified = m.phase === 'done' && m.result
   const running = m.phase === 'verifying'
@@ -221,7 +223,7 @@ function VerifyButton({ m, open }) {
   )
 }
 
-function Outcome({ outcome }) {
+export function Outcome({ outcome }) {
   const o = OUTCOME_META[outcome.decision]
   const t = TONES[o.tone]
   return (

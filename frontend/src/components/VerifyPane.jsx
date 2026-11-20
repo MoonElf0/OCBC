@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { CircleCheck, X, RotateCw, ShieldCheck, ShieldAlert, ShieldX, Inbox, Clock, CalendarCheck, ScanSearch, SearchX, FileBarChart, LoaderCircle, ArrowRight, BookOpen, ChevronDown, Compass, Send } from 'lucide-react'
+import { CircleCheck, X, RotateCw, ShieldCheck, ShieldAlert, ShieldX, Inbox, Clock, CalendarCheck, ScanSearch, SearchX, FileBarChart, LoaderCircle, ArrowRight, BookOpen, ChevronDown, Compass, Send, RefreshCw, FileQuestion } from 'lucide-react'
 import { useStore, usePaneAnswer } from '../state/store'
 import { CHECKS, CHECK_ICON, CHECK_STATUS, CLAIM_STATUS, TONES, VERDICT, SEVERITY, CHECK_DISPLAY_ORDER, severityOf, severityFor, bandFor } from '../lib/status'
 import { scenarioById } from '../lib/pipeline'
@@ -8,6 +8,22 @@ import { freshnessOf, formatDate } from '../lib/freshness'
 import { display } from '../lib/rules'
 import { DOCUMENTS } from '../fixtures'
 import { ScoreRing, CompositionBar, TONE_HEX, useCountUp } from './charts'
+import { docInfo } from './ui'
+import { StateCard, PartialNotice, AssessmentHistory } from './lifecycle'
+
+/**
+ * Freshness of a passage. Backend passages carry the state of the exact
+ * version assessed; demo passages read the fixture library. Documents outside
+ * the library (a submitted answer can cite anything) have none.
+ */
+function passageFreshness(p) {
+  if (p?.version && p.state) return { state: p.state, stale: p.state !== 'current', superseded: p.supersededBy, reviewDate: p.reviewDate }
+  if (!p?.docId || !DOCUMENTS[p.docId]) return null
+  return freshnessOf(p.docId)
+}
+
+/** Citations as written ("DOC-FX-019 §2.1") reduced to document ids. */
+const citedIds = (citations) => [...new Set(citations.map((c) => c.toUpperCase().match(/DOC-[A-Z]+-\d+/)?.[0]).filter(Boolean))]
 
 const BAND_SHIELD = { verified: ShieldCheck, caution: ShieldAlert, unsupported: ShieldX, unknown: ShieldAlert }
 
@@ -79,6 +95,12 @@ export default function VerifyPane() {
             <>
               <Divider />
               <Sources m={m} sc={sc} />
+              {(m.source === 'submitted' || m.state === 'reverify-required') && (
+                <div className="mt-5">
+                  <StateCard m={m} />
+                </div>
+              )}
+              <AssessmentHistoryBlock m={m} />
               <ReportLink />
             </>
           )}
@@ -153,6 +175,11 @@ function Score({ m }) {
           )}
         </div>
       </div>
+      {r.assessment?.partial && (
+        <div className="mt-4">
+          <PartialNotice assessment={r.assessment} />
+        </div>
+      )}
       {r.guidance && (
         <div className="mt-4 flex gap-3 rounded-2xl border border-l-4 border-black/[0.06] bg-white/90 p-3.5" style={{ borderLeftColor: TONE_HEX[band.status] }}>
           <Compass size={18} className={`mt-0.5 shrink-0 ${t.text}`} aria-hidden="true" />
@@ -259,7 +286,9 @@ function Evidence({ m, c }) {
   const said = display(m.text.slice(c.start, c.end))
   const policy = c.counter ? display(c.counter.passage) : ''
   const swap = said && policy && said !== policy
-  const f = c.source ? freshnessOf(c.source.docId) : null
+  const f = passageFreshness(c.source)
+  // The backend may name one passage as both the rule and the contradiction: show it once.
+  const same = c.counter && c.source && c.counter.docId === c.source.docId && c.counter.section === c.source.section && c.counter.version === c.source.version
   return (
     <div className="rise-in space-y-2.5 border-t border-black/5 bg-bone/60 p-3">
       {swap && (
@@ -276,17 +305,29 @@ function Evidence({ m, c }) {
         </div>
       )}
       {c.counter && <PassageBox p={c.counter} label="Current policy" />}
-      {c.source && (
+      {c.source && !same && (
         <PassageBox
           p={c.source}
-          label={c.nearest ? 'Closest passage found (does not mention this)' : c.counter ? 'Source the answer used' : 'Source'}
-          warn={f?.state === 'superseded' ? `Replaced on ${formatDate(f.supersededBy.updated)}` : f?.state === 'overdue' ? `${f.months} months old, review overdue` : null}
+          label={c.nearest ? (c.status === 'unassessed' ? 'Closest passage found (not checked by a model)' : 'Closest passage found (does not mention this)') : c.counter ? 'Source the answer used' : 'Source'}
+          warn={
+            f?.state === 'superseded'
+              ? f.supersededBy
+                ? `Replaced on ${formatDate(f.supersededBy.updated)}`
+                : `Replaced by ${String(f.superseded ?? 'a newer version').replace('@', ' ')}`
+              : f?.state === 'overdue'
+                ? f.months != null
+                  ? `${f.months} months old, review overdue`
+                  : f.reviewDate
+                    ? `Review was due ${formatDate(f.reviewDate)}`
+                    : 'Review overdue'
+                : null
+          }
         />
       )}
       {!c.source && (
         <div className="flex items-center gap-2 rounded-xl bg-white p-3 text-body-sm text-carbon">
           <SearchX size={16} className="shrink-0 text-status-unsupported" aria-hidden="true" />
-          No approved document mentions this. {c.reason.replace('No source found. ', '')}
+          No approved document mentions this. {c.reason?.replace('No source found. ', '')}
         </div>
       )}
     </div>
@@ -294,7 +335,7 @@ function Evidence({ m, c }) {
 }
 
 function PassageBox({ p, label, warn }) {
-  const doc = DOCUMENTS[p.docId]
+  const doc = docInfo(p.docId, p)
   return (
     <figure className="rounded-xl bg-white p-3">
       <figcaption className="mb-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-medium text-smoke">
@@ -308,8 +349,10 @@ function PassageBox({ p, label, warn }) {
         )}
       </figcaption>
       <blockquote className="text-body-sm text-ink">“{p.passage}”</blockquote>
+      {p.screened && <p className="mt-1.5 text-[12px] text-carbon">Instruction-like text in this document was removed and never used as evidence.</p>}
       <div className="mt-1.5 text-[12px] text-smoke">
         {doc.title} · {p.section}
+        {p.version ? ` · ${p.version}` : ''}
       </div>
     </figure>
   )
@@ -365,7 +408,8 @@ function CheckBox({ it }) {
 function Sources({ m, sc }) {
   // Backend mode: retrieval and the search record come from the server's result.
   const retrieved = m.result?.retrieved ?? sc.verification.retrieved
-  const ids = [...m.citations, ...retrieved.filter((d) => !m.citations.includes(d))]
+  const cited = citedIds(m.citations)
+  const ids = [...cited, ...retrieved.filter((d) => !cited.includes(d))]
   if (!ids.length) {
     const s = m.result?.search ?? sc.verification.search
     return (
@@ -394,10 +438,16 @@ function Sources({ m, sc }) {
       <SectionTitle aside={`${ids.length} ${ids.length === 1 ? 'document' : 'documents'}`}>Sources</SectionTitle>
       <ul className="space-y-1.5">
         {ids.map((id) => {
-          const doc = DOCUMENTS[id]
-          const f = freshnessOf(id)
-          const found = !m.citations.includes(id)
-          const st = f.state === 'superseded' ? { label: 'Replaced', tone: 'unsupported', Icon: Clock } : f.state === 'overdue' ? { label: 'Overdue', tone: 'caution', Icon: Clock } : { label: 'Current', tone: 'verified', Icon: CalendarCheck }
+          const doc = docInfo(id, versionOf(m, id))
+          const f = passageFreshness(versionOf(m, id) ?? { docId: id })
+          const found = !cited.includes(id)
+          const st = !f
+            ? { label: 'Not in library', tone: 'unknown', Icon: FileQuestion }
+            : f.state === 'superseded'
+              ? { label: 'Replaced', tone: 'unsupported', Icon: Clock }
+              : f.state === 'overdue'
+                ? { label: 'Overdue', tone: 'caution', Icon: Clock }
+                : { label: 'Current', tone: 'verified', Icon: CalendarCheck }
           const t = TONES[st.tone]
           return (
             <li key={id} className="flex items-center gap-3 rounded-xl px-1 py-1.5">
@@ -413,7 +463,8 @@ function Sources({ m, sc }) {
                 )}
               </div>
               <span className={`shrink-0 rounded-full px-2 py-0.5 text-[12px] font-semibold ${t.surface} ${t.text}`}>
-                {st.label} · {f.months}mo
+                {st.label}
+                {f?.months != null ? ` · ${f.months}mo` : ''}
               </span>
             </li>
           )
@@ -423,10 +474,28 @@ function Sources({ m, sc }) {
   )
 }
 
+/** The passage the result carries for a document: its exact version, as assessed (backend mode). */
+function versionOf(m, docId) {
+  const r = m.result
+  if (!r) return null
+  for (const c of r.claims) for (const p of [c.source, c.counter]) if (p?.docId === docId && p.version) return p
+  for (const k of r.checks) for (const p of k.evidence ?? []) if (p.docId === docId && p.version) return p
+  return null
+}
+
+function AssessmentHistoryBlock({ m }) {
+  if (!m.serverId) return null
+  return (
+    <div className="mt-5">
+      <AssessmentHistory m={m} />
+    </div>
+  )
+}
+
 /* ─── Footer actions ─────────────────────────────────────────────────────── */
 
 function Footer({ m }) {
-  const { escalate } = useStore()
+  const { escalate, reverify } = useStore()
   const [composing, setComposing] = useState(false)
   const [note, setNote] = useState('')
   const done = m.phase === 'done'
@@ -458,6 +527,17 @@ function Footer({ m }) {
           </button>
         </div>
       </form>
+    )
+  }
+
+  if (m.state === 'reverify-required') {
+    return (
+      <div className="flex shrink-0 items-center gap-2 border-t border-black/5 px-4 py-3">
+        <span className="text-caption text-carbon">A policy this answer used has a new version.</span>
+        <button onClick={() => reverify(m.id)} className="ml-auto inline-flex items-center gap-2 rounded-full bg-ocbc-red px-5 py-2.5 text-body-sm font-medium whitespace-nowrap text-white shadow-md transition-all hover:bg-ocbc-red-deep active:scale-[0.98]">
+          <RefreshCw size={16} aria-hidden="true" /> Re-verify against current policy
+        </button>
+      </div>
     )
   }
 

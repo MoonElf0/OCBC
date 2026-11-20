@@ -1,6 +1,6 @@
 # Assessment AI — Feature Summary
 
-A scripted front-end demo for the OCBC × NYP Ignite Innovation Challenge (Problem Statement 1: Trusted AI Agents). Two separate systems: a simple **answering agent** ("Policy Assistant") that answers banking policy questions, and a **verifier** ("Assessment AI") that independently checks each answer, scores it, flags unsupported claims, shows evidence, and routes low-confidence answers to a human reviewer. No backend — everything is hardcoded fixture data (`frontend/src/fixtures/index.js`), built to mirror the shape a real pipeline would return.
+A front-end demo (scripted, offline) with an optional backend mode, for the OCBC × NYP Ignite Innovation Challenge (Problem Statement 1: Trusted AI Agents). This file describes the demo-mode features; backend-mode additions (verify any answer, mandatory review states, versioned knowledge library, evaluation) are in README.md. Two separate systems: a simple **answering agent** ("Policy Assistant") that answers banking policy questions, and a **verifier** ("Assessment AI") that independently checks each answer, scores it, flags unsupported claims, shows evidence, and routes low-confidence answers to a human reviewer. In demo mode everything is hardcoded fixture data (`frontend/src/fixtures/index.js`), built to mirror the shape a real pipeline would return.
 
 ## Top nav
 - Role switcher (dropdown): jump between the Employee workspace, Reviewer queue, and Trends dashboard.

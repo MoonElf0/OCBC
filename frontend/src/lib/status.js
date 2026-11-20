@@ -22,6 +22,10 @@ import {
   Target,
   Pencil,
   Ban,
+  CircleDashed,
+  Inbox,
+  RefreshCw,
+  ShieldCheck,
 } from 'lucide-react'
 
 export const CHECK_ICON = { citation: Quote, freshness: Clock, crossref: Layers, groundedness: Anchor, consistency: Scale, intent: Target }
@@ -31,7 +35,7 @@ export const topicIcon = (topic) => TOPIC_ICON[topic] ?? MessageCircleQuestion
 import { BANDS } from '../fixtures'
 
 // Plural-safe labels for counts, e.g. '2 on stale sources'.
-export const CLAIM_COUNT_LABEL = { supported: 'supported', unsupported: 'unsupported', conflicting: 'conflicting', stale: 'on stale sources', 'off-intent': 'off the question', 'no-source': 'with no source found' }
+export const CLAIM_COUNT_LABEL = { supported: 'supported', unsupported: 'unsupported', conflicting: 'conflicting', stale: 'on stale sources', 'off-intent': 'off the question', 'no-source': 'with no source found', insufficient: 'without approved evidence', unassessed: 'not checked' }
 
 // Every status carries an icon and a text label as well as a colour.
 // Tailwind needs literal class names, so each tone spells its classes out.
@@ -49,6 +53,9 @@ export const CLAIM_STATUS = {
   stale: { label: 'Stale source', tone: 'caution', Icon: Clock },
   'off-intent': { label: 'Off the question', tone: 'caution', Icon: Shuffle },
   'no-source': { label: 'No source found', tone: 'unsupported', Icon: SearchX },
+  // Backend-mode statuses: the pipeline found no approved evidence, or a model step did not run.
+  insufficient: { label: 'Insufficient evidence', tone: 'unknown', Icon: SearchX },
+  unassessed: { label: 'Not checked', tone: 'unknown', Icon: CircleDashed },
 }
 
 export const CHECK_STATUS = {
@@ -56,6 +63,7 @@ export const CHECK_STATUS = {
   warning: { label: 'Warning', tone: 'caution', Icon: TriangleAlert },
   fail: { label: 'Fail', tone: 'unsupported', Icon: CircleX },
   na: { label: 'N/A', tone: 'unknown', Icon: CircleSlash },
+  unavailable: { label: 'Not run', tone: 'unknown', Icon: CircleDashed },
   running: { label: 'Checking', tone: 'unknown', Icon: LoaderCircle },
   queued: { label: 'Queued', tone: 'unknown', Icon: CircleHelp },
 }
@@ -85,8 +93,9 @@ export const VERDICT = {
 // Severity of each claim status, worst first. Drives sort order and the legend.
 export const SEVERITY = [
   { id: 'wrong', label: 'Wrong', tone: 'unsupported', Icon: CircleX, statuses: ['conflicting', 'unsupported'] },
-  { id: 'nosource', label: 'No source', tone: 'unsupported', Icon: SearchX, statuses: ['no-source'] },
+  { id: 'nosource', label: 'No source', tone: 'unsupported', Icon: SearchX, statuses: ['no-source', 'insufficient'] },
   { id: 'check', label: 'Check', tone: 'caution', Icon: TriangleAlert, statuses: ['stale', 'off-intent'] },
+  { id: 'unchecked', label: 'Not checked', tone: 'unknown', Icon: CircleDashed, statuses: ['unassessed'] },
   { id: 'correct', label: 'Correct', tone: 'verified', Icon: CircleCheck, statuses: ['supported'] },
 ]
 export const severityFor = (status) => SEVERITY.find((s) => s.statuses.includes(status))
@@ -116,12 +125,25 @@ export const BAND_ICON = {
 }
 
 export const REASONS = {
-  'low-confidence': { label: 'Low confidence', tone: 'unsupported', Icon: CircleX },
-  conflicting: { label: 'Conflicting claim', tone: 'unsupported', Icon: GitCompareArrows },
+  'low-confidence': { label: 'Low reliability index', tone: 'unsupported', Icon: CircleX },
+  conflicting: { label: 'Conflicting evidence', tone: 'unsupported', Icon: GitCompareArrows },
   unsupported: { label: 'Unsupported claim', tone: 'unsupported', Icon: CircleX },
-  'no-source': { label: 'No source found', tone: 'unknown', Icon: CircleSlash },
+  'no-source': { label: 'Insufficient evidence', tone: 'unknown', Icon: CircleSlash },
   stale: { label: 'Stale source', tone: 'caution', Icon: Clock },
-  'high-stakes': { label: 'High-stakes topic', tone: 'unknown', Icon: TriangleAlert },
+  'high-stakes': { label: 'High-risk topic', tone: 'unknown', Icon: TriangleAlert },
+  partial: { label: 'Partial assessment', tone: 'unknown', Icon: CircleDashed },
+  'evidence-changed': { label: 'Evidence changed', tone: 'caution', Icon: RefreshCw },
   employee: { label: 'Escalated by employee', tone: 'unknown', Icon: CircleHelp },
   paraphrased: { label: 'Free-text question', tone: 'unknown', Icon: CircleHelp },
+}
+
+// Where an answer is in its life. Every state says what has to happen next.
+export const ANSWER_STATES = {
+  verifying: { label: 'Under verification', tone: 'unknown', Icon: LoaderCircle, next: 'Assessment AI is checking the answer. Wait for the result before using it.' },
+  'review-required': { label: 'Review required', tone: 'caution', Icon: Inbox, next: 'A reviewer must approve, correct or reject this answer before anyone relies on it.' },
+  cleared: { label: 'No review required', tone: 'unknown', Icon: ShieldCheck, next: 'No review rule applies. Check the flags and sources before acting.' },
+  approved: { label: 'Approved', tone: 'verified', Icon: CircleCheck, next: 'A reviewer approved this answer.' },
+  corrected: { label: 'Corrected', tone: 'verified', Icon: Pencil, next: 'Use the reviewer’s corrected answer, not the original.' },
+  rejected: { label: 'Rejected', tone: 'unsupported', Icon: Ban, next: 'Do not use this answer.' },
+  'reverify-required': { label: 'Evidence changed · re-verification required', tone: 'caution', Icon: RefreshCw, next: 'A policy this answer relied on has a new version. Re-verify it before relying on it.' },
 }

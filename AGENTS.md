@@ -7,11 +7,11 @@ An AI answer-verification layer for OCBC, built for the OCBC × NYP Ignite Innov
 ## Tech stack
 
 - **Frontend:** React + Vite, Tailwind CSS
-- **Backend:** none. This is a scripted front-end demo — no server, no database, no API keys, no model calls
+- **Backend:** optional. Demo mode (default) is a scripted front-end demo — no server, no API keys, no model calls. Backend mode (`npm run dev:backend`) talks to a FastAPI + SQLite service in `backend/` that computes retrieval, rule checks, the reliability index, routing and the dashboard. Policy Assistant answers and their judge verdicts are still scripted; answers submitted through "Verify an answer" and reviewer corrections run the general pipeline (`backend/app/pipeline.py`). Model steps run only when `ASSESSMENT_MODEL_PROVIDER` is set on the server; otherwise they are reported as not run. See `backend/README.md`
 - **Data:** hardcoded fixtures in a single clearly separated module. Synthetic policy documents, scripted answers, scripted verdicts, scripted dashboard numbers
-- **Python:** only for one-off scripts if we need them (generating fixture data, for example). Not part of what runs
+- **Python:** the backend (`backend/`, FastAPI, stdlib sqlite3; the `anthropic` SDK only when a model provider is configured)
 
-It must start with one command and work offline. Do not introduce a server, a second frontend framework, or a different CSS approach without asking.
+Demo mode must start with one command and work offline, with the backend stopped. Do not introduce a second frontend framework or a different CSS approach without asking.
 
 ## Design reference
 
@@ -38,8 +38,12 @@ Load it before writing any UI. It defines the full token set (OCBC red, neutrals
 - **Don't add gamification.** No XP bars, levels, streaks or point scores. An early reference mock had a "Lv: 12" bar — it doesn't belong in a banking trust tool.
 - **Don't add scope the brief rules out:** production deployment, live banking system connections, real customer or transaction data, training a foundation model.
 - **Don't let the fixtures contradict each other.** If the dashboard says a topic has a 32% unsupported-claim rate, the demo answers for that topic must show flags that match. Inconsistent numbers are what a judge spots first.
-- **Don't claim it's live.** Nothing in the interface says real-time, connected, or live. The pitch states plainly that verification is scripted for the demo, and explains the pipeline design behind it. Getting caught implying otherwise costs more than the feature is worth.
-- **Don't add a backend.** If something seems to need a server, it means the fixture isn't rich enough — extend the fixture instead.
+- **Don't claim it's live.** Nothing in the interface says real-time, connected, or live — backend mode is labelled "backend mode" and states what is still scripted. The pitch states plainly which parts are scripted, and explains the pipeline design behind it. Getting caught implying otherwise costs more than the feature is worth.
+- **Keep the two modes in step.** Fixture data lives only in `frontend/src/fixtures/index.js`; after changing it or the JS scoring/metrics, run `npm run export:fixtures` and the backend tests. Both modes must satisfy `contract/verification-result.schema.json`. One exception: the labelled evaluation cases and the extra policy versions they need live in `backend/data/eval_cases.json` — backend-only test data, kept apart so evaluation never depends on the demo database.
+- **Never fill a model step with scripted data.** When no model is available, the steps that need one are marked "Not run", the result is partial, and the reliability index is capped below High.
+- **Mandatory review is never bypassed.** Only a reviewer decision clears "Review required" — not a high index, not feedback, not the Challenger. Reviewer identities are simulated and labelled as such.
+- **Approved policy text is never edited.** A change is a new version (draft → approved); the replaced version is kept as superseded, and assessments that used it are marked for re-verification.
+- **Say "reliability index".** It is an evidence-based index, not a probability of being correct and not permission to act.
 - **Don't use square corners or 0px radius anywhere.** See the radius system in @DESIGN.md.
 
 ## How to run
@@ -53,6 +57,8 @@ npm run build        # static bundle, deployable anywhere
 ```
 
 No server to start, no env vars, no API keys. It runs offline (Inter is bundled via @fontsource).
+
+Backend mode: start `backend/` (see `backend/README.md`), then `npm run dev:backend`. `npm run export:fixtures` refreshes the JSON the backend reads.
 
 All scripted data lives in `frontend/src/fixtures/index.js`. The seams a real system would replace are `src/lib/agent.js` (answering agent) and `src/lib/pipeline.js` (verifier playback). Dashboard rates are computed from the fixture counts in `src/lib/metrics.js`, never typed in.
 

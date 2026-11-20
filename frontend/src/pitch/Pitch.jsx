@@ -21,7 +21,7 @@ const SLIDES = [
       <div className="mx-auto mt-12 grid max-w-5xl items-center gap-3 md:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr]">
         {[['Policy updated', 'Limit drops to SGD 200k'], ['Old circular lingers', 'Still in the index'], ['Agent retrieves it', 'Fluent, confident answer'], ['Employee acts', 'Wrong limit approved']].flatMap((b, i) => [i ? <Arrow key={`a${i}`} /> : null, <Box key={b[0]} title={b[0]} sub={b[1]} i={i} hot={i === 3} />])}
       </div></>),
-  () => (<><div className="eyebrow mb-6 text-smoke">Our answer</div><Big>Two systems.<br /><Grad>Never one.</Grad></Big><Sub>The Policy Assistant answers. Assessment AI re-checks every claim against source passages, freshness and other documents, then scores it with a verdict, never a bare number.</Sub></>),
+  () => (<><div className="eyebrow mb-6 text-smoke">Our answer</div><Big>Two systems.<br /><Grad>Never one.</Grad></Big><Sub>The Policy Assistant answers. Assessment AI re-checks every claim against source passages, freshness and other documents, then gives it a reliability index with a verdict, never a bare number.</Sub></>),
   () => (
     <><div className="eyebrow mb-6 text-smoke">Innovation</div><Big className="!text-[clamp(32px,5vw,64px)]">Beyond a score.</Big>
       <div className="mx-auto mt-12 grid max-w-4xl gap-4 text-left md:grid-cols-2">

@@ -5,9 +5,11 @@
  *   npm run dev:backend         backend mode: talks to the FastAPI service in
  *                               backend/ through the Vite proxy at /api
  *
- * Backend mode computes retrieval, rule checks, scores, routing and the
- * dashboard on the server. Answers and judge verdicts are still scripted,
- * so the interface never calls this "live".
+ * Backend mode computes retrieval, rule checks, the reliability index,
+ * routing and the dashboard on the server. Policy Assistant answers and their
+ * judge verdicts are still scripted; submitted answers and reviewer
+ * corrections run the backend's general pipeline, with model steps only when
+ * a provider is configured on the server. The interface never calls this "live".
  */
 export const BACKEND = import.meta.env?.VITE_MODE === 'backend'
 
@@ -17,7 +19,28 @@ async function call(path, { method = 'GET', body } = {}) {
     headers: body ? { 'Content-Type': 'application/json' } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   })
-  if (!res.ok) throw new Error(`${method} /api${path} → ${res.status}`)
+  if (!res.ok) {
+    // FastAPI puts the reason in `detail`; some 422s carry a JSON payload inside it.
+    let detail = null
+    try {
+      detail = (await res.json()).detail
+    } catch {
+      /* not JSON */
+    }
+    let payload = null
+    if (typeof detail === 'string' && detail.startsWith('{')) {
+      try {
+        payload = JSON.parse(detail)
+      } catch {
+        /* plain text */
+      }
+    }
+    const err = new Error(payload?.message ?? (typeof detail === 'string' ? detail : `${method} /api${path} → ${res.status}`))
+    err.status = res.status
+    err.payload = payload
+    err.fromServer = typeof detail === 'string'
+    throw err
+  }
   return res.json()
 }
 
@@ -28,6 +51,17 @@ export const api = {
   reviews: () => call('/reviews'),
   decide: (reviewId, body) => call(`/reviews/${reviewId}/decision`, { method: 'POST', body }),
   metrics: () => call('/metrics'),
+  health: () => call('/health'),
+  submit: (body) => call('/answers', { method: 'POST', body }),
+  preview: (body) => call('/verify/preview', { method: 'POST', body }),
+  reverify: (answerId) => call(`/answers/${answerId}/reverify`, { method: 'POST' }),
+  history: (answerId) => call(`/answers/${answerId}/history`),
+  library: () => call('/library'),
+  proposeVersion: (docId, body) => call(`/library/${encodeURIComponent(docId)}/versions`, { method: 'POST', body }),
+  approveVersion: (docId, version) => call(`/library/${encodeURIComponent(docId)}/versions/${encodeURIComponent(version)}/approve`, { method: 'POST' }),
+  evalInfo: () => call('/eval'),
+  evalRun: (split) => call('/eval/run', { method: 'POST', body: { split } }),
+  reset: () => call('/admin/reset', { method: 'POST' }),
 
   /** Same callbacks as pipeline.verify. Returns a cancel function. */
   verify(answerId, { onCheckStart, onCheckDone, onComplete, onError }) {
@@ -37,7 +71,7 @@ export const api = {
     on('check_done', (d) => onCheckDone(d.i, d.check, d.claims))
     on('complete', (d) => {
       es.close()
-      onComplete(d.result, d.routed)
+      onComplete(d.result, d.routed, { state: d.state, assessmentId: d.assessmentId })
     })
     es.onerror = () => {
       if (es.readyState === EventSource.CLOSED) return
