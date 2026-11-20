@@ -10,15 +10,21 @@
  */
 import { CHECKS } from './status'
 import { assess } from './assess'
+import { BACKEND, api } from './backend'
 
 export { scenarioById } from './assess'
 
 /**
+ * In backend mode the same callbacks are driven by the server's event stream
+ * (GET /api/answers/:id/verify); onCheckDone may also carry the claims, and
+ * onComplete the routing decision the server made.
+ *
  * @param {string} scenarioId
- * @param {{ question?: string, onCheckStart(i), onCheckDone(i, check), onComplete(result) }} handlers
+ * @param {{ answerId?: string, question?: string, onCheckStart(i), onCheckDone(i, check, claims?), onComplete(result, routed?), onError?() }} handlers
  * @returns {() => void} cancel
  */
-export function verify(scenarioId, { question, onCheckStart, onCheckDone, onComplete }) {
+export function verify(scenarioId, { answerId, question, onCheckStart, onCheckDone, onComplete, onError }) {
+  if (BACKEND) return api.verify(answerId, { onCheckStart, onCheckDone, onComplete, onError })
   const result = assess(scenarioId, { question })
   const timers = []
   let at = 100

@@ -7,6 +7,7 @@
  * retrieval agent would replace `ask` behind the same return shape.
  */
 import { SCENARIOS, FALLBACK } from '../fixtures'
+import { BACKEND, api } from './backend'
 
 const normalise = (s) => s.toLowerCase().replace(/[’']/g, "'").replace(/[^a-z0-9%' -]+/g, ' ')
 
@@ -33,8 +34,12 @@ export function matchScenario(input) {
   return bestScore >= 4 ? best : FALLBACK
 }
 
-/** @returns {{ scenarioId: string, text: string, citations: string[] }} */
-export function ask(question) {
+/**
+ * In backend mode the server's agent answers and stores the answer (answerId).
+ * @returns {Promise<{ answerId?: string, scenarioId: string, text: string, citations: string[] }>}
+ */
+export async function ask(question) {
+  if (BACKEND) return api.ask(question)
   const s = matchScenario(question)
   return { scenarioId: s.id, text: s.answer.text, citations: s.answer.citations }
 }

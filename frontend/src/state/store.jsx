@@ -5,8 +5,11 @@ import { verify, scenarioById } from '../lib/pipeline'
 import { assess } from '../lib/assess'
 import { bandFor, CHECKS } from '../lib/status'
 import { freshnessOf } from '../lib/freshness'
+import { BACKEND, api } from '../lib/backend'
 
-// Local state only. Nothing persists past a refresh.
+// UI state. In demo mode this is the only state and nothing persists past a
+// refresh. In backend mode the server is the record for answers, the review
+// queue and reviewer decisions; the actions below mirror its responses.
 
 const initial = {
   view: 'workspace', // 'workspace' | 'review' | 'trends'
@@ -40,6 +43,7 @@ function reducer(state, a) {
       const user = { id: `u${a.id}`, kind: 'user', text: a.question }
       const answer = {
         id: `a${a.id}`,
+        serverId: a.reply.answerId ?? null, // backend mode: the stored answer's id
         kind: 'answer',
         question: a.question,
         scenarioId: a.reply.scenarioId,
@@ -70,11 +74,13 @@ function reducer(state, a) {
       return updateMsg(state, a.id, (m) => ({ checks: m.checks.map((c, i) => (i === a.i ? { status: 'running' } : c)) }))
 
     case 'checkDone':
-      return updateMsg(state, a.id, (m) => ({ checks: m.checks.map((c, i) => (i === a.i ? a.check : c)) }))
+      return updateMsg(state, a.id, (m) => ({ checks: m.checks.map((c, i) => (i === a.i ? a.check : c)), ...(a.claims ? { claims: a.claims } : {}) }))
 
     case 'verified': {
       let s = updateMsg(state, a.id, { phase: 'done', result: a.result })
       if (s.activeId !== a.id && a.id === latestAnswerId(s.messages)) s = { ...s, offerId: a.id }
+      // Backend mode: the server already applied the routing rule.
+      if (a.server) return a.routed ? updateMsg(s, a.id, { routed: a.routed }) : s
       const msg = s.messages.find((m) => m.id === a.id)
       const sc = scenarioById(msg.scenarioId)
       // Routing rule: a Low score, any conflicting claim, or a high-stakes
@@ -135,7 +141,6 @@ function reducer(state, a) {
 
     case 'decide': {
       const item = state.queue.find((q) => q.id === a.queueId)
-      const hint = REVIEW_HINTS[item.scenarioId] ?? {}
       // A correction sent as drafted is re-verified like any other answer.
       const draft = CORRECTIONS[item.scenarioId]
       const recheck = a.decision === 'corrected' && draft && a.correctedText === draft.answer.text
@@ -147,19 +152,25 @@ function reducer(state, a) {
         reviewer: 'Policy Reviewer · Business Banking Credit Risk',
         at: 'Today',
       }
-      let s = {
-        ...state,
-        queue: state.queue.map((q) => (q.id === a.queueId ? { ...q, status: 'resolved', outcome } : q)),
-        liveDecisions: [
-          ...state.liveDecisions,
-          { id: item.id, topic: scenarioById(item.scenarioId).topic, docId: hint.docId ?? null, decision: a.decision, category: a.decision === 'approved' ? 'none' : hint.category ?? 'none' },
-        ],
-      }
-      const askers = [item.answerId, ...(item.watchers ?? [])].filter(Boolean)
-      for (const id of askers) s = updateMsg(s, id, { outcome })
-      s = { ...s, unreadOutcomes: s.unreadOutcomes + askers.length }
-      return { ...s, toast: { text: askers.length ? 'Decision sent back to the employee who asked.' : 'Decision recorded.' } }
+      const queue = state.queue.map((q) => (q.id === a.queueId ? { ...q, status: 'resolved', outcome } : q))
+      return applyDecision(state, item, outcome, queue, [item.answerId, ...(item.watchers ?? [])].filter(Boolean))
     }
+
+    // Backend mode: the server recorded the decision; mirror it.
+    case 'decided': {
+      const item = state.queue.find((q) => q.id === a.queueId)
+      return applyDecision(state, item, a.outcome, a.queue, a.askers)
+    }
+
+    case 'escalated':
+      return {
+        ...updateMsg(state, a.id, { routed: a.routed }),
+        queue: a.queue,
+        toast: { text: a.routed.joined ? 'Joined a review already open for this question. The outcome will appear here.' : 'Sent to a reviewer. The outcome will appear on this answer.' },
+      }
+
+    case 'queue':
+      return { ...state, queue: a.queue }
 
     case 'trust':
       return { ...state, trust: a.id ? { id: a.id, claimId: a.claimId } : null }
@@ -173,6 +184,24 @@ function reducer(state, a) {
     default:
       return state
   }
+}
+
+/** Record a reviewer decision and return it to every employee waiting on it. */
+function applyDecision(state, item, outcome, queue, askers) {
+  const hint = REVIEW_HINTS[item.scenarioId] ?? {}
+  let s = {
+    ...state,
+    queue,
+    liveDecisions: [
+      ...state.liveDecisions,
+      { id: item.id, topic: scenarioById(item.scenarioId).topic, docId: hint.docId ?? null, decision: outcome.decision, category: outcome.decision === 'approved' ? 'none' : hint.category ?? 'none' },
+    ],
+  }
+  // askers are message ids in demo mode, stored answer ids in backend mode.
+  const ids = s.messages.filter((m) => askers.includes(m.id) || (m.serverId && askers.includes(m.serverId))).map((m) => m.id)
+  for (const id of ids) s = updateMsg(s, id, { outcome })
+  s = { ...s, unreadOutcomes: s.unreadOutcomes + ids.length }
+  return { ...s, toast: { text: askers.length ? 'Decision sent back to the employee who asked.' : 'Decision recorded.' } }
 }
 
 function addToQueue(state, msg, routedBy, reasons, note) {
@@ -209,12 +238,30 @@ export function StoreProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initial)
   const cancels = useRef([])
   const nextId = useRef(1)
+  const stateRef = useRef(state)
+  stateRef.current = state
 
   useEffect(() => () => cancels.current.forEach((c) => c()), [])
 
-  const askQuestion = useCallback((question) => {
+  const fail = useCallback((what) => dispatch({ type: 'toast', toast: { text: `${what} The backend did not respond. Is it running on port 8000?` } }), [])
+
+  const refreshQueue = useCallback(() => {
+    api.reviews().then((queue) => dispatch({ type: 'queue', queue }), () => fail('Could not load the review queue.'))
+  }, [fail])
+
+  // Backend mode: the review queue lives on the server.
+  useEffect(() => {
+    if (BACKEND) refreshQueue()
+  }, [refreshQueue])
+
+  const askQuestion = useCallback(async (question) => {
     const id = nextId.current++
-    const reply = ask(question)
+    let reply
+    try {
+      reply = await ask(question)
+    } catch {
+      return fail('Could not get an answer.')
+    }
     dispatch({ type: 'ask', id, question, reply })
     const answerId = `a${id}`
     // Brief "thinking" beat, then stream the answer, then stream verification in.
@@ -225,10 +272,15 @@ export function StoreProvider({ children }) {
         () => {
           dispatch({ type: 'streamed', id: answerId })
           const stopVerify = verify(reply.scenarioId, {
+            answerId: reply.answerId,
             question,
             onCheckStart: (i) => dispatch({ type: 'checkStart', id: answerId, i }),
-            onCheckDone: (i, check) => dispatch({ type: 'checkDone', id: answerId, i, check }),
-            onComplete: (result) => dispatch({ type: 'verified', id: answerId, result }),
+            onCheckDone: (i, check, claims) => dispatch({ type: 'checkDone', id: answerId, i, check, claims }),
+            onComplete: (result, routed) => {
+              dispatch({ type: 'verified', id: answerId, result, server: BACKEND, routed })
+              if (routed) refreshQueue()
+            },
+            onError: () => fail('Verification stopped.'),
           })
           cancels.current.push(stopVerify)
         },
@@ -236,6 +288,39 @@ export function StoreProvider({ children }) {
       cancels.current.push(stopStream)
     }, 260)
     cancels.current.push(() => clearTimeout(t))
+  }, [fail, refreshQueue])
+
+  const escalate = useCallback(
+    async (id, note) => {
+      if (!BACKEND) return dispatch({ type: 'escalate', id, note })
+      const m = stateRef.current.messages.find((x) => x.id === id)
+      try {
+        const { routed, queue } = await api.escalate(m.serverId, note)
+        dispatch({ type: 'escalated', id, routed, queue })
+      } catch {
+        fail('Could not send for review.')
+      }
+    },
+    [fail],
+  )
+
+  const decide = useCallback(
+    async ({ queueId, decision, note, correctedText }) => {
+      if (!BACKEND) return dispatch({ type: 'decide', queueId, decision, note, correctedText })
+      try {
+        const { outcome, askers, queue } = await api.decide(queueId, { decision, note, correctedText })
+        dispatch({ type: 'decided', queueId, outcome, askers, queue })
+      } catch {
+        fail('Could not record the decision.')
+      }
+    },
+    [fail],
+  )
+
+  const feedback = useCallback((id, value) => {
+    const m = stateRef.current.messages.find((x) => x.id === id)
+    dispatch({ type: 'feedback', id, value })
+    if (BACKEND && m?.serverId) api.feedback(m.serverId, m.feedback === value ? null : value).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -244,7 +329,7 @@ export function StoreProvider({ children }) {
     return () => clearTimeout(t)
   }, [state.toast])
 
-  return <Ctx.Provider value={{ state, dispatch, askQuestion }}>{children}</Ctx.Provider>
+  return <Ctx.Provider value={{ state, dispatch, askQuestion, escalate, decide, feedback }}>{children}</Ctx.Provider>
 }
 
 export function useStore() {
