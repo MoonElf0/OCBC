@@ -3,6 +3,7 @@ import { UserRound, MessageSquare, Inbox, ChartLine, Check, Sun, Moon } from 'lu
 import { getTheme, applyTheme } from '../lib/theme'
 import { useStore } from '../state/store'
 import { CharacterMark } from './Character'
+import { BACKEND } from '../lib/backend'
 
 const LINKS = {
   workspace: [{ id: 'workspace', label: 'Workspace' }],
@@ -63,7 +64,12 @@ export default function TopNav() {
         </div>
 
         <div className="ml-auto flex items-center gap-3">
-          <span className="hidden whitespace-nowrap rounded-full border border-white/25 px-3 py-1 text-caption text-white/80 lg:inline">Prototype · synthetic data only</span>
+          <span
+            className="hidden whitespace-nowrap rounded-full border border-white/25 px-3 py-1 text-caption text-white/80 lg:inline"
+            title={BACKEND ? 'Backend mode: retrieval, rule checks, scores, routing and the dashboard are computed by the backend. Answers and judge verdicts are still scripted.' : undefined}
+          >
+            {BACKEND ? 'Prototype · synthetic data · backend mode' : 'Prototype · synthetic data only'}
+          </span>
           {admin && (
             <button onClick={() => go('workspace')} className="whitespace-nowrap rounded-full border border-white/25 px-4 py-1.5 text-body-sm font-medium text-white hover:border-white/60">
               Back to workspace
@@ -92,7 +98,7 @@ export default function TopNav() {
               <div role="menu" className="rise-in absolute right-0 top-12 z-30 w-72 rounded-2xl border border-frost bg-porcelain p-2 text-ink shadow-md">
                 <div className="px-3 pt-2 pb-3">
                   <div className="eyebrow text-smoke">Switch role · demo</div>
-                  <div className="mt-1 text-caption text-carbon">All roles share this browser session. Nothing is saved.</div>
+                  <div className="mt-1 text-caption text-carbon">{BACKEND ? 'All roles share one backend. Queue and decisions are saved.' : 'All roles share this browser session. Nothing is saved.'}</div>
                 </div>
                 <MenuItem Icon={MessageSquare} label="Employee workspace" sub="Relationship Manager · Business Banking" active={state.view === 'workspace'} onClick={() => go('workspace')} badge={state.unreadOutcomes ? `${state.unreadOutcomes} outcome` : null} />
                 <div className="my-1 border-t border-frost" />

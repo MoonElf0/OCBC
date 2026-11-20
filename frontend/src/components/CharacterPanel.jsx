@@ -600,7 +600,7 @@ function ClaimDetail({ m, claimId }) {
             <div className="flex items-center gap-2 text-body-sm font-semibold text-ink">
               <CircleSlash size={18} className="text-status-unknown" aria-hidden="true" /> No source found
             </div>
-            <SearchRecord scenarioId={m.scenarioId} />
+            <SearchRecord scenarioId={m.scenarioId} search={m.result?.search} />
           </div>
         )}
       </div>
@@ -628,7 +628,7 @@ function Reasoning({ reason, method }) {
 }
 
 function Actions({ m }) {
-  const { dispatch } = useStore()
+  const { escalate, feedback } = useStore()
   const [composing, setComposing] = useState(false)
   const [note, setNote] = useState('')
   const done = m.phase === 'done'
@@ -654,7 +654,7 @@ function Actions({ m }) {
           className="rise-in space-y-3"
           onSubmit={(e) => {
             e.preventDefault()
-            dispatch({ type: 'escalate', id: m.id, note })
+            escalate(m.id, note)
             setComposing(false)
           }}
         >
@@ -676,10 +676,10 @@ function Actions({ m }) {
           <PrimaryButton onClick={() => setComposing(true)} disabled={!done} className="flex-1 whitespace-nowrap">
             <Inbox size={16} /> Send for human review
           </PrimaryButton>
-          <GhostButton onClick={() => dispatch({ type: 'feedback', id: m.id, value: 'helpful' })} pressed={m.feedback === 'helpful'} disabled={!done} aria-label="Helpful" title="Helpful" className="px-3">
+          <GhostButton onClick={() => feedback(m.id, 'helpful')} pressed={m.feedback === 'helpful'} disabled={!done} aria-label="Helpful" title="Helpful" className="px-3">
             <ThumbsUp size={17} />
           </GhostButton>
-          <GhostButton onClick={() => dispatch({ type: 'feedback', id: m.id, value: 'wrong' })} pressed={m.feedback === 'wrong'} disabled={!done} aria-label="Wrong" title="Wrong" className="px-3">
+          <GhostButton onClick={() => feedback(m.id, 'wrong')} pressed={m.feedback === 'wrong'} disabled={!done} aria-label="Wrong" title="Wrong" className="px-3">
             <ThumbsDown size={17} />
           </GhostButton>
         </div>
