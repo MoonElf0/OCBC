@@ -6,14 +6,14 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import Ajv2020 from 'ajv/dist/2020'
-import { SCENARIOS, FALLBACK, CORRECTIONS } from './index'
+import { SCENARIOS, FALLBACK, CORRECTIONS, EVAL_ANSWERS } from './index'
 import { assess } from '../lib/assess'
 import { buildFixtures, buildGolden } from '../../scripts/export-data'
 
 const root = new URL('../../../', import.meta.url)
 const schema = JSON.parse(readFileSync(new URL('contract/verification-result.schema.json', root), 'utf8'))
 const validate = new Ajv2020({ allErrors: true, strict: false }).compile(schema)
-const ALL = [...SCENARIOS, FALLBACK, ...Object.values(CORRECTIONS)]
+const ALL = [...SCENARIOS, FALLBACK, ...Object.values(CORRECTIONS), ...EVAL_ANSWERS]
 
 describe('verification result contract', () => {
   for (const s of ALL) {

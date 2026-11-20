@@ -1,14 +1,15 @@
 import { describe, it, expect } from 'vitest'
-import { SCENARIOS, FALLBACK, CORRECTIONS, DOCUMENTS, REVIEW_QUEUE_SEED, REVIEW_HINTS, REVIEW_OUTCOMES, WEEKLY, WINDOW_WEEKS } from './index'
+import { SCENARIOS, FALLBACK, CORRECTIONS, DOCUMENTS, REVIEW_QUEUE_SEED, REVIEW_HINTS, REVIEW_OUTCOMES, WEEKLY, WINDOW_WEEKS, EVAL_ANSWERS, EVAL_SET, AGENT_VERSIONS, TOPICS } from './index'
 import { CHECKS, CLAIM_STATUS } from '../lib/status'
 import { freshnessOf } from '../lib/freshness'
 import { assess } from '../lib/assess'
 import { figures } from '../lib/rules'
 import { topicStats, recommendations } from '../lib/metrics'
 import { matchScenario } from '../lib/agent'
+import { compareVersions, changeOf, summarise } from '../lib/evaluation'
 
 const JUDGE = new Set(CHECKS.filter((c) => c.method === 'judge').map((c) => c.id))
-const ALL = [...SCENARIOS, FALLBACK, ...Object.values(CORRECTIONS)]
+const ALL = [...SCENARIOS, FALLBACK, ...Object.values(CORRECTIONS), ...EVAL_ANSWERS]
 
 describe('fixtures are shaped like real pipeline output', () => {
   for (const s of ALL) {
@@ -159,6 +160,77 @@ describe('no source found is Unknown, not merely unsupported', () => {
     const r = assess('collateral-crypto')
     expect(r.claims.every((c) => c.status === 'no-source')).toBe(true)
     expect(r.score).toBeLessThanOrEqual(10)
+  })
+})
+
+describe('agent release check: v1 vs v2 on one test set', () => {
+  const ids = new Set(ALL.map((s) => s.id))
+  const r = compareVersions()
+
+  it('every test question has a scored answer from each version, on its own topic', () => {
+    expect(AGENT_VERSIONS.map((v) => v.id)).toEqual(['v1', 'v2'])
+    for (const q of EVAL_SET) {
+      for (const v of AGENT_VERSIONS) {
+        expect(ids.has(q.answers[v.id]), `${q.id} ${v.id}`).toBe(true)
+        expect(assess(q.answers[v.id]).checks).toHaveLength(6)
+      }
+      const v1 = ALL.find((s) => s.id === q.answers.v1)
+      expect(v1.topic).toBe(q.topic)
+      expect(v1.question).toBe(q.question)
+    }
+    for (const t of Object.keys(TOPICS)) expect(EVAL_SET.filter((q) => q.topic === t).length, t).toBe(2)
+  })
+
+  it("v1's answers to the demo questions are the workspace answers, unchanged", () => {
+    for (const s of SCENARIOS) expect(EVAL_SET.find((q) => q.answers.v1 === s.id), s.id).toBeTruthy()
+  })
+
+  it('the workspace agent can never return a v2 answer', () => {
+    for (const s of EVAL_ANSWERS) expect(matchScenario(s.question).id).not.toBe(s.id)
+  })
+
+  it('v2 fixes the stale, authority and no-source cases, and the verifier catches its KYC regression', () => {
+    const change = Object.fromEntries(r.questions.map((q) => [q.id, q.change]))
+    expect(change).toEqual({
+      'q-sme-limit': 'fixed',
+      'q-sme-cutoff': 'fixed',
+      'q-kyc-ubo': 'regressed',
+      'q-kyc-address': 'unchanged',
+      'q-fx-override': 'fixed',
+      'q-fx-approver': 'fixed',
+      'q-fees-waiver': 'improved',
+      'q-fees-cards': 'unchanged',
+      'q-collateral-crypto': 'fixed',
+      'q-collateral-gold': 'fixed',
+    })
+    expect(r.release.id).toBe('hold')
+    expect(r.release.detail[0]).toContain('KYC & Onboarding')
+    expect(r.topics.find((t) => t.id === 'kyc').verdict).toBe('regressed')
+  })
+
+  it('the stale fee matrix survives the agent change, and the check says so', () => {
+    expect(r.overall.candidate.stale).toBe(2)
+    expect(r.notes.find((n) => n.kind === 'stale-document').docId).toBe('DOC-OPS-045')
+  })
+
+  it('declining with no approved source is counted as fixed, not as a missing score', () => {
+    expect(r.overall.base.withoutSource).toBe(2)
+    expect(r.overall.candidate.withoutSource).toBe(0)
+    expect(r.overall.candidate.declined).toBe(2)
+    expect(r.topics.find((t) => t.id === 'collateral').candidate.flagRate).toBeNull()
+  })
+
+  it('rates are computed from claim counts', () => {
+    const o = r.overall.base
+    expect(o.flagRate).toBeCloseTo(o.flagged / o.claims)
+    expect(o.flagged).toBe(r.questions.reduce((t, q) => t + q.base.flags.length, 0))
+    expect(r.overall.candidate.flagRate).toBeLessThan(o.flagRate)
+  })
+
+  it('a new or worse flag is a regression even when the flag count drops', () => {
+    const a = summarise({ score: 70, band: { id: 'medium' }, claims: [{ status: 'stale' }, { status: 'stale' }] })
+    const b = summarise({ score: 60, band: { id: 'medium' }, claims: [{ status: 'conflicting' }, { status: 'supported' }] })
+    expect(changeOf(a, b)).toBe('regressed')
   })
 })
 

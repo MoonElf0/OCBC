@@ -14,6 +14,7 @@ import * as F from '../src/fixtures/index.js'
 import { assess, SCORE_MODEL } from '../src/lib/assess.js'
 import { CHECKS } from '../src/lib/status.js'
 import { overallStats, weeklySeries, topicTable, recommendations } from '../src/lib/metrics.js'
+import { compareVersions } from '../src/lib/evaluation.js'
 
 // A paraphrase per scenario, so the free-text path is covered too.
 const PARAPHRASE = 'free text question that is not the scripted one'
@@ -43,13 +44,16 @@ export function buildFixtures() {
     WINDOW_WEEKS: F.WINDOW_WEEKS,
     WEEKLY: F.WEEKLY,
     PEOPLE: F.PEOPLE,
+    AGENT_VERSIONS: F.AGENT_VERSIONS,
+    EVAL_ANSWERS: F.EVAL_ANSWERS,
+    EVAL_SET: F.EVAL_SET,
     CHECKS: CHECKS.map(({ id, name, question, method, ms }) => ({ id, name, question, method, ms })),
     SCORE_MODEL,
   })
 }
 
 export function buildGolden() {
-  const ids = [...F.SCENARIOS, F.FALLBACK, ...Object.values(F.CORRECTIONS)].map((s) => s.id)
+  const ids = [...F.SCENARIOS, F.FALLBACK, ...Object.values(F.CORRECTIONS), ...F.EVAL_ANSWERS].map((s) => s.id)
   return json({
     assess: Object.fromEntries(ids.map((id) => [id, assess(id)])),
     assessParaphrased: Object.fromEntries(F.SCENARIOS.map((s) => [s.id, assess(s.id, { question: PARAPHRASE })])),
@@ -62,5 +66,6 @@ export function buildGolden() {
       recommendationsWithLive: recommendations(SAMPLE_LIVE_DECISIONS),
       sampleLiveDecisions: SAMPLE_LIVE_DECISIONS,
     },
+    evaluation: compareVersions(),
   })
 }
