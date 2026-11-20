@@ -1,255 +1,235 @@
 """
-SQLite storage. One file, no server: data/assessment.db (override with
-ASSESSMENT_DB). Seeded from data/fixtures.json on first run; reset with
+MongoDB storage. Connection string in MONGODB_URI (put it in backend/.env,
+which git ignores), database name in MONGODB_DB (default "assessment").
+Seeded from data/fixtures.json on first run; reset with
 `python -m app.db --reset` or POST /api/admin/reset.
 
-What lives here
-  documents, sections   the approved policy library retrieval searches
-  topics, weekly_counts history behind the Trends dashboard
-  review_outcomes       tagged reviewer decisions (seeded history + live)
-  answers               every question asked, its answer and verification
-  reviews               the human review queue
+Collections
+  documents        the approved policy library retrieval searches; sections embedded
+  topics, weekly_counts   history behind the Trends dashboard
+  review_outcomes  tagged reviewer decisions (seeded history + live)
+  answers          every question asked, its answer and verification
+  reviews          the human review queue
+  meta             demo date, window, counters, library revision
+
+Every function returns the same shapes the earlier SQLite version did, so main.py
+and the API are unchanged. Writes are serialised by main.py's lock; counters
+use atomic $inc.
 """
 import json
 import os
-import sqlite3
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from uuid import uuid4
+
+from dotenv import load_dotenv
+from pymongo import ASCENDING, DESCENDING, MongoClient, ReturnDocument
+from pymongo.database import Database
 
 from . import fixtures
 
-DEFAULT_PATH = Path(__file__).resolve().parent.parent / "data" / "assessment.db"
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS topics (id TEXT PRIMARY KEY, name TEXT NOT NULL, ord INTEGER NOT NULL);
-CREATE TABLE IF NOT EXISTS documents (
-  id TEXT PRIMARY KEY, title TEXT NOT NULL, version TEXT NOT NULL, topic TEXT NOT NULL REFERENCES topics(id),
-  owner TEXT NOT NULL, updated TEXT NOT NULL, review_cycle_months INTEGER NOT NULL,
-  superseded_by TEXT REFERENCES documents(id), ord INTEGER NOT NULL
-);
-CREATE TABLE IF NOT EXISTS sections (
-  doc_id TEXT NOT NULL REFERENCES documents(id), section_id TEXT NOT NULL, heading TEXT NOT NULL,
-  text TEXT NOT NULL, ord INTEGER NOT NULL, PRIMARY KEY (doc_id, section_id)
-);
-CREATE TABLE IF NOT EXISTS weekly_counts (
-  topic TEXT NOT NULL REFERENCES topics(id), week INTEGER NOT NULL, label TEXT NOT NULL,
-  answers INTEGER NOT NULL, claims INTEGER NOT NULL, unsupported INTEGER NOT NULL, conflicting INTEGER NOT NULL,
-  stale INTEGER NOT NULL, no_source INTEGER NOT NULL, reviews INTEGER NOT NULL, PRIMARY KEY (topic, week)
-);
-CREATE TABLE IF NOT EXISTS review_outcomes (
-  id INTEGER PRIMARY KEY AUTOINCREMENT, topic TEXT NOT NULL, decision TEXT NOT NULL, category TEXT NOT NULL,
-  doc_id TEXT, count INTEGER NOT NULL,
-  review_id TEXT  -- NULL: seeded history. Set: a decision made through the API.
-);
-CREATE TABLE IF NOT EXISTS answers (
-  id TEXT PRIMARY KEY, question TEXT NOT NULL, scenario_id TEXT NOT NULL, text TEXT NOT NULL,
-  citations TEXT NOT NULL, result TEXT, feedback TEXT, created_at TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS reviews (
-  id TEXT PRIMARY KEY, seq INTEGER NOT NULL, answer_id TEXT REFERENCES answers(id), scenario_id TEXT NOT NULL,
-  asked_by TEXT NOT NULL, asked_at TEXT NOT NULL, routed_by TEXT NOT NULL, reasons TEXT NOT NULL,
-  note TEXT NOT NULL DEFAULT '', status TEXT NOT NULL, watchers TEXT NOT NULL DEFAULT '[]',
-  outcome TEXT, created_at TEXT NOT NULL
-);
-"""
-
-METRIC_COLS = [("answers", "answers"), ("claims", "claims"), ("unsupported", "unsupported"), ("conflicting", "conflicting"),
-               ("stale", "stale"), ("noSource", "no_source"), ("reviews", "reviews")]
+DEFAULT_DB = "assessment"
+COLLECTIONS = ["reviews", "answers", "review_outcomes", "weekly_counts", "documents", "topics", "meta"]
+METRIC_KEYS = ["answers", "claims", "unsupported", "conflicting", "stale", "noSource", "reviews"]
 
 
 def now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def connect(path: str | os.PathLike | None = None) -> sqlite3.Connection:
-    path = path or os.environ.get("ASSESSMENT_DB") or DEFAULT_PATH
-    conn = sqlite3.connect(path, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    conn.executescript(SCHEMA)
-    if conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0] == 0:
-        seed(conn)
-    return conn
+def _plain(value):
+    """JSON round-trip, so stored results match what the API sends (string keys, lists not tuples)."""
+    return json.loads(json.dumps(value))
 
 
-def reset(conn: sqlite3.Connection) -> None:
-    for t in ["reviews", "answers", "review_outcomes", "weekly_counts", "sections", "documents", "topics", "meta"]:
-        conn.execute(f"DELETE FROM {t}")
-    seed(conn)
+def connect(uri: str | None = None, name: str | None = None, client=None) -> Database:
+    """Open the database, seeding it if the library is empty. Pass `client` (e.g. mongomock) in tests."""
+    if client is None:
+        uri = uri or os.environ.get("MONGODB_URI")
+        if not uri:
+            raise RuntimeError("MONGODB_URI is not set. Add it to backend/.env (see backend/README.md).")
+        client = MongoClient(uri, serverSelectionTimeoutMS=8000, appname="assessment-ai-backend")
+    db = client[name or os.environ.get("MONGODB_DB") or DEFAULT_DB]
+    db.reviews.create_index([("status", ASCENDING), ("scenarioId", ASCENDING), ("seq", DESCENDING)])
+    db.weekly_counts.create_index([("topic", ASCENDING), ("week", ASCENDING)], unique=True)
+    if db.documents.count_documents({}) == 0:
+        reset(db)  # empty or half-seeded: clear leftovers, then seed
+    return db
 
 
-def seed(conn: sqlite3.Connection) -> None:
+def reset(db: Database) -> None:
+    for c in COLLECTIONS:
+        db[c].delete_many({})
+    seed(db)
+
+
+def seed(db: Database) -> None:
     f = fixtures.load()
-    with conn:
-        conn.execute("INSERT OR REPLACE INTO meta VALUES ('window_weeks', ?)", (str(f["WINDOW_WEEKS"]),))
-        conn.execute("INSERT OR REPLACE INTO meta VALUES ('today', ?)", (f["DEMO_TODAY"],))
-        conn.execute("INSERT OR REPLACE INTO meta VALUES ('answer_seq', '0')")
-        conn.execute("INSERT OR REPLACE INTO meta VALUES ('library_rev', ?)", (uuid4().hex,))
-        for i, t in enumerate(f["TOPICS"].values()):
-            conn.execute("INSERT INTO topics VALUES (?, ?, ?)", (t["id"], t["name"], i))
-        # Insert without supersededBy first, so the reference always resolves.
-        for i, d in enumerate(f["DOCUMENTS"].values()):
-            conn.execute("INSERT INTO documents VALUES (?,?,?,?,?,?,?,NULL,?)",
-                         (d["id"], d["title"], d["version"], d["topic"], d["owner"], d["updated"], d["reviewCycleMonths"], i))
-            for j, s in enumerate(d["sections"]):
-                conn.execute("INSERT INTO sections VALUES (?,?,?,?,?)", (d["id"], s["id"], s["heading"], s["text"], j))
-        for d in f["DOCUMENTS"].values():
-            conn.execute("UPDATE documents SET superseded_by = ? WHERE id = ?", (d["supersededBy"], d["id"]))
-        for topic, w in f["WEEKLY"].items():
-            for i, label in enumerate(f["WEEKS"]):
-                conn.execute("INSERT INTO weekly_counts VALUES (?,?,?,?,?,?,?,?,?,?)",
-                             (topic, i, label, *[w[k][i] for k, _ in METRIC_COLS]))
-        for r in f["REVIEW_OUTCOMES"]:
-            conn.execute("INSERT INTO review_outcomes (topic, decision, category, doc_id, count) VALUES (?,?,?,?,?)",
-                         (r["topic"], r["decision"], r["category"], r["docId"], r["count"]))
-        for q in f["REVIEW_QUEUE_SEED"]:
-            conn.execute(
-                "INSERT INTO reviews (id, seq, answer_id, scenario_id, asked_by, asked_at, routed_by, reasons, status, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
-                (q["id"], int(q["id"].split("-")[1]), None, q["scenarioId"], q["askedBy"], q["askedAt"], q["routedBy"], json.dumps(q["reasons"]), "pending", q["askedAt"]),
-            )
+    db.meta.insert_many([
+        {"_id": "window_weeks", "value": f["WINDOW_WEEKS"]},
+        {"_id": "today", "value": f["DEMO_TODAY"]},
+        {"_id": "answer_seq", "value": 0},
+        {"_id": "outcome_seq", "value": 0},
+        {"_id": "library_rev", "value": 0},
+    ])
+    db.topics.insert_many([{"_id": t["id"], "name": t["name"], "ord": i} for i, t in enumerate(f["TOPICS"].values())])
+    db.documents.insert_many([
+        {"_id": d["id"], "title": d["title"], "version": d["version"], "topic": d["topic"], "owner": d["owner"],
+         "updated": d["updated"], "reviewCycleMonths": d["reviewCycleMonths"], "supersededBy": d["supersededBy"],
+         "ord": i, "sections": [{"id": s["id"], "heading": s["heading"], "text": s["text"]} for s in d["sections"]]}
+        for i, d in enumerate(f["DOCUMENTS"].values())
+    ])
+    db.weekly_counts.insert_many([
+        {"topic": topic, "week": i, "label": label, **{k: w[k][i] for k in METRIC_KEYS}}
+        for topic, w in f["WEEKLY"].items() for i, label in enumerate(f["WEEKS"])
+    ])
+    for r in f["REVIEW_OUTCOMES"]:
+        db.review_outcomes.insert_one({"ord": _next(db, "outcome_seq"), "topic": r["topic"], "decision": r["decision"],
+                                       "category": r["category"], "docId": r["docId"], "count": r["count"], "reviewId": None})
+    db.reviews.insert_many([
+        {"_id": q["id"], "seq": int(q["id"].split("-")[1]), "answerId": None, "scenarioId": q["scenarioId"],
+         "askedBy": q["askedBy"], "askedAt": q["askedAt"], "routedBy": q["routedBy"], "reasons": q["reasons"],
+         "note": "", "status": "pending", "watchers": [], "outcome": None, "createdAt": q["askedAt"]}
+        for q in f["REVIEW_QUEUE_SEED"]
+    ])
+
+
+def _next(db: Database, counter: str) -> int:
+    doc = db.meta.find_one_and_update({"_id": counter}, {"$inc": {"value": 1}}, upsert=True, return_document=ReturnDocument.AFTER)
+    return doc["value"]
+
+
+def _meta(db: Database, key: str):
+    return db.meta.find_one({"_id": key})["value"]
 
 
 # ── reads ────────────────────────────────────────────────────────────────
 
-def today(conn) -> str:
-    return conn.execute("SELECT value FROM meta WHERE key='today'").fetchone()[0]
+def today(db: Database) -> str:
+    return _meta(db, "today")
 
 
-def documents(conn) -> dict:
+def documents(db: Database) -> dict:
     """The library, shaped like fixtures DOCUMENTS."""
-    docs = {}
-    for d in conn.execute("SELECT * FROM documents ORDER BY ord"):
-        docs[d["id"]] = {
-            "id": d["id"], "title": d["title"], "version": d["version"], "topic": d["topic"], "owner": d["owner"],
-            "updated": d["updated"], "reviewCycleMonths": d["review_cycle_months"], "supersededBy": d["superseded_by"],
-            "sections": [{"id": s["section_id"], "heading": s["heading"], "text": s["text"]}
-                         for s in conn.execute("SELECT * FROM sections WHERE doc_id=? ORDER BY ord", (d["id"],))],
-        }
-    return docs
+    return {
+        d["_id"]: {"id": d["_id"], "title": d["title"], "version": d["version"], "topic": d["topic"], "owner": d["owner"],
+                   "updated": d["updated"], "reviewCycleMonths": d["reviewCycleMonths"], "supersededBy": d["supersededBy"],
+                   "sections": d["sections"]}
+        for d in db.documents.find().sort("ord", ASCENDING)
+    }
 
 
-def library_rev(conn) -> str:
+def library_rev(db: Database) -> str:
     """Changes whenever the library changes, so the retrieval index is rebuilt."""
-    return conn.execute("SELECT value FROM meta WHERE key='library_rev'").fetchone()[0]
+    return str(_meta(db, "library_rev"))
 
 
-def metrics_data(conn) -> tuple[dict, list[dict]]:
+def metrics_data(db: Database) -> tuple[dict, list[dict]]:
     """(data shaped like the fixtures, live decisions) for app.metrics.Metrics."""
-    topics = {t["id"]: {"id": t["id"], "name": t["name"]} for t in conn.execute("SELECT * FROM topics ORDER BY ord")}
-    weeks = [r["label"] for r in conn.execute("SELECT DISTINCT week, label FROM weekly_counts ORDER BY week")]
+    topics = {t["_id"]: {"id": t["_id"], "name": t["name"]} for t in db.topics.find().sort("ord", ASCENDING)}
+    labels = {r["week"]: r["label"] for r in db.weekly_counts.find({}, {"week": 1, "label": 1})}
+    weeks = [labels[w] for w in sorted(labels)]
     weekly = {}
     for t in topics:
-        rows = conn.execute("SELECT * FROM weekly_counts WHERE topic=? ORDER BY week", (t,)).fetchall()
-        weekly[t] = {k: [r[col] for r in rows] for k, col in METRIC_COLS}
+        rows = list(db.weekly_counts.find({"topic": t}).sort("week", ASCENDING))
+        weekly[t] = {k: [r[k] for r in rows] for k in METRIC_KEYS}
     outcomes, live = [], []
-    for r in conn.execute("SELECT * FROM review_outcomes ORDER BY id"):
-        row = {"topic": r["topic"], "decision": r["decision"], "category": r["category"], "docId": r["doc_id"]}
-        if r["review_id"]:
-            live.append({"id": r["review_id"], **row})
+    for r in db.review_outcomes.find().sort("ord", ASCENDING):
+        row = {"topic": r["topic"], "decision": r["decision"], "category": r["category"], "docId": r["docId"]}
+        if r["reviewId"]:
+            live.append({"id": r["reviewId"], **row})
         else:
             outcomes.append({**row, "count": r["count"]})
     data = {
-        "TOPICS": topics, "WEEKS": weeks, "WEEKLY": weekly, "REVIEW_OUTCOMES": outcomes, "DOCUMENTS": documents(conn),
-        "WINDOW_WEEKS": int(conn.execute("SELECT value FROM meta WHERE key='window_weeks'").fetchone()[0]),
+        "TOPICS": topics, "WEEKS": weeks, "WEEKLY": weekly, "REVIEW_OUTCOMES": outcomes, "DOCUMENTS": documents(db),
+        "WINDOW_WEEKS": int(_meta(db, "window_weeks")),
     }
     return data, live
 
 
-def _answer(row) -> dict | None:
-    if not row:
+def _answer(doc) -> dict | None:
+    if not doc:
         return None
-    return {"id": row["id"], "question": row["question"], "scenarioId": row["scenario_id"], "text": row["text"],
-            "citations": json.loads(row["citations"]), "result": json.loads(row["result"]) if row["result"] else None,
-            "feedback": row["feedback"], "createdAt": row["created_at"]}
+    return {"id": doc["_id"], "question": doc["question"], "scenarioId": doc["scenarioId"], "text": doc["text"],
+            "citations": doc["citations"], "result": doc.get("result"), "feedback": doc.get("feedback"),
+            "createdAt": doc["createdAt"]}
 
 
-def get_answer(conn, answer_id: str) -> dict | None:
-    return _answer(conn.execute("SELECT * FROM answers WHERE id=?", (answer_id,)).fetchone())
+def get_answer(db: Database, answer_id: str) -> dict | None:
+    return _answer(db.answers.find_one({"_id": answer_id}))
 
 
-def _review(row) -> dict:
-    return {"id": row["id"], "answerId": row["answer_id"], "scenarioId": row["scenario_id"], "askedBy": row["asked_by"],
-            "askedAt": row["asked_at"], "routedBy": row["routed_by"], "reasons": json.loads(row["reasons"]), "note": row["note"],
-            "status": row["status"], "watchers": json.loads(row["watchers"]),
-            "outcome": json.loads(row["outcome"]) if row["outcome"] else None, "createdAt": row["created_at"]}
+def _review(doc) -> dict:
+    return {"id": doc["_id"], "answerId": doc["answerId"], "scenarioId": doc["scenarioId"], "askedBy": doc["askedBy"],
+            "askedAt": doc["askedAt"], "routedBy": doc["routedBy"], "reasons": doc["reasons"], "note": doc["note"],
+            "status": doc["status"], "watchers": doc["watchers"], "outcome": doc.get("outcome"), "createdAt": doc["createdAt"]}
 
 
-def reviews(conn) -> list[dict]:
-    return [_review(r) for r in conn.execute("SELECT * FROM reviews ORDER BY seq DESC")]
+def reviews(db: Database) -> list[dict]:
+    return [_review(r) for r in db.reviews.find().sort("seq", DESCENDING)]
 
 
-def get_review(conn, review_id: str) -> dict | None:
-    row = conn.execute("SELECT * FROM reviews WHERE id=?", (review_id,)).fetchone()
-    return _review(row) if row else None
+def get_review(db: Database, review_id: str) -> dict | None:
+    doc = db.reviews.find_one({"_id": review_id})
+    return _review(doc) if doc else None
 
 
 # ── writes ───────────────────────────────────────────────────────────────
 
-def add_answer(conn, question: str, reply: dict) -> str:
-    with conn:
-        n = int(conn.execute("SELECT value FROM meta WHERE key='answer_seq'").fetchone()[0]) + 1
-        conn.execute("UPDATE meta SET value=? WHERE key='answer_seq'", (str(n),))
-        answer_id = f"ANS-{n:05d}"
-        conn.execute("INSERT INTO answers (id, question, scenario_id, text, citations, created_at) VALUES (?,?,?,?,?,?)",
-                     (answer_id, question, reply["scenarioId"], reply["text"], json.dumps(reply["citations"]), now()))
+def add_answer(db: Database, question: str, reply: dict) -> str:
+    answer_id = f"ANS-{_next(db, 'answer_seq'):05d}"
+    db.answers.insert_one({"_id": answer_id, "question": question, "scenarioId": reply["scenarioId"], "text": reply["text"],
+                           "citations": _plain(reply["citations"]), "result": None, "feedback": None, "createdAt": now()})
     return answer_id
 
 
-def save_result(conn, answer_id: str, result: dict) -> None:
-    with conn:
-        conn.execute("UPDATE answers SET result=? WHERE id=?", (json.dumps(result), answer_id))
+def save_result(db: Database, answer_id: str, result: dict) -> None:
+    db.answers.update_one({"_id": answer_id}, {"$set": {"result": _plain(result)}})
 
 
-def set_feedback(conn, answer_id: str, value: str | None) -> None:
-    with conn:
-        conn.execute("UPDATE answers SET feedback=? WHERE id=?", (value, answer_id))
+def set_feedback(db: Database, answer_id: str, value: str | None) -> None:
+    db.answers.update_one({"_id": answer_id}, {"$set": {"feedback": value}})
 
 
-def route(conn, answer: dict, routed_by: str, reasons: list[str], note: str, asked_by: str) -> dict:
+def route(db: Database, answer: dict, routed_by: str, reasons: list[str], note: str, asked_by: str) -> dict:
     """Queue an answer for review, or join an open review of the same question."""
-    with conn:
-        open_ = conn.execute("SELECT * FROM reviews WHERE status='pending' AND scenario_id=? ORDER BY seq DESC LIMIT 1",
-                             (answer["scenarioId"],)).fetchone()
-        if open_:
-            r = _review(open_)
-            watchers = r["watchers"] if answer["id"] in r["watchers"] or answer["id"] == r["answerId"] else [*r["watchers"], answer["id"]]
-            merged = list(dict.fromkeys([*r["reasons"], *reasons]))
-            conn.execute("UPDATE reviews SET watchers=?, reasons=? WHERE id=?", (json.dumps(watchers), json.dumps(merged), r["id"]))
-            return {"by": routed_by, "queueId": r["id"], "joined": True}
-        seq = max(1041, conn.execute("SELECT COALESCE(MAX(seq), 0) FROM reviews").fetchone()[0]) + 1
-        review_id = f"RQ-{seq}"
-        conn.execute(
-            "INSERT INTO reviews (id, seq, answer_id, scenario_id, asked_by, asked_at, routed_by, reasons, note, status, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-            (review_id, seq, answer["id"], answer["scenarioId"], asked_by, "Just now", routed_by, json.dumps(reasons), note, "pending", now()),
-        )
-        return {"by": routed_by, "queueId": review_id}
+    open_ = db.reviews.find_one({"status": "pending", "scenarioId": answer["scenarioId"]}, sort=[("seq", DESCENDING)])
+    if open_:
+        r = _review(open_)
+        watchers = r["watchers"] if answer["id"] in r["watchers"] or answer["id"] == r["answerId"] else [*r["watchers"], answer["id"]]
+        merged = list(dict.fromkeys([*r["reasons"], *reasons]))
+        db.reviews.update_one({"_id": r["id"]}, {"$set": {"watchers": watchers, "reasons": merged}})
+        return {"by": routed_by, "queueId": r["id"], "joined": True}
+    last = db.reviews.find_one({}, {"seq": 1}, sort=[("seq", DESCENDING)])
+    seq = max(1041, last["seq"] if last else 0) + 1
+    review_id = f"RQ-{seq}"
+    db.reviews.insert_one({"_id": review_id, "seq": seq, "answerId": answer["id"], "scenarioId": answer["scenarioId"],
+                           "askedBy": asked_by, "askedAt": "Just now", "routedBy": routed_by, "reasons": list(reasons),
+                           "note": note, "status": "pending", "watchers": [], "outcome": None, "createdAt": now()})
+    return {"by": routed_by, "queueId": review_id}
 
 
-def resolve_review(conn, review_id: str, outcome: dict, decision_row: dict) -> None:
-    with conn:
-        conn.execute("UPDATE reviews SET status='resolved', outcome=? WHERE id=?", (json.dumps(outcome), review_id))
-        conn.execute("INSERT INTO review_outcomes (topic, decision, category, doc_id, count, review_id) VALUES (?,?,?,?,1,?)",
-                     (decision_row["topic"], decision_row["decision"], decision_row["category"], decision_row["docId"], review_id))
+def resolve_review(db: Database, review_id: str, outcome: dict, decision_row: dict) -> None:
+    db.reviews.update_one({"_id": review_id}, {"$set": {"status": "resolved", "outcome": _plain(outcome)}})
+    db.review_outcomes.insert_one({"ord": _next(db, "outcome_seq"), "topic": decision_row["topic"],
+                                   "decision": decision_row["decision"], "category": decision_row["category"],
+                                   "docId": decision_row["docId"], "count": 1, "reviewId": review_id})
 
 
-def update_section(conn, doc_id: str, section_id: str, text: str, updated: str | None) -> bool:
-    with conn:
-        cur = conn.execute("UPDATE sections SET text=? WHERE doc_id=? AND section_id=?", (text, doc_id, section_id))
-        if cur.rowcount and updated:
-            conn.execute("UPDATE documents SET updated=? WHERE id=?", (updated, doc_id))
-        if cur.rowcount:
-            conn.execute("UPDATE meta SET value=? WHERE key='library_rev'", (uuid4().hex,))
-        return cur.rowcount > 0
+def update_section(db: Database, doc_id: str, section_id: str, text: str, updated: str | None) -> bool:
+    changes = {"sections.$.text": text, **({"updated": updated} if updated else {})}
+    res = db.documents.update_one({"_id": doc_id, "sections.id": section_id}, {"$set": changes})
+    if res.matched_count:
+        _next(db, "library_rev")
+    return res.matched_count > 0
 
 
 if __name__ == "__main__":
-    c = connect()
+    d = connect()
     if "--reset" in sys.argv:
-        reset(c)
-        c.commit()
-        print("Database reset and reseeded from data/fixtures.json")
+        reset(d)
+        print(f"Database '{d.name}' reset and reseeded from data/fixtures.json")
     else:
-        print(f"Database ready ({c.execute('SELECT COUNT(*) FROM documents').fetchone()[0]} documents)")
+        print(f"Database '{d.name}' ready ({d.documents.count_documents({})} documents)")

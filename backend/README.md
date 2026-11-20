@@ -3,12 +3,21 @@
 A FastAPI service the frontend can run against in **backend mode**. Demo mode
 (the default) never calls it and stays fully offline.
 
+Storage is MongoDB (e.g. a free Atlas cluster). Copy `.env.example` to `.env`
+and put your connection string in `MONGODB_URI`; `.env` is git-ignored, so
+never put the string anywhere else. In Atlas, allow your IP under
+Network Access, or the connection times out.
+
 ```bash
 cd backend
 python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
+cp .env.example .env     # then edit MONGODB_URI
 .venv/bin/uvicorn app.main:app --reload --port 8000
 ```
+
+On Windows use `py -m venv .venv`, `.venv\Scripts\pip`, `.venv\Scripts\uvicorn`
+and `copy .env.example .env`.
 
 In another terminal:
 
@@ -24,8 +33,12 @@ cd backend
 .venv/bin/python -m pytest -q
 ```
 
-No API keys, no network, no model. SQLite file at `data/assessment.db`,
-created and seeded on first run. Reset it with
+Tests use `mongomock` (in memory) and never touch your cluster.
+
+No API keys and no model. Data lives in the MongoDB database named by
+`MONGODB_DB` (default `assessment`), created and seeded on first run;
+collections: `documents` (sections embedded), `topics`, `weekly_counts`,
+`review_outcomes`, `answers`, `reviews`, `meta`. Reset it with
 `.venv/bin/python -m app.db --reset` or `POST /api/admin/reset`.
 
 ## What is computed and what is still scripted
@@ -40,7 +53,7 @@ created and seeded on first run. Reset it with
 | Counter-passage, "found by checker", no-source record | **computed** | unchanged |
 | Citation, freshness, cross-referencing | **computed** (`app/rules.py`) | unchanged |
 | Score, band, routing | **computed** | unchanged |
-| Review queue, decisions, feedback | **stored** in SQLite | unchanged |
+| Review queue, decisions, feedback | **stored** in MongoDB | unchanged |
 | Dashboard and recommendations | **computed** from the database (`app/metrics.py`) | unchanged |
 
 Every result carries a `provenance` field saying exactly this, and the UI

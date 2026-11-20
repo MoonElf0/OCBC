@@ -7,9 +7,9 @@ An AI answer-verification layer for OCBC, built for the OCBC × NYP Ignite Innov
 ## Tech stack
 
 - **Frontend:** React + Vite, Tailwind CSS
-- **Backend:** optional. Demo mode (default) is a scripted front-end demo — no server, no API keys, no model calls. Backend mode (`npm run dev:backend`) talks to a FastAPI + SQLite service in `backend/` that computes retrieval, rule checks, scores, routing and the dashboard; answers and judge verdicts are still scripted. See `backend/README.md`
+- **Backend:** optional. Demo mode (default) is a scripted front-end demo — no server, no API keys, no model calls. Backend mode (`npm run dev:backend`) talks to a FastAPI + MongoDB service in `backend/` that computes retrieval, rule checks, scores, routing and the dashboard; answers and judge verdicts are still scripted. See `backend/README.md`
 - **Data:** hardcoded fixtures in a single clearly separated module. Synthetic policy documents, scripted answers, scripted verdicts, scripted dashboard numbers
-- **Python:** the backend (`backend/`, FastAPI, stdlib sqlite3, no model calls yet)
+- **Python:** the backend (`backend/`, FastAPI, pymongo against MongoDB via `MONGODB_URI` in `backend/.env`, no model calls yet)
 
 Demo mode must start with one command and work offline, with the backend stopped. Do not introduce a second frontend framework or a different CSS approach without asking.
 

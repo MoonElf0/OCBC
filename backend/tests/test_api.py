@@ -1,6 +1,7 @@
 """End to end through HTTP: ask -> verify -> route -> review -> dashboard."""
 import json
 
+import mongomock
 import pytest
 from fastapi.testclient import TestClient
 
@@ -12,8 +13,8 @@ FX_Q = fixtures.scenario_by_id("fx-override")["question"]
 
 
 @pytest.fixture()
-def client(tmp_path, monkeypatch):
-    monkeypatch.setattr(api, "_conn", db.connect(tmp_path / "test.db"))
+def client(monkeypatch):
+    monkeypatch.setattr(api, "_conn", db.connect(client=mongomock.MongoClient()))  # in-memory, never the real cluster
     monkeypatch.setattr(api, "_index", None)
     return TestClient(api.app)
 
