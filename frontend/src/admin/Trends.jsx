@@ -34,7 +34,7 @@ export default function Trends() {
 
   return (
     <div className="scroll-quiet h-full overflow-y-auto">
-      <div className="mx-auto max-w-[1200px] space-y-6 px-6 py-6">
+      <div className="mx-auto max-w-[1560px] space-y-6 px-6 py-6">
         <header className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <Eyebrow>Trends · last 4 weeks vs the 4 before</Eyebrow>

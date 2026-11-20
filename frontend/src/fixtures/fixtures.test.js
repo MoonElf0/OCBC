@@ -41,6 +41,12 @@ describe('fixtures are shaped like real pipeline output', () => {
       expect(v.checks.every((c) => JUDGE.has(c.id))).toBe(true)
       expect(assess(s.id).checks.map((c) => c.id)).toEqual(CHECKS.map((c) => c.id))
     })
+
+    it(`${s.id}: carries the short labels the panel shows at a glance`, () => {
+      expect(v.headline?.length, 'headline').toBeGreaterThan(0)
+      for (const c of v.claims) if (c.status !== 'supported') expect(c.short?.length, c.id).toBeGreaterThan(0)
+      for (const c of assess(s.id).checks) expect(c.short?.length, c.id).toBeGreaterThan(0)
+    })
   }
 })
 

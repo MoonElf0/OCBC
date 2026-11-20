@@ -54,6 +54,7 @@ export function assess(scenarioId, { question } = {}) {
     judge.intent = {
       id: 'intent',
       status: 'warning',
+      short: 'Matched to a similar question',
       summary: `Your question was matched to the scripted question “${sc.question}”. The answer may not address exactly what you asked.`,
       evidence: [{ kind: 'question' }],
     }

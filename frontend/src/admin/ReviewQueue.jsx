@@ -33,7 +33,7 @@ export default function ReviewQueue() {
   const counts = { pending: state.queue.filter((q) => q.status === 'pending').length, resolved: state.queue.filter((q) => q.status === 'resolved').length }
 
   return (
-    <div className="mx-auto grid h-full max-w-[1200px] grid-cols-[280px_1fr] gap-6 px-6 py-6">
+    <div className="mx-auto grid h-full max-w-[1560px] grid-cols-[280px_1fr] gap-6 px-6 py-6">
       <aside className="flex min-h-0 flex-col overflow-hidden rounded-3xl border border-frost bg-porcelain">
         <div className="border-b border-frost p-4">
           <Eyebrow>Reviewer queue</Eyebrow>

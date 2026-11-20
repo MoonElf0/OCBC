@@ -196,6 +196,7 @@ export const SCENARIOS = [
     verification: {
       explanation:
         'Two of three claims match current policy. The SGD 250,000 limit comes only from a circular that was superseded in May 2026 — the current standard sets SGD 200,000. Confirm the limit before acting on it.',
+      headline: 'Confirm the limit before acting',
       retrieved: ['DOC-SME-112'],
       claims: [
         {
@@ -204,6 +205,7 @@ export const SCENARIOS = [
           check: 'freshness',
           source: passageOf('DOC-SME-087', '§2'),
           counter: passageOf('DOC-SME-112', '§3.1'),
+          short: 'SGD 250k is outdated — now SGD 200k',
           reason: 'No current approved source supports SGD 250,000. The only passage stating it is in a superseded circular, so it counts as unsupported rather than conflicting: the agent copied its source faithfully, but the source is no longer approved. The current standard sets SGD 200,000.',
         },
         {
@@ -222,9 +224,9 @@ export const SCENARIOS = [
         },
       ],
       checks: [
-        { id: 'groundedness', status: 'warning', summary: '2 of 3 claims are supported by a current approved source. 1 claim rests only on a superseded document.', evidence: [passageOf('DOC-SME-087', '§2'), passageOf('DOC-SME-104', '§5.2'), passageOf('DOC-SME-112', '§3.4')] },
-        { id: 'consistency', status: 'pass', summary: 'The answer does not contradict itself. The limit discrepancy is reported under cross-referencing.', evidence: [passageOf('DOC-SME-104', '§5.1')] },
-        { id: 'intent', status: 'pass', summary: 'The question asks for an approval limit. The answer states a limit and the escalation path above it.', evidence: [{ kind: 'question' }] },
+        { id: 'groundedness', status: 'warning', short: '1 claim rests on a replaced circular', summary: '2 of 3 claims are supported by a current approved source. 1 claim rests only on a superseded document.', evidence: [passageOf('DOC-SME-087', '§2'), passageOf('DOC-SME-104', '§5.2'), passageOf('DOC-SME-112', '§3.4')] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'The answer does not contradict itself. The limit discrepancy is reported under cross-referencing.', evidence: [passageOf('DOC-SME-104', '§5.1')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'The question asks for an approval limit. The answer states a limit and the escalation path above it.', evidence: [{ kind: 'question' }] },
       ],
     },
   }),
@@ -244,6 +246,7 @@ export const SCENARIOS = [
     },
     verification: {
       explanation: 'All four claims match the current Customer Due Diligence Procedures, updated seven months ago. No conflicts with other approved documents.',
+      headline: 'Safe to use',
       retrieved: [],
       claims: [
         { quote: 'each beneficial owner holding 25% or more of the company', status: 'supported', check: 'groundedness', source: passageOf('DOC-KYC-031', '§4.1'), reason: 'Matches the 25% ownership threshold.' },
@@ -252,9 +255,9 @@ export const SCENARIOS = [
         { quote: 'the ownership structure must be confirmed in writing by a director', status: 'supported', check: 'groundedness', source: passageOf('DOC-KYC-031', '§4.4'), reason: 'Matches the ownership confirmation requirement.' },
       ],
       checks: [
-        { id: 'groundedness', status: 'pass', summary: '4 of 4 claims are supported by an approved source.', evidence: [passageOf('DOC-KYC-031', '§4.1'), passageOf('DOC-KYC-031', '§4.2'), passageOf('DOC-KYC-031', '§4.3'), passageOf('DOC-KYC-031', '§4.4')] },
-        { id: 'consistency', status: 'pass', summary: 'The answer does not contradict itself or another approved document.', evidence: [passageOf('DOC-KYC-031', '§4.4')] },
-        { id: 'intent', status: 'pass', summary: 'The question asks which documents are needed. The answer lists them.', evidence: [{ kind: 'question' }] },
+        { id: 'groundedness', status: 'pass', short: 'All 4 claims backed by policy', summary: '4 of 4 claims are supported by an approved source.', evidence: [passageOf('DOC-KYC-031', '§4.1'), passageOf('DOC-KYC-031', '§4.2'), passageOf('DOC-KYC-031', '§4.3'), passageOf('DOC-KYC-031', '§4.4')] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'The answer does not contradict itself or another approved document.', evidence: [passageOf('DOC-KYC-031', '§4.4')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'The question asks which documents are needed. The answer lists them.', evidence: [{ kind: 'question' }] },
       ],
     },
   }),
@@ -275,6 +278,7 @@ export const SCENARIOS = [
     verification: {
       explanation:
         'The answer contradicts its own cited source. The FX guidelines cap relationship-manager overrides at 10 basis points — not 50 — and nothing in the library mentions a treasury-mandate exception. Do not act on this answer.',
+      headline: 'Don’t act on this answer',
       retrieved: [],
       claims: [
         {
@@ -283,6 +287,7 @@ export const SCENARIOS = [
           check: 'consistency',
           source: passageOf('DOC-FX-019', '§2.2'),
           counter: passageOf('DOC-FX-019', '§2.1'),
+          short: 'Says 50 bps — policy caps it at 10 bps',
           reason: 'The guideline caps relationship-manager overrides at 10 basis points. Anything above needs prior approval from the Treasury desk head.',
         },
         {
@@ -291,6 +296,7 @@ export const SCENARIOS = [
           check: 'groundedness',
           source: passageOf('DOC-FX-019', '§2.1'),
           nearest: true,
+          short: 'Mandate exception isn’t in any policy',
           reason: 'No retrieved passage mentions a treasury-mandate condition. The nearest passage, shown here, sets the authority limit without any exception.',
         },
         {
@@ -302,9 +308,9 @@ export const SCENARIOS = [
         },
       ],
       checks: [
-        { id: 'groundedness', status: 'fail', summary: '1 of 3 claims is supported. 1 conflicts with the source and 1 has no supporting passage.', evidence: [passageOf('DOC-FX-019', '§2.1'), passageOf('DOC-FX-019', '§3.1')] },
-        { id: 'consistency', status: 'fail', summary: 'The answer says no approval is needed; the cited guideline says approval is required above 10 bps.', evidence: [passageOf('DOC-FX-019', '§2.2')] },
-        { id: 'intent', status: 'pass', summary: 'The question asks whether approval is needed. The answer addresses that directly.', evidence: [{ kind: 'question' }] },
+        { id: 'groundedness', status: 'fail', short: 'Only 1 of 3 claims backed', summary: '1 of 3 claims is supported. 1 conflicts with the source and 1 has no supporting passage.', evidence: [passageOf('DOC-FX-019', '§2.1'), passageOf('DOC-FX-019', '§3.1')] },
+        { id: 'consistency', status: 'fail', short: 'Says no approval — policy requires it', summary: 'The answer says no approval is needed; the cited guideline says approval is required above 10 bps.', evidence: [passageOf('DOC-FX-019', '§2.2')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'The question asks whether approval is needed. The answer addresses that directly.', evidence: [{ kind: 'question' }] },
       ],
     },
   }),
@@ -325,16 +331,17 @@ export const SCENARIOS = [
     verification: {
       explanation:
         'The waiver limits match the Fee Waiver Authority Matrix, but that document is 22 months old and past its 12-month review. The last sentence answers a question about retail cards that was not asked.',
+      headline: 'Right limits, outdated source',
       retrieved: [],
       claims: [
-        { quote: 'A branch manager can waive account service fees of up to SGD 500 per account per year', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 3'), reason: 'Matches the source, but the source is 22 months old and overdue for its annual review. The limit may have changed.' },
-        { quote: 'Waivers above SGD 500 need approval from the area head', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 4'), reason: 'Matches the source, but the source is overdue for review.' },
-        { quote: 'For retail credit cards, annual fee reversals are handled by the Cards Service team', status: 'off-intent', check: 'intent', source: passageOf('DOC-CRD-022', '§7.2'), reason: 'Accurate, but it answers a different question: you asked about SME business accounts, not retail credit cards.' },
+        { quote: 'A branch manager can waive account service fees of up to SGD 500 per account per year', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 3'), short: 'SGD 500 limit — source overdue for review', reason: 'Matches the source, but the source is 22 months old and overdue for its annual review. The limit may have changed.' },
+        { quote: 'Waivers above SGD 500 need approval from the area head', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 4'), short: 'Area-head rule — source overdue', reason: 'Matches the source, but the source is overdue for review.' },
+        { quote: 'For retail credit cards, annual fee reversals are handled by the Cards Service team', status: 'off-intent', check: 'intent', source: passageOf('DOC-CRD-022', '§7.2'), short: 'About retail cards — not what you asked', reason: 'Accurate, but it answers a different question: you asked about SME business accounts, not retail credit cards.' },
       ],
       checks: [
-        { id: 'groundedness', status: 'pass', summary: '3 of 3 claims match a source passage. 2 of them rest on a document overdue for review.', evidence: [passageOf('DOC-OPS-045', 'Row 3'), passageOf('DOC-OPS-045', 'Row 4'), passageOf('DOC-CRD-022', '§7.2')] },
-        { id: 'consistency', status: 'pass', summary: 'The answer does not contradict itself or another approved document.', evidence: [passageOf('DOC-OPS-045', 'Row 4')] },
-        { id: 'intent', status: 'warning', summary: 'The question is about an SME business account. The final sentence answers a nearby question about retail credit cards.', evidence: [{ kind: 'question' }, passageOf('DOC-CRD-022', '§7.2')] },
+        { id: 'groundedness', status: 'pass', short: 'All 3 claims match a source', summary: '3 of 3 claims match a source passage. 2 of them rest on a document overdue for review.', evidence: [passageOf('DOC-OPS-045', 'Row 3'), passageOf('DOC-OPS-045', 'Row 4'), passageOf('DOC-CRD-022', '§7.2')] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'The answer does not contradict itself or another approved document.', evidence: [passageOf('DOC-OPS-045', 'Row 4')] },
+        { id: 'intent', status: 'warning', short: 'Last sentence is off-topic', summary: 'The question is about an SME business account. The final sentence answers a nearby question about retail credit cards.', evidence: [{ kind: 'question' }, passageOf('DOC-CRD-022', '§7.2')] },
       ],
     },
   }),
@@ -356,17 +363,18 @@ export const SCENARIOS = [
       noSource: true,
       explanation:
         'No approved document covers crypto or digital-asset collateral, and the answer cites nothing. Every claim here is unverified. Treat it as unknown until a reviewer confirms policy.',
+      headline: 'No policy covers this',
       retrieved: [],
       search: { documentsSearched: 7, query: 'crypto digital asset collateral haircut custodian', topMatch: 0.21, threshold: 0.6 },
       claims: [
-        { quote: 'Major crypto assets such as Bitcoin and Ether can be accepted as collateral for SME loans at a 50% haircut', status: 'no-source', check: 'groundedness', source: null, reason: 'No source found. Retrieval returned no passage above the relevance threshold.' },
-        { quote: 'provided they are held with an approved custodian', status: 'no-source', check: 'groundedness', source: null, reason: 'No source found. No approved document mentions custodians.' },
-        { quote: 'Valuations are refreshed daily', status: 'no-source', check: 'groundedness', source: null, reason: 'No source found. No approved document sets a valuation frequency for this asset class.' },
+        { quote: 'Major crypto assets such as Bitcoin and Ether can be accepted as collateral for SME loans at a 50% haircut', status: 'no-source', check: 'groundedness', source: null, short: 'No policy on crypto collateral', reason: 'No source found. Retrieval returned no passage above the relevance threshold.' },
+        { quote: 'provided they are held with an approved custodian', status: 'no-source', check: 'groundedness', source: null, short: 'Custodian rule not found', reason: 'No source found. No approved document mentions custodians.' },
+        { quote: 'Valuations are refreshed daily', status: 'no-source', check: 'groundedness', source: null, short: 'Daily valuation rule not found', reason: 'No source found. No approved document sets a valuation frequency for this asset class.' },
       ],
       checks: [
-        { id: 'groundedness', status: 'fail', summary: '0 of 3 claims are supported. No approved passage was retrieved.', evidence: [{ kind: 'search' }] },
-        { id: 'consistency', status: 'pass', summary: 'The answer does not contradict itself.', evidence: [{ kind: 'search' }] },
-        { id: 'intent', status: 'pass', summary: 'The question asks whether crypto is acceptable collateral. The answer addresses that.', evidence: [{ kind: 'question' }] },
+        { id: 'groundedness', status: 'fail', short: '0 of 3 claims backed', summary: '0 of 3 claims are supported. No approved passage was retrieved.', evidence: [{ kind: 'search' }] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'The answer does not contradict itself.', evidence: [{ kind: 'search' }] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'The question asks whether crypto is acceptable collateral. The answer addresses that.', evidence: [{ kind: 'question' }] },
       ],
     },
   }),
@@ -384,12 +392,13 @@ export const FALLBACK = {
   },
   verification: {
     explanation: 'The reply makes no policy claims, so there is nothing to verify. No score is given.',
+    headline: 'Nothing to verify',
     retrieved: [],
     claims: [],
     checks: [
-      { id: 'groundedness', status: 'na', summary: 'No factual claims to check.', evidence: [{ kind: 'search' }] },
-      { id: 'consistency', status: 'na', summary: 'No claims to compare.', evidence: [{ kind: 'search' }] },
-      { id: 'intent', status: 'pass', summary: 'The reply says plainly that it has no answer, rather than guessing.', evidence: [{ kind: 'question' }] },
+      { id: 'groundedness', status: 'na', short: 'No claims to check', summary: 'No factual claims to check.', evidence: [{ kind: 'search' }] },
+      { id: 'consistency', status: 'na', short: 'No claims to compare', summary: 'No claims to compare.', evidence: [{ kind: 'search' }] },
+      { id: 'intent', status: 'pass', short: 'Says plainly it has no answer', summary: 'The reply says plainly that it has no answer, rather than guessing.', evidence: [{ kind: 'question' }] },
     ],
   },
 }
@@ -427,6 +436,7 @@ export const CORRECTIONS = {
     },
     verification: {
       explanation: 'All three claims now match current policy. The limit cites the current Cross-Border Payments Standard instead of the superseded circular.',
+      headline: 'Now matches current policy',
       retrieved: [],
       claims: [
         { quote: 'a relationship manager can approve a single SME cross-border transfer of up to SGD 200,000', status: 'supported', check: 'groundedness', source: passageOf('DOC-SME-112', '§3.1'), reason: 'Matches the current relationship manager limit.' },
@@ -434,9 +444,9 @@ export const CORRECTIONS = {
         { quote: 'Transfers approved before 2:30 pm Singapore time are targeted for same-day processing', status: 'supported', check: 'groundedness', source: passageOf('DOC-SME-112', '§3.4'), reason: 'Matches the processing rule.' },
       ],
       checks: [
-        { id: 'groundedness', status: 'pass', summary: '3 of 3 claims are supported by a current approved source.', evidence: [passageOf('DOC-SME-112', '§3.1'), passageOf('DOC-SME-104', '§5.2'), passageOf('DOC-SME-112', '§3.4')] },
-        { id: 'consistency', status: 'pass', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-SME-112', '§3.1')] },
-        { id: 'intent', status: 'pass', summary: 'States the limit asked for and the escalation path.', evidence: [{ kind: 'question' }] },
+        { id: 'groundedness', status: 'pass', short: 'All 3 claims backed', summary: '3 of 3 claims are supported by a current approved source.', evidence: [passageOf('DOC-SME-112', '§3.1'), passageOf('DOC-SME-104', '§5.2'), passageOf('DOC-SME-112', '§3.4')] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-SME-112', '§3.1')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'States the limit asked for and the escalation path.', evidence: [{ kind: 'question' }] },
       ],
     },
   }),
@@ -450,6 +460,7 @@ export const CORRECTIONS = {
     },
     verification: {
       explanation: 'All three claims match the FX Rate Override Guidelines word for word. The treasury-mandate exception has been removed.',
+      headline: 'Now matches the guideline',
       retrieved: [],
       claims: [
         { quote: 'Relationship managers may apply FX rate overrides of up to 10 basis points', status: 'supported', check: 'groundedness', source: passageOf('DOC-FX-019', '§2.1'), reason: 'Matches the authority limit.' },
@@ -457,9 +468,9 @@ export const CORRECTIONS = {
         { quote: 'Every override must be recorded in the deal ticket with a reason code', status: 'supported', check: 'groundedness', source: passageOf('DOC-FX-019', '§3.1'), reason: 'Matches the record-keeping rule.' },
       ],
       checks: [
-        { id: 'groundedness', status: 'pass', summary: '3 of 3 claims are supported.', evidence: [passageOf('DOC-FX-019', '§2.1'), passageOf('DOC-FX-019', '§2.2')] },
-        { id: 'consistency', status: 'pass', summary: 'No contradiction with the guideline.', evidence: [passageOf('DOC-FX-019', '§2.2')] },
-        { id: 'intent', status: 'pass', summary: 'Answers whether approval is needed.', evidence: [{ kind: 'question' }] },
+        { id: 'groundedness', status: 'pass', short: 'All 3 claims backed', summary: '3 of 3 claims are supported.', evidence: [passageOf('DOC-FX-019', '§2.1'), passageOf('DOC-FX-019', '§2.2')] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with the guideline.', evidence: [passageOf('DOC-FX-019', '§2.2')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'Answers whether approval is needed.', evidence: [{ kind: 'question' }] },
       ],
     },
   }),
@@ -473,15 +484,16 @@ export const CORRECTIONS = {
     },
     verification: {
       explanation: 'The off-topic sentence is gone. The limits still rest on a matrix that is overdue for review, so the score stays Medium until Branch Operations confirms it.',
+      headline: 'Fixed — source still overdue',
       retrieved: [],
       claims: [
-        { quote: 'A branch manager can waive account service fees of up to SGD 500 per account per year', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 3'), reason: 'Matches the source, which is overdue for review.' },
-        { quote: 'waivers above SGD 500 need approval from the area head', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 4'), reason: 'Matches the source, which is overdue for review.' },
+        { quote: 'A branch manager can waive account service fees of up to SGD 500 per account per year', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 3'), short: 'SGD 500 limit — source overdue for review', reason: 'Matches the source, which is overdue for review.' },
+        { quote: 'waivers above SGD 500 need approval from the area head', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 4'), short: 'Area-head rule — source overdue', reason: 'Matches the source, which is overdue for review.' },
       ],
       checks: [
-        { id: 'groundedness', status: 'pass', summary: '2 of 2 claims match a source passage.', evidence: [passageOf('DOC-OPS-045', 'Row 3'), passageOf('DOC-OPS-045', 'Row 4')] },
-        { id: 'consistency', status: 'pass', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-OPS-045', 'Row 4')] },
-        { id: 'intent', status: 'pass', summary: 'Answers only about the SME business account asked about.', evidence: [{ kind: 'question' }] },
+        { id: 'groundedness', status: 'pass', short: 'Both claims match a source', summary: '2 of 2 claims match a source passage.', evidence: [passageOf('DOC-OPS-045', 'Row 3'), passageOf('DOC-OPS-045', 'Row 4')] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-OPS-045', 'Row 4')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'Answers only about the SME business account asked about.', evidence: [{ kind: 'question' }] },
       ],
     },
   }),
@@ -495,12 +507,13 @@ export const CORRECTIONS = {
     },
     verification: {
       explanation: 'The corrected reply makes no policy claims. It states that no policy exists, which is what retrieval found.',
+      headline: 'Correctly says no policy exists',
       retrieved: [],
       claims: [],
       checks: [
-        { id: 'groundedness', status: 'na', summary: 'No factual policy claims.', evidence: [{ kind: 'search' }] },
-        { id: 'consistency', status: 'pass', summary: 'Consistent with the empty retrieval result.', evidence: [{ kind: 'search' }] },
-        { id: 'intent', status: 'pass', summary: 'Answers the question asked.', evidence: [{ kind: 'question' }] },
+        { id: 'groundedness', status: 'na', short: 'No policy claims to check', summary: 'No factual policy claims.', evidence: [{ kind: 'search' }] },
+        { id: 'consistency', status: 'pass', short: 'Matches the empty search result', summary: 'Consistent with the empty retrieval result.', evidence: [{ kind: 'search' }] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'Answers the question asked.', evidence: [{ kind: 'question' }] },
       ],
     },
   }),
