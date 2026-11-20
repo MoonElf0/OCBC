@@ -15,7 +15,7 @@ export function EvidenceItem({ item, scenarioId, question, search }) {
     )
   }
   if (item.kind === 'search') return <SearchRecord scenarioId={scenarioId} search={search} />
-  return <Passage docId={item.docId} section={item.section} passage={item.passage} />
+  return <Passage {...item} />
 }
 
 /** `search` is the result's retrieval record when the backend computed it. */

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { UserRound, MessageSquare, Inbox, ChartLine, Check, Sun, Moon } from 'lucide-react'
+import { UserRound, MessageSquare, Inbox, ChartLine, Check, Sun, Moon, Library, FlaskConical } from 'lucide-react'
 import { getTheme, applyTheme } from '../lib/theme'
 import { useStore } from '../state/store'
 import { CharacterMark } from './Character'
@@ -9,7 +9,9 @@ const LINKS = {
   workspace: [{ id: 'workspace', label: 'Workspace' }],
   admin: [
     { id: 'review', label: 'Review queue' },
+    { id: 'library', label: 'Knowledge library' },
     { id: 'trends', label: 'Trends' },
+    { id: 'evaluation', label: 'Evaluation' },
   ],
 }
 
@@ -66,7 +68,7 @@ export default function TopNav() {
         <div className="ml-auto flex items-center gap-3">
           <span
             className="hidden whitespace-nowrap rounded-full border border-white/25 px-3 py-1 text-caption text-white/80 lg:inline"
-            title={BACKEND ? 'Backend mode: retrieval, rule checks, scores, routing and the dashboard are computed by the backend. Answers and judge verdicts are still scripted.' : undefined}
+            title={BACKEND ? 'Backend mode: retrieval, rule checks, the reliability index, routing and the dashboard are computed by the backend. Policy Assistant answers and their judge verdicts are scripted; submitted answers and corrections run the pipeline, with model steps only if a provider is configured.' : undefined}
           >
             {BACKEND ? 'Prototype · synthetic data · backend mode' : 'Prototype · synthetic data only'}
           </span>
@@ -98,13 +100,15 @@ export default function TopNav() {
               <div role="menu" className="rise-in absolute right-0 top-12 z-30 w-72 rounded-2xl border border-frost bg-porcelain p-2 text-ink shadow-md">
                 <div className="px-3 pt-2 pb-3">
                   <div className="eyebrow text-smoke">Switch role · demo</div>
-                  <div className="mt-1 text-caption text-carbon">{BACKEND ? 'All roles share one backend. Queue and decisions are saved.' : 'All roles share this browser session. Nothing is saved.'}</div>
+                  <div className="mt-1 text-caption text-carbon">{BACKEND ? 'All roles share one backend. Queue and decisions are saved.' : 'All roles share this browser session. Nothing is saved.'} Roles are simulated: there is no sign-in.</div>
                 </div>
                 <MenuItem Icon={MessageSquare} label="Employee workspace" sub="Relationship Manager · Business Banking" active={state.view === 'workspace'} onClick={() => go('workspace')} badge={state.unreadOutcomes ? `${state.unreadOutcomes} outcome` : null} />
                 <div className="my-1 border-t border-frost" />
                 <div className="eyebrow px-3 pt-2 pb-1 text-smoke">Admin</div>
                 <MenuItem Icon={Inbox} label="Reviewer queue" sub={`${pending} pending`} active={state.view === 'review'} onClick={() => go('review')} />
+                <MenuItem Icon={Library} label="Knowledge library" sub="Policy versions and change impact" active={state.view === 'library'} onClick={() => go('library')} />
                 <MenuItem Icon={ChartLine} label="Trends dashboard" sub="Reliability over 12 weeks" active={state.view === 'trends'} onClick={() => go('trends')} />
+                <MenuItem Icon={FlaskConical} label="Evaluation" sub="How well the verifier performs" active={state.view === 'evaluation'} onClick={() => go('evaluation')} />
               </div>
             )}
           </div>

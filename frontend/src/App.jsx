@@ -4,6 +4,8 @@ import CharacterPanel from './components/CharacterPanel'
 import Thread from './components/Thread'
 import ReviewQueue from './admin/ReviewQueue'
 import Trends from './admin/Trends'
+import Library from './admin/Library'
+import Evaluation from './admin/Evaluation'
 import TrustMap from './components/TrustMap'
 import Pitch from './pitch/Pitch'
 
@@ -21,6 +23,8 @@ export default function App() {
         )}
         {state.view === 'review' && <ReviewQueue />}
         {state.view === 'trends' && <Trends />}
+        {state.view === 'library' && <Library />}
+        {state.view === 'evaluation' && <Evaluation />}
       </main>
       <TrustMap />
       {state.pitch && <Pitch />}

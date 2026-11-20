@@ -71,7 +71,11 @@ def test_escalate_then_correct_feeds_the_dashboard(client):
     draft = fixtures.load()["CORRECTIONS"]["sme-limit"]["answer"]["text"]
     d = client.post(f"/api/reviews/{rid}/decision", json={"decision": "corrected", "note": "Use DOC-SME-112", "correctedText": draft}).json()
     assert d["askers"] == [a["answerId"]]
-    assert d["outcome"]["recheck"]["result"]["band"]["id"] == "high"
+    # The correction is re-verified by the general pipeline, not a scripted verdict. With no model
+    # configured the figures check out but meaning is unchecked: partial, so never High.
+    re_ = d["outcome"]["recheck"]["result"]
+    assert re_["assessment"]["partial"] is True and re_["band"]["id"] != "high"
+    assert not any(c["status"] in ("conflicting", "unsupported", "insufficient") for c in re_["claims"])
     assert client.post(f"/api/reviews/{rid}/decision", json={"decision": "approved"}).status_code == 409
 
     after = client.get("/api/metrics").json()
