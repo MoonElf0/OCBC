@@ -1,4 +1,5 @@
 """The agent release check must match the JS demo, and hold over the API."""
+import mongomock
 import pytest
 from fastapi.testclient import TestClient
 
@@ -33,7 +34,7 @@ def test_comparison_matches_js(golden):
 
 @pytest.fixture()
 def client(tmp_path, monkeypatch):
-    monkeypatch.setattr(api, "_conn", db.connect(tmp_path / "test.db"))
+    monkeypatch.setattr(api, "_conn", db.connect(client=mongomock.MongoClient()))
     monkeypatch.setattr(api, "_index", None)
     return TestClient(api.app)
 

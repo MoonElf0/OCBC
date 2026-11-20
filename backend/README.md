@@ -12,8 +12,13 @@ Network Access, or the connection times out.
 cd backend
 python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
+cp .env.example .env     # then put your own MONGODB_URI in it
 .venv/bin/uvicorn app.main:app --reload --port 8000
 ```
+
+Each teammate needs their own `backend/.env`; git never shares it. If it is
+missing, the backend stops on the first request with "MONGODB_URI is not set".
+After pulling, run the `pip install` line again in case requirements changed.
 
 On Windows use `py -m venv .venv`, `.venv\Scripts\pip`, `.venv\Scripts\uvicorn`
 and `copy .env.example .env`.
@@ -33,9 +38,16 @@ cd backend
 .venv/bin/python -m pytest -q
 ```
 
-No API keys, no network, no model. SQLite file at `data/assessment.db`,
-created and seeded on first run. Reset it with
-`.venv/bin/python -m app.db --reset` or `POST /api/admin/reset`.
+Tests use `mongomock` (in memory) and never touch your cluster.
+
+Data lives in the MongoDB database named by `MONGODB_DB` (default
+`assessment`), created and seeded on first run. A database written by an
+older version of the backend is rebuilt from the seed, since it only ever
+holds demo data. Collections: `policy_versions`, `topics`, `weekly_counts`,
+`review_outcomes`, `answers`, `assessments`, `reviews`, `events`,
+`eval_runs`, `meta`. Reset with `.venv/bin/python -m app.db --reset` or
+`POST /api/admin/reset`. Teammates sharing one cluster should each set their
+own `MONGODB_DB`, or one person's reset wipes everyone's demo state.
 
 ## What is computed and what is still scripted
 
@@ -49,7 +61,7 @@ created and seeded on first run. Reset it with
 | Counter-passage, "found by checker", no-source record | **computed** | unchanged |
 | Citation, freshness, cross-referencing | **computed** (`app/rules.py`) | unchanged |
 | Score, band, routing | **computed** | unchanged |
-| Review queue, decisions, feedback | **stored** in SQLite | unchanged |
+| Review queue, decisions, feedback | **stored** in MongoDB | unchanged |
 | Dashboard and recommendations | **computed** from the database (`app/metrics.py`) | unchanged |
 
 Every result carries a `provenance` field saying exactly this, and the UI

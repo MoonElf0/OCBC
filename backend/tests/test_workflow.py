@@ -2,6 +2,7 @@
 Through HTTP: submit any answer -> verify -> mandatory review -> correction
 re-verified -> policy change -> affected answers flagged -> re-verified.
 """
+import mongomock
 import json
 
 import pytest
@@ -17,7 +18,7 @@ KYC_RIGHT = "Identify every beneficial owner who holds 25% or more of the compan
 
 
 def make_client(tmp_path, monkeypatch, provider=None):
-    monkeypatch.setattr(api, "_conn", db.connect(tmp_path / "test.db"))
+    monkeypatch.setattr(api, "_conn", db.connect(client=mongomock.MongoClient()))
     monkeypatch.setattr(api, "_index", None)
     monkeypatch.setattr(api, "_provider", provider or api.get_provider())
     return TestClient(api.app)

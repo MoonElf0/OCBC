@@ -1,20 +1,32 @@
 """
-SQLite storage. One file, no server: data/assessment.db (override with
-ASSESSMENT_DB). Seeded from data/fixtures.json on first run; reset with
-`python -m app.db --reset` or POST /api/admin/reset.
+MongoDB storage. Connection string in MONGODB_URI (put it in backend/.env,
+which git ignores), database name in MONGODB_DB (default "assessment").
+Seeded from data/fixtures.json on first run; reset with
+`python -m app.db --reset` or POST /api/admin/reset. A database written by
+an older schema is rebuilt from the seed (it holds demo data only).
 
-What lives here
-  documents, sections   the approved policy library retrieval searches
-  topics, weekly_counts history behind the Trends dashboard
-  review_outcomes       tagged reviewer decisions (seeded history + live)
-  answers               every question asked, its answer and verification
-  reviews               the human review queue
+Collections
+  policy_versions  every version of every policy document; approved
+                   text is never edited in place
+  topics, weekly_counts   history behind the Trends dashboard
+  review_outcomes  tagged reviewer decisions (seeded history + live)
+  answers          every answer: asked, submitted for verification,
+                   or written by a reviewer as a correction
+  assessments      every verification of an answer, kept when a newer
+                   one is made, with the policy versions it relied on
+  reviews          the human review queue
+  events           audit trail: who did what to which answer, when
+  eval_runs        evaluation runs and their recorded predictions
+  meta             schema version, demo date, counters, library revision
+
+Writes are serialised by main.py's lock; counters use atomic $inc.
 """
 import json
 import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from uuid import uuid4
 
 from dotenv import load_dotenv
 from pymongo import ASCENDING, DESCENDING, MongoClient, ReturnDocument
@@ -22,44 +34,15 @@ from pymongo.database import Database
 
 from . import fixtures, library
 
-DEFAULT_PATH = Path(__file__).resolve().parent.parent / "data" / "assessment.db"
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS topics (id TEXT PRIMARY KEY, name TEXT NOT NULL, ord INTEGER NOT NULL);
-CREATE TABLE IF NOT EXISTS documents (
-  id TEXT PRIMARY KEY, title TEXT NOT NULL, version TEXT NOT NULL, topic TEXT NOT NULL REFERENCES topics(id),
-  owner TEXT NOT NULL, updated TEXT NOT NULL, review_cycle_months INTEGER NOT NULL,
-  superseded_by TEXT REFERENCES documents(id), ord INTEGER NOT NULL
-);
-CREATE TABLE IF NOT EXISTS sections (
-  doc_id TEXT NOT NULL REFERENCES documents(id), section_id TEXT NOT NULL, heading TEXT NOT NULL,
-  text TEXT NOT NULL, ord INTEGER NOT NULL, PRIMARY KEY (doc_id, section_id)
-);
-CREATE TABLE IF NOT EXISTS weekly_counts (
-  topic TEXT NOT NULL REFERENCES topics(id), week INTEGER NOT NULL, label TEXT NOT NULL,
-  answers INTEGER NOT NULL, claims INTEGER NOT NULL, unsupported INTEGER NOT NULL, conflicting INTEGER NOT NULL,
-  stale INTEGER NOT NULL, no_source INTEGER NOT NULL, reviews INTEGER NOT NULL, PRIMARY KEY (topic, week)
-);
-CREATE TABLE IF NOT EXISTS review_outcomes (
-  id INTEGER PRIMARY KEY AUTOINCREMENT, topic TEXT NOT NULL, decision TEXT NOT NULL, category TEXT NOT NULL,
-  doc_id TEXT, count INTEGER NOT NULL,
-  review_id TEXT  -- NULL: seeded history. Set: a decision made through the API.
-);
-CREATE TABLE IF NOT EXISTS answers (
-  id TEXT PRIMARY KEY, question TEXT NOT NULL, scenario_id TEXT NOT NULL, text TEXT NOT NULL,
-  citations TEXT NOT NULL, result TEXT, feedback TEXT, created_at TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS reviews (
-  id TEXT PRIMARY KEY, seq INTEGER NOT NULL, answer_id TEXT REFERENCES answers(id), scenario_id TEXT NOT NULL,
-  asked_by TEXT NOT NULL, asked_at TEXT NOT NULL, routed_by TEXT NOT NULL, reasons TEXT NOT NULL,
-  note TEXT NOT NULL DEFAULT '', status TEXT NOT NULL, watchers TEXT NOT NULL DEFAULT '[]',
-  outcome TEXT, created_at TEXT NOT NULL
-);
-"""
-
-METRIC_COLS = [("answers", "answers"), ("claims", "claims"), ("unsupported", "unsupported"), ("conflicting", "conflicting"),
-               ("stale", "stale"), ("noSource", "no_source"), ("reviews", "reviews")]
+DEFAULT_DB = "assessment"
+SCHEMA_VERSION = "3-mongo"
+COLLECTIONS = ["events", "eval_runs", "reviews", "assessments", "answers", "review_outcomes", "weekly_counts",
+               "policy_versions", "topics", "meta"]
+METRIC_KEYS = ["answers", "claims", "unsupported", "conflicting", "stale", "noSource", "reviews"]
+VERSION_KEYS = ["docId", "version", "status", "title", "topic", "owner", "effectiveFrom", "reviewDate", "replaces",
+                "supersededBy", "sections", "changeNote", "createdAt", "approvedAt"]
 
 SYSTEM = "Assessment AI"
 
@@ -68,61 +51,82 @@ def now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
-def connect(path: str | os.PathLike | None = None) -> sqlite3.Connection:
-    path = path or os.environ.get("ASSESSMENT_DB") or DEFAULT_PATH
-    conn = sqlite3.connect(path, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    conn.executescript(SCHEMA)
-    if conn.execute("SELECT COUNT(*) FROM documents").fetchone()[0] == 0:
-        seed(conn)
-    return conn
+def _plain(value):
+    """JSON round-trip, so what is stored matches what the API sends (string keys, lists not tuples)."""
+    return json.loads(json.dumps(value))
 
 
-def reset(conn: sqlite3.Connection) -> None:
-    for t in ["reviews", "answers", "review_outcomes", "weekly_counts", "sections", "documents", "topics", "meta"]:
-        conn.execute(f"DELETE FROM {t}")
-    seed(conn)
+# ── connection and seed ──────────────────────────────────────────────────
+
+def connect(uri: str | None = None, name: str | None = None, client=None) -> Database:
+    """Open the database, rebuilding or seeding it as needed. Tests pass `client=mongomock.MongoClient()`."""
+    if client is None:
+        uri = uri or os.environ.get("MONGODB_URI")
+        if not uri:
+            raise RuntimeError("MONGODB_URI is not set. Copy backend/.env.example to backend/.env and put your "
+                               "MongoDB connection string in it (see backend/README.md).")
+        client = MongoClient(uri, serverSelectionTimeoutMS=8000, appname="assessment-ai-backend")
+    db = client[name or os.environ.get("MONGODB_DB") or DEFAULT_DB]
+    schema = db.meta.find_one({"_id": "schema"})
+    if not schema or schema["value"] != SCHEMA_VERSION or db.policy_versions.count_documents({}) == 0:
+        # Empty, half-seeded, or written by an older version of the prototype: demo data only, rebuild it.
+        for c in db.list_collection_names():
+            db.drop_collection(c)
+        _indexes(db)
+        seed(db)
+    return db
+
+
+def _indexes(db: Database) -> None:
+    db.policy_versions.create_index([("docId", ASCENDING), ("version", ASCENDING)], unique=True)
+    db.weekly_counts.create_index([("topic", ASCENDING), ("week", ASCENDING)], unique=True)
+    db.reviews.create_index([("status", ASCENDING), ("scenarioId", ASCENDING), ("seq", DESCENDING)])
+    db.assessments.create_index([("answerId", ASCENDING)])
+    db.answers.create_index([("parentId", ASCENDING)])
+
+
+def reset(db: Database) -> None:
+    for c in COLLECTIONS:
+        db[c].delete_many({})
+    seed(db)
 
 
 def seed(db: Database) -> None:
     f = fixtures.load()
-    with conn:
-        conn.execute("INSERT OR REPLACE INTO meta VALUES ('window_weeks', ?)", (str(f["WINDOW_WEEKS"]),))
-        conn.execute("INSERT OR REPLACE INTO meta VALUES ('today', ?)", (f["DEMO_TODAY"],))
-        conn.execute("INSERT OR REPLACE INTO meta VALUES ('answer_seq', '0')")
-        conn.execute("INSERT OR REPLACE INTO meta VALUES ('library_rev', ?)", (uuid4().hex,))
-        for i, t in enumerate(f["TOPICS"].values()):
-            conn.execute("INSERT INTO topics VALUES (?, ?, ?)", (t["id"], t["name"], i))
-        # Insert without supersededBy first, so the reference always resolves.
-        for i, d in enumerate(f["DOCUMENTS"].values()):
-            conn.execute("INSERT INTO documents VALUES (?,?,?,?,?,?,?,NULL,?)",
-                         (d["id"], d["title"], d["version"], d["topic"], d["owner"], d["updated"], d["reviewCycleMonths"], i))
-            for j, s in enumerate(d["sections"]):
-                conn.execute("INSERT INTO sections VALUES (?,?,?,?,?)", (d["id"], s["id"], s["heading"], s["text"], j))
-        for d in f["DOCUMENTS"].values():
-            conn.execute("UPDATE documents SET superseded_by = ? WHERE id = ?", (d["supersededBy"], d["id"]))
-        for topic, w in f["WEEKLY"].items():
-            for i, label in enumerate(f["WEEKS"]):
-                conn.execute("INSERT INTO weekly_counts VALUES (?,?,?,?,?,?,?,?,?,?)",
-                             (topic, i, label, *[w[k][i] for k, _ in METRIC_COLS]))
-        for r in f["REVIEW_OUTCOMES"]:
-            conn.execute("INSERT INTO review_outcomes (topic, decision, category, doc_id, count) VALUES (?,?,?,?,?)",
-                         (r["topic"], r["decision"], r["category"], r["docId"], r["count"]))
-        for q in f["REVIEW_QUEUE_SEED"]:
-            conn.execute(
-                "INSERT INTO reviews (id, seq, answer_id, scenario_id, asked_by, asked_at, routed_by, reasons, status, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
-                (q["id"], int(q["id"].split("-")[1]), None, q["scenarioId"], q["askedBy"], q["askedAt"], q["routedBy"], json.dumps(q["reasons"]), "pending", q["askedAt"]),
-            )
+    db.meta.insert_many([{"_id": k, "value": v} for k, v in {
+        "schema": SCHEMA_VERSION, "window_weeks": f["WINDOW_WEEKS"], "today": f["DEMO_TODAY"], "answer_seq": 0,
+        "assessment_seq": 0, "outcome_seq": 0, "event_seq": 0, "version_seq": 0, "library_rev": uuid4().hex}.items()])
+    db.topics.insert_many([{"_id": t["id"], "name": t["name"], "ord": i} for i, t in enumerate(f["TOPICS"].values())])
+    for r in library.seed_records(f["DOCUMENTS"]):
+        _insert_version(db, r)
+    db.weekly_counts.insert_many([
+        {"topic": topic, "week": i, "label": label, **{k: w[k][i] for k in METRIC_KEYS}}
+        for topic, w in f["WEEKLY"].items() for i, label in enumerate(f["WEEKS"])
+    ])
+    for r in f["REVIEW_OUTCOMES"]:
+        db.review_outcomes.insert_one({"ord": _next(db, "outcome_seq"), "topic": r["topic"], "decision": r["decision"],
+                                       "category": r["category"], "docId": r["docId"], "count": r["count"], "reviewId": None})
+    db.reviews.insert_many([
+        {"_id": q["id"], "seq": int(q["id"].split("-")[1]), "answerId": None, "scenarioId": q["scenarioId"],
+         "askedBy": q["askedBy"], "askedAt": q["askedAt"], "routedBy": q["routedBy"], "reasons": list(q["reasons"]),
+         "note": "", "status": "pending", "watchers": [], "outcome": None, "createdAt": q["askedAt"]}
+        for q in f["REVIEW_QUEUE_SEED"]
+    ])
 
 
-def _insert_version(conn, r: dict, ord_: int) -> None:
-    conn.execute(
-        "INSERT INTO policy_versions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-        (r["docId"], r["version"], r["status"], r["title"], r["topic"], r["owner"], r["effectiveFrom"], r["reviewDate"],
-         r.get("replaces"), json.dumps(r["supersededBy"]) if r.get("supersededBy") else None, json.dumps(r["sections"]),
-         r.get("changeNote", ""), r["createdAt"], r.get("approvedAt"), ord_),
-    )
+def _next(db: Database, counter: str) -> int:
+    doc = db.meta.find_one_and_update({"_id": counter}, {"$inc": {"value": 1}}, upsert=True, return_document=ReturnDocument.AFTER)
+    return doc["value"]
+
+
+def _meta(db: Database, key: str):
+    return db.meta.find_one({"_id": key})["value"]
+
+
+def _insert_version(db: Database, r: dict) -> None:
+    rec = {k: r.get(k) for k in VERSION_KEYS}
+    rec["changeNote"] = rec["changeNote"] or ""
+    db.policy_versions.insert_one({"_id": f"{r['docId']}@{r['version']}", "ord": _next(db, "version_seq"), **_plain(rec)})
 
 
 # ── library ──────────────────────────────────────────────────────────────
@@ -131,88 +135,69 @@ def today(db: Database) -> str:
     return _meta(db, "today")
 
 
-def documents(conn) -> dict:
-    """The library, shaped like fixtures DOCUMENTS."""
-    docs = {}
-    for d in conn.execute("SELECT * FROM documents ORDER BY ord"):
-        docs[d["id"]] = {
-            "id": d["id"], "title": d["title"], "version": d["version"], "topic": d["topic"], "owner": d["owner"],
-            "updated": d["updated"], "reviewCycleMonths": d["review_cycle_months"], "supersededBy": d["superseded_by"],
-            "sections": [{"id": s["section_id"], "heading": s["heading"], "text": s["text"]}
-                         for s in conn.execute("SELECT * FROM sections WHERE doc_id=? ORDER BY ord", (d["id"],))],
-        }
-    return docs
-
-
-def library_rev(conn) -> str:
+def library_rev(db: Database) -> str:
     """Changes whenever the library changes, so the retrieval index is rebuilt."""
     return str(_meta(db, "library_rev"))
 
 
-def _bump_rev(conn) -> None:
-    conn.execute("UPDATE meta SET value=? WHERE key='library_rev'", (uuid4().hex,))
+def _bump_rev(db: Database) -> None:
+    db.meta.update_one({"_id": "library_rev"}, {"$set": {"value": uuid4().hex}})
 
 
-def _version(row) -> dict:
-    return {
-        "docId": row["doc_id"], "version": row["version"], "status": row["status"], "title": row["title"], "topic": row["topic"],
-        "owner": row["owner"], "effectiveFrom": row["effective_from"], "reviewDate": row["review_date"], "replaces": row["replaces"],
-        "supersededBy": json.loads(row["superseded_by"]) if row["superseded_by"] else None, "sections": json.loads(row["sections"]),
-        "changeNote": row["change_note"], "createdAt": row["created_at"], "approvedAt": row["approved_at"],
-    }
+def _version(doc) -> dict:
+    return {k: doc.get(k) for k in VERSION_KEYS}
 
 
-def version_records(conn) -> list[dict]:
-    return [_version(r) for r in conn.execute("SELECT * FROM policy_versions ORDER BY ord")]
+def version_records(db: Database) -> list[dict]:
+    return [_version(d) for d in db.policy_versions.find().sort("ord", ASCENDING)]
 
 
-def get_version(conn, doc_id: str, version: str) -> dict | None:
-    row = conn.execute("SELECT * FROM policy_versions WHERE doc_id=? AND version=?", (doc_id, version)).fetchone()
-    return _version(row) if row else None
+def get_version(db: Database, doc_id: str, version: str) -> dict | None:
+    doc = db.policy_versions.find_one({"docId": doc_id, "version": version})
+    return _version(doc) if doc else None
 
 
-def documents(conn) -> dict:
+def documents(db: Database) -> dict:
     """The library in the original fixture shape, as in force today. For the seed this equals the fixtures."""
-    return library.current_docs(version_records(conn), today(conn))
+    return library.current_docs(version_records(db), today(db))
 
 
-def add_draft(conn, doc_id: str, version: str, sections: list[dict], effective_from: str, review_date: str,
+def add_draft(db: Database, doc_id: str, version: str, sections: list[dict], effective_from: str, review_date: str,
               change_note: str, owner: str | None = None, title: str | None = None) -> dict:
     """A new version starts as a draft. Approved versions are never changed."""
-    with conn:
-        base = conn.execute("SELECT * FROM policy_versions WHERE doc_id=? AND status!='draft' ORDER BY effective_from DESC, ord DESC LIMIT 1", (doc_id,)).fetchone()
-        if not base:
-            raise KeyError(doc_id)
-        if conn.execute("SELECT 1 FROM policy_versions WHERE doc_id=? AND version=?", (doc_id, version)).fetchone():
-            raise ValueError(f"{doc_id} {version} already exists. Versions are never overwritten.")
-        b = _version(base)
-        rec = {**b, "version": version, "status": "draft", "effectiveFrom": effective_from, "reviewDate": review_date,
-               "replaces": b["version"], "supersededBy": None, "sections": sections, "changeNote": change_note,
-               "owner": owner or b["owner"], "title": title or b["title"], "createdAt": now(), "approvedAt": None}
-        _insert_version(conn, rec, conn.execute("SELECT COALESCE(MAX(ord),0)+1 FROM policy_versions").fetchone()[0])
-    return rec
+    base = db.policy_versions.find_one({"docId": doc_id, "status": {"$ne": "draft"}},
+                                       sort=[("effectiveFrom", DESCENDING), ("ord", DESCENDING)])
+    if not base:
+        raise KeyError(doc_id)
+    if db.policy_versions.find_one({"docId": doc_id, "version": version}):
+        raise ValueError(f"{doc_id} {version} already exists. Versions are never overwritten.")
+    b = _version(base)
+    rec = {**b, "version": version, "status": "draft", "effectiveFrom": effective_from, "reviewDate": review_date,
+           "replaces": b["version"], "supersededBy": None, "sections": sections, "changeNote": change_note,
+           "owner": owner or b["owner"], "title": title or b["title"], "createdAt": now(), "approvedAt": None}
+    _insert_version(db, rec)
+    return _plain(rec)
 
 
-def approve_version(conn, doc_id: str, version: str) -> dict:
+def approve_version(db: Database, doc_id: str, version: str) -> dict:
     """Approve a draft. The version it replaces is marked superseded, its text kept for audit."""
-    with conn:
-        row = conn.execute("SELECT * FROM policy_versions WHERE doc_id=? AND version=?", (doc_id, version)).fetchone()
-        if not row:
-            raise KeyError(f"{doc_id} {version}")
-        if row["status"] != "draft":
-            raise ValueError(f"{doc_id} {version} is {row['status']}, not a draft.")
-        conn.execute("UPDATE policy_versions SET status='approved', approved_at=? WHERE doc_id=? AND version=?", (now(), doc_id, version))
-        if row["replaces"]:
-            conn.execute("UPDATE policy_versions SET status='superseded', superseded_by=? WHERE doc_id=? AND version=? AND status='approved'",
-                         (json.dumps({"docId": doc_id, "version": version}), doc_id, row["replaces"]))
-        _bump_rev(conn)
-    return get_version(conn, doc_id, version)
+    row = get_version(db, doc_id, version)
+    if not row:
+        raise KeyError(f"{doc_id} {version}")
+    if row["status"] != "draft":
+        raise ValueError(f"{doc_id} {version} is {row['status']}, not a draft.")
+    db.policy_versions.update_one({"docId": doc_id, "version": version}, {"$set": {"status": "approved", "approvedAt": now()}})
+    if row["replaces"]:
+        db.policy_versions.update_one({"docId": doc_id, "version": row["replaces"], "status": "approved"},
+                                      {"$set": {"status": "superseded", "supersededBy": {"docId": doc_id, "version": version}}})
+    _bump_rev(db)
+    return get_version(db, doc_id, version)
 
 
-def next_version(conn, doc_id: str) -> str:
+def next_version(db: Database, doc_id: str) -> str:
     """v2.3 -> v2.4 (never reuses an existing label)."""
-    labels = {r["version"] for r in conn.execute("SELECT version FROM policy_versions WHERE doc_id=?", (doc_id,))}
-    latest = conn.execute("SELECT version FROM policy_versions WHERE doc_id=? ORDER BY ord DESC LIMIT 1", (doc_id,)).fetchone()[0]
+    labels = {d["version"] for d in db.policy_versions.find({"docId": doc_id}, {"version": 1})}
+    latest = db.policy_versions.find_one({"docId": doc_id}, sort=[("ord", DESCENDING)])["version"]
     major, _, minor = latest.lstrip("v").partition(".")
     n = int(minor or 0) + 1
     while f"v{major}.{n}" in labels:
@@ -247,32 +232,104 @@ def metrics_data(db: Database) -> tuple[dict, list[dict]]:
 
 # ── answers and assessments ──────────────────────────────────────────────
 
-def _seq(conn, key: str) -> int:
-    n = int(conn.execute("SELECT value FROM meta WHERE key=?", (key,)).fetchone()[0]) + 1
-    conn.execute("UPDATE meta SET value=? WHERE key=?", (str(n), key))
-    return n
+ANSWER_KEYS = ["kind", "question", "scenarioId", "text", "citations", "topic", "asOf", "parentId", "state",
+               "latestAssessment", "feedback", "createdAt"]
 
 
 def _answer(doc) -> dict | None:
     if not doc:
         return None
-    return {"id": row["id"], "question": row["question"], "scenarioId": row["scenario_id"], "text": row["text"],
-            "citations": json.loads(row["citations"]), "result": json.loads(row["result"]) if row["result"] else None,
-            "feedback": row["feedback"], "createdAt": row["created_at"]}
+    return {"id": doc["_id"], **{k: doc.get(k) for k in ANSWER_KEYS}}
 
 
-def get_answer(conn, answer_id: str) -> dict | None:
-    return _answer(conn.execute("SELECT * FROM answers WHERE id=?", (answer_id,)).fetchone())
+def get_answer(db: Database, answer_id: str) -> dict | None:
+    a = _answer(db.answers.find_one({"_id": answer_id}))
+    if a:
+        latest = get_assessment(db, a["latestAssessment"]) if a["latestAssessment"] else None
+        a["result"] = latest["result"] if latest else None
+        a["assessment"] = {k: v for k, v in latest.items() if k != "result"} if latest else None
+    return a
+
+
+def add_answer(db: Database, *, kind: str, question: str, text: str, citations: list[str], as_of: str,
+               scenario_id: str | None = None, parent_id: str | None = None, topic: str | None = None) -> str:
+    answer_id = f"ANS-{_next(db, 'answer_seq'):05d}"
+    db.answers.insert_one({"_id": answer_id, "kind": kind, "question": question, "scenarioId": scenario_id, "text": text,
+                           "citations": _plain(citations), "topic": topic, "asOf": as_of, "parentId": parent_id,
+                           "state": "verifying", "latestAssessment": None, "feedback": None, "createdAt": now()})
+    return answer_id
+
+
+def child_answer_ids(db: Database, parent_id: str) -> list[str]:
+    """Corrections written for an answer, oldest first."""
+    return [d["_id"] for d in db.answers.find({"parentId": parent_id}, {"_id": 1}).sort("_id", ASCENDING)]
+
+
+ASSESSMENT_KEYS = ["answerId", "trigger", "result", "policyVersions", "routing", "evidenceChanged", "replacedBy", "createdAt"]
+
+
+def _assessment(doc) -> dict:
+    return {"id": doc["_id"], **{k: doc.get(k) for k in ASSESSMENT_KEYS}}
+
+
+def get_assessment(db: Database, assessment_id: str) -> dict | None:
+    doc = db.assessments.find_one({"_id": assessment_id})
+    return _assessment(doc) if doc else None
+
+
+def assessments_of(db: Database, answer_id: str) -> list[dict]:
+    return [_assessment(d) for d in db.assessments.find({"answerId": answer_id}).sort([("createdAt", ASCENDING), ("_id", ASCENDING)])]
+
+
+def add_assessment(db: Database, answer_id: str, trigger: str, result: dict, policy_versions: list[dict], routing: dict,
+                   state: str, topic: str | None) -> str:
+    """Record a new assessment. An earlier one is kept and points to its replacement."""
+    aid = f"AS-{_next(db, 'assessment_seq'):05d}"
+    prev = (db.answers.find_one({"_id": answer_id}, {"latestAssessment": 1}) or {}).get("latestAssessment")
+    db.assessments.insert_one({"_id": aid, "answerId": answer_id, "trigger": trigger, "result": _plain(result),
+                               "policyVersions": _plain(policy_versions), "routing": _plain(routing), "evidenceChanged": None,
+                               "replacedBy": None, "createdAt": now()})
+    if prev:
+        db.assessments.update_one({"_id": prev}, {"$set": {"replacedBy": aid}})
+    changes = {"latestAssessment": aid, "state": state, **({"topic": topic} if topic is not None else {})}
+    db.answers.update_one({"_id": answer_id}, {"$set": changes})
+    return aid
+
+
+def set_state(db: Database, answer_id: str, state: str) -> None:
+    db.answers.update_one({"_id": answer_id}, {"$set": {"state": state}})
+
+
+def set_feedback(db: Database, answer_id: str, value: str | None) -> None:
+    db.answers.update_one({"_id": answer_id}, {"$set": {"feedback": value}})
+
+
+def assessments_relying_on(db: Database, doc_id: str, except_version: str) -> list[dict]:
+    """Current (not replaced) assessments that used another version of doc_id."""
+    out = []
+    for d in db.assessments.find({"replacedBy": None}).sort("_id", ASCENDING):
+        a = _assessment(d)
+        if any(v["docId"] == doc_id and v["version"] != except_version for v in a["policyVersions"]):
+            out.append(a)
+    return out
+
+
+def mark_evidence_changed(db: Database, assessment_id: str, note: dict) -> None:
+    db.assessments.update_one({"_id": assessment_id}, {"$set": {"evidenceChanged": _plain(note)}})
+
+
+# ── reviews ──────────────────────────────────────────────────────────────
+
+REVIEW_KEYS = ["answerId", "scenarioId", "askedBy", "askedAt", "routedBy", "reasons", "note", "status", "watchers",
+               "outcome", "createdAt"]
 
 
 def _review(doc) -> dict:
-    return {"id": doc["_id"], "answerId": doc["answerId"], "scenarioId": doc["scenarioId"], "askedBy": doc["askedBy"],
-            "askedAt": doc["askedAt"], "routedBy": doc["routedBy"], "reasons": doc["reasons"], "note": doc["note"],
-            "status": doc["status"], "watchers": doc["watchers"], "outcome": doc.get("outcome"), "createdAt": doc["createdAt"]}
+    return {"id": doc["_id"], **{k: doc.get(k) for k in REVIEW_KEYS}}
 
 
 def reviews(db: Database) -> list[dict]:
-    return [_review(r) for r in db.reviews.find().sort("seq", DESCENDING)]
+    return [_review(d) for d in db.reviews.find().sort("seq", DESCENDING)]
 
 
 def get_review(db: Database, review_id: str) -> dict | None:
@@ -280,46 +337,44 @@ def get_review(db: Database, review_id: str) -> dict | None:
     return _review(doc) if doc else None
 
 
-# ── writes ───────────────────────────────────────────────────────────────
-
-def add_answer(conn, question: str, reply: dict) -> str:
-    with conn:
-        n = int(conn.execute("SELECT value FROM meta WHERE key='answer_seq'").fetchone()[0]) + 1
-        conn.execute("UPDATE meta SET value=? WHERE key='answer_seq'", (str(n),))
-        answer_id = f"ANS-{n:05d}"
-        conn.execute("INSERT INTO answers (id, question, scenario_id, text, citations, created_at) VALUES (?,?,?,?,?,?)",
-                     (answer_id, question, reply["scenarioId"], reply["text"], json.dumps(reply["citations"]), now()))
-    return answer_id
+def unlinked_reviews(db: Database) -> list[dict]:
+    """Seeded queue items that have no answer record yet."""
+    return [_review(d) for d in db.reviews.find({"answerId": None}).sort("seq", ASCENDING)]
 
 
-def save_result(conn, answer_id: str, result: dict) -> None:
-    with conn:
-        conn.execute("UPDATE answers SET result=? WHERE id=?", (json.dumps(result), answer_id))
+def link_review(db: Database, review_id: str, answer_id: str) -> None:
+    db.reviews.update_one({"_id": review_id}, {"$set": {"answerId": answer_id}})
 
 
-def set_feedback(conn, answer_id: str, value: str | None) -> None:
-    with conn:
-        conn.execute("UPDATE answers SET feedback=? WHERE id=?", (value, answer_id))
+def open_review_for(db: Database, answer_id: str) -> dict | None:
+    doc = db.reviews.find_one({"status": "pending", "$or": [{"answerId": answer_id}, {"watchers": answer_id}]},
+                              sort=[("seq", DESCENDING)])
+    return _review(doc) if doc else None
 
 
-def route(conn, answer: dict, routed_by: str, reasons: list[str], note: str, asked_by: str) -> dict:
-    """Queue an answer for review, or join an open review of the same question."""
-    with conn:
-        open_ = conn.execute("SELECT * FROM reviews WHERE status='pending' AND scenario_id=? ORDER BY seq DESC LIMIT 1",
-                             (answer["scenarioId"],)).fetchone()
-        if open_:
-            r = _review(open_)
-            watchers = r["watchers"] if answer["id"] in r["watchers"] or answer["id"] == r["answerId"] else [*r["watchers"], answer["id"]]
-            merged = list(dict.fromkeys([*r["reasons"], *reasons]))
-            conn.execute("UPDATE reviews SET watchers=?, reasons=? WHERE id=?", (json.dumps(watchers), json.dumps(merged), r["id"]))
-            return {"by": routed_by, "queueId": r["id"], "joined": True}
-        seq = max(1041, conn.execute("SELECT COALESCE(MAX(seq), 0) FROM reviews").fetchone()[0]) + 1
-        review_id = f"RQ-{seq}"
-        conn.execute(
-            "INSERT INTO reviews (id, seq, answer_id, scenario_id, asked_by, asked_at, routed_by, reasons, note, status, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-            (review_id, seq, answer["id"], answer["scenarioId"], asked_by, "Just now", routed_by, json.dumps(reasons), note, "pending", now()),
-        )
-        return {"by": routed_by, "queueId": review_id}
+def route(db: Database, answer: dict, routed_by: str, reasons: list[str], note: str, asked_by: str) -> dict:
+    """
+    Queue an answer for review. Scripted questions join an open review of the
+    same question (one reviewer decision answers every employee waiting on it);
+    any other answer gets a review of its own.
+    """
+    open_ = db.reviews.find_one({"status": "pending", "answerId": answer["id"]})
+    if not open_ and answer.get("scenarioId") and answer["kind"] == "asked":
+        open_ = db.reviews.find_one({"status": "pending", "scenarioId": answer["scenarioId"]}, sort=[("seq", DESCENDING)])
+    if open_:
+        r = _review(open_)
+        watchers = r["watchers"] if answer["id"] in r["watchers"] or answer["id"] == r["answerId"] else [*r["watchers"], answer["id"]]
+        merged = list(dict.fromkeys([*r["reasons"], *reasons]))
+        note_ = r["note"] if not note else (f"{r['note']}\n{note}" if r["note"] else note)
+        db.reviews.update_one({"_id": r["id"]}, {"$set": {"watchers": watchers, "reasons": merged, "note": note_}})
+        return {"by": routed_by, "queueId": r["id"], "joined": r["answerId"] != answer["id"]}
+    last = db.reviews.find_one({}, {"seq": 1}, sort=[("seq", DESCENDING)])
+    seq = max(1041, last["seq"] if last else 0) + 1
+    review_id = f"RQ-{seq}"
+    db.reviews.insert_one({"_id": review_id, "seq": seq, "answerId": answer["id"], "scenarioId": answer.get("scenarioId"),
+                           "askedBy": asked_by, "askedAt": now(), "routedBy": routed_by, "reasons": list(reasons), "note": note,
+                           "status": "pending", "watchers": [], "outcome": None, "createdAt": now()})
+    return {"by": routed_by, "queueId": review_id}
 
 
 def resolve_review(db: Database, review_id: str, outcome: dict, decision_row: dict) -> None:
@@ -329,21 +384,41 @@ def resolve_review(db: Database, review_id: str, outcome: dict, decision_row: di
                                    "docId": decision_row["docId"], "count": 1, "reviewId": review_id})
 
 
-def update_section(conn, doc_id: str, section_id: str, text: str, updated: str | None) -> bool:
-    with conn:
-        cur = conn.execute("UPDATE sections SET text=? WHERE doc_id=? AND section_id=?", (text, doc_id, section_id))
-        if cur.rowcount and updated:
-            conn.execute("UPDATE documents SET updated=? WHERE id=?", (updated, doc_id))
-        if cur.rowcount:
-            conn.execute("UPDATE meta SET value=? WHERE key='library_rev'", (uuid4().hex,))
-        return cur.rowcount > 0
+# ── audit trail ──────────────────────────────────────────────────────────
+
+def log(db: Database, action: str, *, actor: str = SYSTEM, role: str = "system", simulated: bool = False,
+        answer_id: str | None = None, review_id: str | None = None, **detail) -> None:
+    db.events.insert_one({"_id": _next(db, "event_seq"), "at": now(), "answerId": answer_id, "reviewId": review_id,
+                          "actor": actor, "role": role, "simulated": bool(simulated), "action": action, "detail": _plain(detail)})
+
+
+def events(db: Database, *, answer_ids: list[str] | None = None, review_id: str | None = None) -> list[dict]:
+    query = {}
+    if answer_ids is not None or review_id is not None:
+        query = {"$or": [{"answerId": {"$in": answer_ids or []}}, {"reviewId": review_id}] if review_id else
+                 [{"answerId": {"$in": answer_ids or []}}]}
+    return [{"id": d["_id"], "at": d["at"], "answerId": d["answerId"], "reviewId": d["reviewId"], "actor": d["actor"],
+             "role": d["role"], "simulated": d["simulated"], "action": d["action"], "detail": d["detail"]}
+            for d in db.events.find(query).sort("_id", ASCENDING)]
+
+
+# ── evaluation ───────────────────────────────────────────────────────────
+
+def add_eval_run(db: Database, run: dict) -> None:
+    db.eval_runs.insert_one({"_id": run["id"], "createdAt": run["createdAt"], "split": run["split"], "mode": run["mode"],
+                             "provider": _plain(run["provider"]), "summary": _plain(run["summary"]), "cases": _plain(run["cases"])})
+
+
+def eval_runs(db: Database) -> list[dict]:
+    return [{"id": d["_id"], "createdAt": d["createdAt"], "split": d["split"], "mode": d["mode"], "provider": d["provider"],
+             "summary": d["summary"], "cases": d["cases"]}
+            for d in db.eval_runs.find().sort([("createdAt", DESCENDING), ("_id", DESCENDING)])]
 
 
 if __name__ == "__main__":
     d = connect()
     if "--reset" in sys.argv:
-        reset(c)
-        c.commit()
-        print("Database reset and reseeded from data/fixtures.json")
+        reset(d)
+        print(f"Database '{d.name}' reset and reseeded from data/fixtures.json")
     else:
-        print(f"Database ready ({c.execute('SELECT COUNT(*) FROM documents').fetchone()[0]} documents)")
+        print(f"Database '{d.name}' ready ({len(d.policy_versions.distinct('docId'))} documents)")

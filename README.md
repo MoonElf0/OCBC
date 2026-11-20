@@ -6,7 +6,7 @@ An employee asks a banking policy question. A simple answering agent (the **Poli
 
 > **Two systems, never one.** The Policy Assistant answers. Assessment AI audits it. The answering agent is kept simple on purpose. Its job is to be wrong sometimes, so the verifier has something to catch.
 
-> **Two modes.** *Demo mode* (default) is a scripted, offline front-end demo: every document, answer, verdict and dashboard figure is synthetic and lives in one fixture module. *Backend mode* adds a FastAPI + SQLite service that verifies **any** answer you paste in, re-verifies reviewer corrections, keeps policy versions and an audit trail, and measures itself on labelled cases. Model steps (claim extraction, support judge, intent) run only when a model provider is configured on the server; without one they are reported as **not run** and the result is marked partial — never filled in from scripts. All data is synthetic.
+> **Two modes.** *Demo mode* (default) is a scripted, offline front-end demo: every document, answer, verdict and dashboard figure is synthetic and lives in one fixture module. *Backend mode* adds a FastAPI + MongoDB service that verifies **any** answer you paste in, re-verifies reviewer corrections, keeps policy versions and an audit trail, and measures itself on labelled cases. Model steps (claim extraction, support judge, intent) run only when a model provider is configured on the server; without one they are reported as **not run** and the result is marked partial — never filled in from scripts. All data is synthetic.
 
 > **Reliability index.** The 0–100 figure is an evidence-based index of how well approved policy backs an answer. It is not the probability that the answer is correct, and not permission to perform a banking action.
 
@@ -53,7 +53,7 @@ See [`backend/README.md`](backend/README.md) for the configuration, the API, and
 
 ## Presentation walkthrough (backend mode)
 
-Reset first: `curl -X POST localhost:8000/api/admin/reset` (or delete `backend/data/assessment.db`).
+Reset first: `curl -X POST localhost:8000/api/admin/reset` (or `python -m app.db --reset` from `backend/`).
 
 1. **New answer.** Workspace → *Verify an answer* → *Fill in an example* → *Verify answer*. The answer appears first; six checks resolve.
 2. **Flagged claim.** The 50 bps claim is *Conflicting* (policy says 10 bps, DOC-FX-019 v2.3 §2.1); the mandate condition has *Insufficient evidence*. State: *Review required* (Low index, conflicting evidence, high-risk topic; partial if no model). Click *See details* and the Trust Map chips.
