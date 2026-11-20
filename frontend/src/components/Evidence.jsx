@@ -3,7 +3,7 @@ import { scenarioById } from '../lib/pipeline'
 import { Passage } from './ui'
 
 /** One evidence item from a check: a source passage, the question, or a search record. */
-export function EvidenceItem({ item, scenarioId, question }) {
+export function EvidenceItem({ item, scenarioId, question, search }) {
   if (item.kind === 'question') {
     return (
       <div className="rounded-2xl bg-bone p-4 text-body-sm text-carbon">
@@ -14,12 +14,13 @@ export function EvidenceItem({ item, scenarioId, question }) {
       </div>
     )
   }
-  if (item.kind === 'search') return <SearchRecord scenarioId={scenarioId} />
+  if (item.kind === 'search') return <SearchRecord scenarioId={scenarioId} search={search} />
   return <Passage docId={item.docId} section={item.section} passage={item.passage} />
 }
 
-export function SearchRecord({ scenarioId }) {
-  const search = scenarioById(scenarioId).verification.search
+/** `search` is the result's retrieval record when the backend computed it. */
+export function SearchRecord({ scenarioId, search: computed }) {
+  const search = computed ?? scenarioById(scenarioId).verification.search
   return (
     <div className="rounded-2xl bg-bone p-4 text-body-sm text-carbon">
       <div className="eyebrow mb-1.5 flex items-center gap-1.5 text-smoke">

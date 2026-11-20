@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ocbc-trust-layer.local/contract/verification-result.schema.json",
+  "title": "VerificationResult",
+  "description": "What Assessment AI returns for one answer. Produced by assess() in the frontend demo mode and by the backend in live mode; both are tested against this schema. Claims are located by character offsets into the answer text, never by rewriting the answer.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["explanation", "retrieved", "claims", "checks", "score", "parts", "band", "matchedQuestion"],
+  "properties": {
+    "explanation": { "type": "string", "minLength": 1, "description": "Plain-language summary of the verdict." },
+    "retrieved": {
+      "type": "array",
+      "description": "Documents the verifier found itself that the agent did not cite.",
+      "items": { "$ref": "#/$defs/docId" },
+      "uniqueItems": true
+    },
+    "claims": { "type": "array", "items": { "$ref": "#/$defs/claim" } },
+    "checks": {
+      "type": "array",
+      "description": "Exactly six checks, in pipeline order.",
+      "minItems": 6,
+      "maxItems": 6,
+      "prefixItems": [
+        { "$ref": "#/$defs/check", "properties": { "id": { "const": "citation" } } },
+        { "$ref": "#/$defs/check", "properties": { "id": { "const": "freshness" } } },
+        { "$ref": "#/$defs/check", "properties": { "id": { "const": "crossref" } } },
+        { "$ref": "#/$defs/check", "properties": { "id": { "const": "groundedness" } } },
+        { "$ref": "#/$defs/check", "properties": { "id": { "const": "consistency" } } },
+        { "$ref": "#/$defs/check", "properties": { "id": { "const": "intent" } } }
+      ],
+      "items": false
+    },
+    "score": { "type": ["integer", "null"], "minimum": 0, "maximum": 100, "description": "null when the answer makes no claims. Never shown without its band." },
+    "parts": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["claimPts", "checkPts", "capped", "cap", "counted"],
+          "properties": {
+            "claimPts": { "type": "integer" },
+            "checkPts": { "type": "integer" },
+            "capped": { "type": "boolean" },
+            "cap": { "type": "integer" },
+            "counted": { "type": "integer" }
+          }
+        }
+      ]
+    },
+    "band": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "status"],
+      "properties": {
+        "id": { "enum": ["high", "medium", "low", "none"] },
+        "label": { "type": "string" },
+        "min": { "type": "integer" },
+        "status": { "$ref": "#/$defs/tone" }
+      }
+    },
+    "headline": { "type": "string", "description": "Short plain-language verdict shown as the score card title." },
+    "guidance": { "type": "string", "description": "One-line advice on what the employee should do with this answer." },
+    "matchedQuestion": { "type": ["string", "null"], "description": "Set when free text was matched to a scripted question (prototype only)." },
+    "noSource": { "type": "boolean", "description": "Retrieval found no passage above the relevance threshold for any claim." },
+    "search": { "$ref": "#/$defs/search" },
+    "provenance": {
+      "type": "object",
+      "description": "Live mode only: which parts of this result were computed and which were scripted.",
+      "additionalProperties": false,
+      "required": ["claims", "retrieval", "ruleChecks", "judgeChecks"],
+      "properties": {
+        "claims": { "enum": ["scripted", "extracted"] },
+        "retrieval": { "enum": ["scripted", "lexical", "hybrid"] },
+        "ruleChecks": { "enum": ["computed"] },
+        "judgeChecks": { "enum": ["scripted", "llm"] }
+      }
+    }
+  },
+  "$defs": {
+    "docId": { "type": "string", "pattern": "^DOC-[A-Z]+-[0-9]+$" },
+    "tone": { "enum": ["verified", "caution", "unsupported", "unknown"] },
+    "checkId": { "enum": ["citation", "freshness", "crossref", "groundedness", "consistency", "intent"] },
+    "passage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["docId", "section", "passage"],
+      "properties": {
+        "docId": { "$ref": "#/$defs/docId" },
+        "section": { "type": "string", "minLength": 1 },
+        "passage": { "type": "string", "minLength": 1 }
+      }
+    },
+    "evidence": {
+      "oneOf": [
+        { "$ref": "#/$defs/passage" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": { "kind": { "enum": ["question", "search"] } }
+        }
+      ]
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "start", "end", "status", "check", "source", "reason"],
+      "properties": {
+        "id": { "type": "string" },
+        "start": { "type": "integer", "minimum": 0 },
+        "end": { "type": "integer", "minimum": 1 },
+        "status": { "enum": ["supported", "unsupported", "conflicting", "stale", "off-intent", "no-source"] },
+        "check": { "$ref": "#/$defs/checkId" },
+        "source": {
+          "description": "The passage the verdict rests on. null only when retrieval found nothing.",
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/passage" }]
+        },
+        "counter": { "$ref": "#/$defs/passage", "description": "The current approved passage that disagrees with the claim." },
+        "nearest": { "type": "boolean", "description": "source is the nearest passage, not a supporting one." },
+        "reason": { "type": "string", "minLength": 1 },
+        "short": { "type": "string", "description": "A few-word label for the flagged-claims list." },
+        "retrieval": {
+          "type": "object",
+          "description": "Live mode only: what the verifier's own retrieval returned for this claim.",
+          "additionalProperties": false,
+          "required": ["topScore", "candidates"],
+          "properties": {
+            "topScore": { "type": "number", "minimum": 0, "maximum": 1 },
+            "candidates": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["docId", "section", "score"],
+                "properties": {
+                  "docId": { "$ref": "#/$defs/docId" },
+                  "section": { "type": "string" },
+                  "score": { "type": "number", "minimum": 0, "maximum": 1 }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "summary", "evidence"],
+      "properties": {
+        "id": { "$ref": "#/$defs/checkId" },
+        "status": { "enum": ["pass", "warning", "fail", "na"] },
+        "summary": { "type": "string", "minLength": 1 },
+        "short": { "type": "string", "description": "A few-word label for the checks list." },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidence" } }
+      }
+    },
+    "search": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["documentsSearched", "query", "topMatch", "threshold"],
+      "properties": {
+        "documentsSearched": { "type": "integer", "minimum": 0 },
+        "query": { "type": "string" },
+        "topMatch": { "type": "number", "minimum": 0, "maximum": 1 },
+        "threshold": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

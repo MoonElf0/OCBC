@@ -4,6 +4,7 @@ import { useStore, useActiveAnswer } from '../state/store'
 import { SCORE_MODEL } from '../lib/assess'
 import { CHECKS, METHOD_LABEL } from '../lib/status'
 import { checksDone } from '../lib/view'
+import { BACKEND } from '../lib/backend'
 import { CheckPill, Eyebrow } from './ui'
 import { EvidenceItem } from './Evidence'
 
@@ -61,7 +62,7 @@ export default function ChecksSheet() {
         </header>
         <div className="scroll-quiet flex-1 overflow-y-auto px-6">
           {CHECKS.map((meta, i) => (
-            <CheckRow key={meta.id} meta={meta} check={m.checks[i]} scenarioId={m.scenarioId} question={m.question} />
+            <CheckRow key={meta.id} meta={meta} check={m.checks[i]} scenarioId={m.scenarioId} question={m.question} search={m.result?.search} />
           ))}
           <Method />
 
@@ -100,14 +101,18 @@ function Method() {
         </div>
         <div>
           <dt className="font-medium text-ink">In this prototype</dt>
-          <dd>Answers, retrieval results and judge verdicts are scripted fixtures; rule checks and scores are computed in code from them.</dd>
+          <dd>
+            {BACKEND
+              ? 'Answers, claim spans and judge verdicts are scripted fixtures. Retrieval, rule checks, scores and routing are computed by the backend from the policy library, and a judge verdict only counts if it cites a passage retrieval returned.'
+              : 'Answers, retrieval results and judge verdicts are scripted fixtures; rule checks and scores are computed in code from them.'}
+          </dd>
         </div>
       </dl>
     </section>
   )
 }
 
-export function CheckRow({ meta, check, scenarioId, question, defaultOpen = false }) {
+export function CheckRow({ meta, check, scenarioId, question, search, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen)
   const settled = check.status !== 'queued' && check.status !== 'running'
   return (
@@ -127,7 +132,7 @@ export function CheckRow({ meta, check, scenarioId, question, defaultOpen = fals
         <div className="rise-in mt-3 space-y-2">
           {check.short && <p className="text-body-sm text-smoke">{check.summary}</p>}
           {check.evidence.map((e, j) => (
-            <EvidenceItem key={j} item={e} scenarioId={scenarioId} question={question} />
+            <EvidenceItem key={j} item={e} scenarioId={scenarioId} question={question} search={search} />
           ))}
         </div>
       )}

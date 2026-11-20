@@ -363,9 +363,11 @@ function CheckBox({ it }) {
 /* ─── Sources ────────────────────────────────────────────────────────────── */
 
 function Sources({ m, sc }) {
-  const ids = [...m.citations, ...sc.verification.retrieved.filter((d) => !m.citations.includes(d))]
+  // Backend mode: retrieval and the search record come from the server's result.
+  const retrieved = m.result?.retrieved ?? sc.verification.retrieved
+  const ids = [...m.citations, ...retrieved.filter((d) => !m.citations.includes(d))]
   if (!ids.length) {
-    const s = sc.verification.search
+    const s = m.result?.search ?? sc.verification.search
     return (
       <section className="rise-in">
         <SectionTitle>Sources</SectionTitle>
@@ -424,7 +426,7 @@ function Sources({ m, sc }) {
 /* ─── Footer actions ─────────────────────────────────────────────────────── */
 
 function Footer({ m }) {
-  const { dispatch } = useStore()
+  const { escalate } = useStore()
   const [composing, setComposing] = useState(false)
   const [note, setNote] = useState('')
   const done = m.phase === 'done'
@@ -439,7 +441,7 @@ function Footer({ m }) {
         className="rise-in shrink-0 space-y-2 border-t border-black/5 px-4 py-3"
         onSubmit={(e) => {
           e.preventDefault()
-          dispatch({ type: 'escalate', id: m.id, note: note.trim() })
+          escalate(m.id, note.trim())
           setComposing(false)
         }}
       >

@@ -55,7 +55,7 @@ export default function ReviewQueue() {
                 <button onClick={() => setSelectedId(q.id)} aria-current={isSel ? 'true' : undefined} className={`w-full rounded-2xl border p-3 text-left transition-colors ${isSel ? 'border-carbon bg-porcelain shadow-md' : 'border-frost hover:border-ash'}`}>
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-caption font-medium text-carbon">{q.id}</span>
-                    <ScoreBadge score={assess(sc.id).score} />
+                    <ScoreBadge score={(q.result ?? assess(sc.id)).score} />
                   </div>
                   <div className="mt-2 line-clamp-2 text-body-sm font-medium text-ink">{sc.question}</div>
                   <div className="mt-1 text-caption text-smoke">
@@ -96,7 +96,7 @@ function ReasonTag({ id }) {
 
 function ReviewDetail({ item }) {
   const sc = scenarioById(item.scenarioId)
-  const v = assess(sc.id)
+  const v = item.result ?? assess(sc.id) // backend mode sends the stored verification
   const [focus, setFocus] = useState(null)
   const claims = [...flagged(v.claims), ...v.claims.filter((c) => c.status === 'supported')]
 
@@ -143,7 +143,7 @@ function ReviewDetail({ item }) {
           <Eyebrow className="mb-3">Claims and evidence</Eyebrow>
           <div className="space-y-3">
             {claims.map((c) => (
-              <ClaimEvidence key={c.id} c={c} sc={sc} focused={focus === c.id} />
+              <ClaimEvidence key={c.id} c={c} sc={sc} focused={focus === c.id} search={v.search} />
             ))}
           </div>
         </div>
@@ -151,7 +151,7 @@ function ReviewDetail({ item }) {
         <div>
           <Eyebrow className="mb-1">Six checks</Eyebrow>
           {CHECKS.map((meta) => (
-            <CheckRow key={meta.id} meta={meta} check={v.checks.find((c) => c.id === meta.id)} scenarioId={sc.id} />
+            <CheckRow key={meta.id} meta={meta} check={v.checks.find((c) => c.id === meta.id)} scenarioId={sc.id} search={v.search} />
           ))}
         </div>
       </section>
@@ -161,7 +161,7 @@ function ReviewDetail({ item }) {
   )
 }
 
-function ClaimEvidence({ c, sc, focused }) {
+function ClaimEvidence({ c, sc, focused, search }) {
   const f = c.source ? freshnessOf(c.source.docId) : null
   return (
     <div id={`flag-${c.id}`} className={`rounded-2xl border p-4 transition-colors ${focused ? 'border-carbon' : 'border-frost'}`}>
@@ -183,7 +183,7 @@ function ClaimEvidence({ c, sc, focused }) {
             <div className="eyebrow mb-1.5 flex items-center gap-1.5 text-status-unknown">
               <CircleSlash size={12} aria-hidden="true" /> No source found
             </div>
-            <SearchRecord scenarioId={sc.id} />
+            <SearchRecord scenarioId={sc.id} search={search} />
           </div>
         )}
         {c.counter && <Passage docId={c.counter.docId} section={c.counter.section} passage={c.counter.passage} />}
@@ -199,7 +199,7 @@ const DECISIONS = [
 ]
 
 function Decision({ item, sc }) {
-  const { dispatch } = useStore()
+  const { decide } = useStore()
   const hint = REVIEW_HINTS[sc.id] ?? {}
   const draft = CORRECTIONS[sc.id]
   const [decision, setDecision] = useState(null)
@@ -207,7 +207,7 @@ function Decision({ item, sc }) {
   const [note, setNote] = useState('')
   const [ack, setAck] = useState(false)
   // Approving an answer that carries flags needs an explicit override.
-  const flagCount = assess(sc.id).claims.filter((c) => c.status !== 'supported').length
+  const flagCount = (item.result ?? assess(sc.id)).claims.filter((c) => c.status !== 'supported').length
   const needsAck = decision === 'approved' && flagCount > 0
   const valid = decision && note.trim().length >= 5 && (decision !== 'corrected' || text.trim() !== sc.answer.text) && (!needsAck || ack)
 
@@ -301,7 +301,7 @@ function Decision({ item, sc }) {
       <PrimaryButton
         className="mt-5 w-full"
         disabled={!valid}
-        onClick={() => dispatch({ type: 'decide', queueId: item.id, decision, note: note.trim(), correctedText: decision === 'corrected' ? text.trim() : null })}
+        onClick={() => decide({ queueId: item.id, decision, note: note.trim(), correctedText: decision === 'corrected' ? text.trim() : null })}
       >
         <Inbox size={16} /> Submit decision
       </PrimaryButton>

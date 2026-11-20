@@ -1,0 +1,2878 @@
+{
+  "assess": {
+    "sme-limit": {
+      "explanation": "Two of three claims match current policy. The SGD 250,000 limit comes only from a circular that was superseded in May 2026. The current standard sets SGD 200,000. Confirm the limit before acting on it.",
+      "headline": "Confirm the limit before acting",
+      "guidance": "The current limit is SGD 200,000. Anything above it needs Credit Committee approval.",
+      "retrieved": [
+        "DOC-SME-112"
+      ],
+      "claims": [
+        {
+          "id": "sme-limit-c1",
+          "start": 30,
+          "end": 120,
+          "status": "unsupported",
+          "check": "freshness",
+          "source": {
+            "docId": "DOC-SME-087",
+            "section": "§2",
+            "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 250,000."
+          },
+          "counter": {
+            "docId": "DOC-SME-112",
+            "section": "§3.1",
+            "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+          },
+          "short": "SGD 250k is outdated. It is now SGD 200k",
+          "reason": "No current approved source supports SGD 250,000. The only passage stating it is in a superseded circular, so it counts as unsupported rather than conflicting: the agent copied its source faithfully, but the source is no longer approved. The current standard sets SGD 200,000."
+        },
+        {
+          "id": "sme-limit-c2",
+          "start": 122,
+          "end": 227,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-SME-104",
+            "section": "§5.2",
+            "passage": "Transfers above the relationship manager limit require approval from the Business Banking Credit Committee before release."
+          },
+          "reason": "Matches the escalation rule in the SME Lending Policy."
+        },
+        {
+          "id": "sme-limit-c3",
+          "start": 229,
+          "end": 314,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-SME-112",
+            "section": "§3.4",
+            "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+          },
+          "reason": "Matches the current Cross-Border Payments Standard. The agent did not cite this document; Assessment AI retrieved it independently."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "Both cited documents exist in the approved library, and every figure in the 2 cited claims appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-087",
+              "section": "§2",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 250,000."
+            },
+            {
+              "docId": "DOC-SME-104",
+              "section": "§5.2",
+              "passage": "Transfers above the relationship manager limit require approval from the Business Banking Credit Committee before release."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "fail",
+          "short": "Cited source was replaced on 20 May 2026",
+          "summary": "DOC-SME-087 was last updated 14 months ago and has been superseded by DOC-SME-112.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.1",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "warning",
+          "short": "Current policy says SGD 200,000",
+          "summary": "The answer states SGD 250,000; the current approved source (DOC-SME-112 §3.1) states SGD 200,000.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.1",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "warning",
+          "short": "1 claim rests on a replaced circular",
+          "summary": "2 of 3 claims are supported by a current approved source. 1 claim rests only on a superseded document.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-087",
+              "section": "§2",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 250,000."
+            },
+            {
+              "docId": "DOC-SME-104",
+              "section": "§5.2",
+              "passage": "Transfers above the relationship manager limit require approval from the Business Banking Credit Committee before release."
+            },
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.4",
+              "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "Doesn’t contradict itself",
+          "summary": "The answer does not contradict itself. The limit discrepancy is reported under cross-referencing.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-104",
+              "section": "§5.1",
+              "passage": "Relationship managers may approve SME cross-border transfers within the limits set by the current Cross-Border Payments Standard."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "The question asks for an approval limit. The answer states a limit and the escalation path above it.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 67,
+      "parts": {
+        "claimPts": 40,
+        "checkPts": 27,
+        "capped": false,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "medium",
+        "label": "Medium",
+        "min": 50,
+        "status": "caution"
+      },
+      "matchedQuestion": null
+    },
+    "kyc-ubo": {
+      "explanation": "All four claims match the current Customer Due Diligence Procedures, updated seven months ago. No conflicts with other approved documents.",
+      "headline": "Safe to use",
+      "guidance": "Safe to use as written. Every requirement matches the current procedure.",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "kyc-ubo-c1",
+          "start": 4,
+          "end": 60,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-KYC-031",
+            "section": "§4.1",
+            "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+          },
+          "reason": "Matches the 25% ownership threshold."
+        },
+        {
+          "id": "kyc-ubo-c2",
+          "start": 62,
+          "end": 166,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-KYC-031",
+            "section": "§4.2",
+            "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+          },
+          "reason": "Matches the identity evidence requirement."
+        },
+        {
+          "id": "kyc-ubo-c3",
+          "start": 182,
+          "end": 245,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-KYC-031",
+            "section": "§4.3",
+            "passage": "Obtain the company's latest business profile from the company registry."
+          },
+          "reason": "Matches the company records requirement."
+        },
+        {
+          "id": "kyc-ubo-c4",
+          "start": 251,
+          "end": 317,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-KYC-031",
+            "section": "§4.4",
+            "passage": "The ownership structure must be confirmed in writing by a director of the company."
+          },
+          "reason": "Matches the ownership confirmation requirement."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "The cited document exists in the approved library, and every figure in the 4 cited claims appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.1",
+              "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+            },
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            },
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.3",
+              "passage": "Obtain the company's latest business profile from the company registry."
+            },
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.4",
+              "passage": "The ownership structure must be confirmed in writing by a director of the company."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "pass",
+          "short": "All sources up to date",
+          "summary": "DOC-KYC-031 was updated within its 12-month review cycle (oldest: DOC-KYC-031, 7 months ago).",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.1",
+              "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "pass",
+          "short": "Figures match current policy",
+          "summary": "Every figure agrees with the approved sources retrieved for the same point.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.1",
+              "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "pass",
+          "short": "All 4 claims backed by policy",
+          "summary": "4 of 4 claims are supported by an approved source.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.1",
+              "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+            },
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            },
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.3",
+              "passage": "Obtain the company's latest business profile from the company registry."
+            },
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.4",
+              "passage": "The ownership structure must be confirmed in writing by a director of the company."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "Doesn’t contradict itself",
+          "summary": "The answer does not contradict itself or another approved document.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.4",
+              "passage": "The ownership structure must be confirmed in writing by a director of the company."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "The question asks which documents are needed. The answer lists them.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 95,
+      "parts": {
+        "claimPts": 60,
+        "checkPts": 40,
+        "capped": true,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "high",
+        "label": "High",
+        "min": 80,
+        "status": "verified"
+      },
+      "matchedQuestion": null
+    },
+    "fx-override": {
+      "explanation": "The answer contradicts its own cited source. The FX guidelines cap relationship-manager overrides at 10 basis points, not 50, and nothing in the library mentions a treasury-mandate exception. Do not act on this answer.",
+      "headline": "Don’t act on this answer",
+      "guidance": "Don’t rely on this answer. Policy allows overrides up to 10 bps; above that, get the Treasury desk head’s approval first.",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "fx-override-c1",
+          "start": 5,
+          "end": 106,
+          "status": "conflicting",
+          "check": "consistency",
+          "source": {
+            "docId": "DOC-FX-019",
+            "section": "§2.2",
+            "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+          },
+          "counter": {
+            "docId": "DOC-FX-019",
+            "section": "§2.1",
+            "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+          },
+          "short": "Says 50 bps, but policy caps it at 10 bps",
+          "reason": "The guideline caps relationship-manager overrides at 10 basis points. Anything above needs prior approval from the Treasury desk head."
+        },
+        {
+          "id": "fx-override-c2",
+          "start": 108,
+          "end": 160,
+          "status": "unsupported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-FX-019",
+            "section": "§2.1",
+            "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+          },
+          "nearest": true,
+          "short": "Mandate exception isn’t in any policy",
+          "reason": "No retrieved passage mentions a treasury-mandate condition. The nearest passage, shown here, sets the authority limit without any exception."
+        },
+        {
+          "id": "fx-override-c3",
+          "start": 162,
+          "end": 231,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-FX-019",
+            "section": "§3.1",
+            "passage": "Every override must be recorded in the deal ticket with a reason code."
+          },
+          "reason": "Matches the record-keeping rule."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "fail",
+          "short": "Cited source says 10 basis points, not 50 basis points",
+          "summary": "DOC-FX-019 exists, but the answer cites it for 50 basis points and the passage says 10 basis points.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "pass",
+          "short": "All sources up to date",
+          "summary": "DOC-FX-019 was updated within its 12-month review cycle (oldest: DOC-FX-019, 2 months ago).",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "fail",
+          "short": "Current policy says 10 basis points",
+          "summary": "The answer states 50 basis points; the current approved source (DOC-FX-019 §2.1) states 10 basis points.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.1",
+              "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "fail",
+          "short": "Only 1 of 3 claims backed",
+          "summary": "1 of 3 claims is supported. 1 conflicts with the source and 1 has no supporting passage.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.1",
+              "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+            },
+            {
+              "docId": "DOC-FX-019",
+              "section": "§3.1",
+              "passage": "Every override must be recorded in the deal ticket with a reason code."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "fail",
+          "short": "Says no approval needed, but policy requires it",
+          "summary": "The answer says no approval is needed; the cited guideline says approval is required above 10 bps.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "The question asks whether approval is needed. The answer addresses that directly.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 33,
+      "parts": {
+        "claimPts": 20,
+        "checkPts": 13,
+        "capped": false,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "low",
+        "label": "Low",
+        "min": 0,
+        "status": "unsupported"
+      },
+      "matchedQuestion": null
+    },
+    "fees-waiver": {
+      "explanation": "The waiver limits match the Fee Waiver Authority Matrix, but that document is 22 months old and past its 12-month review. The last sentence answers a question about retail cards that was not asked.",
+      "headline": "Right limits, outdated source",
+      "guidance": "The SGD 500 limit matches the matrix, but the matrix is overdue for review. Confirm with Branch Operations before waiving.",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "fees-waiver-c1",
+          "start": 5,
+          "end": 90,
+          "status": "stale",
+          "check": "freshness",
+          "source": {
+            "docId": "DOC-OPS-045",
+            "section": "Row 3",
+            "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+          },
+          "short": "Right limit, but the source is overdue for review",
+          "reason": "Matches the source, but the source is 22 months old and overdue for its annual review. The limit may have changed."
+        },
+        {
+          "id": "fees-waiver-c2",
+          "start": 92,
+          "end": 146,
+          "status": "stale",
+          "check": "freshness",
+          "source": {
+            "docId": "DOC-OPS-045",
+            "section": "Row 4",
+            "passage": "Waivers above SGD 500 require approval from the area head."
+          },
+          "short": "Right rule, but the source is overdue for review",
+          "reason": "Matches the source, but the source is overdue for review."
+        },
+        {
+          "id": "fees-waiver-c3",
+          "start": 148,
+          "end": 231,
+          "status": "off-intent",
+          "check": "intent",
+          "source": {
+            "docId": "DOC-CRD-022",
+            "section": "§7.2",
+            "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+          },
+          "short": "About retail cards, not what you asked",
+          "reason": "Accurate, but it answers a different question: you asked about SME business accounts, not retail credit cards."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "Both cited documents exist in the approved library, and every figure in the 3 cited claims appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 3",
+              "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+            },
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 4",
+              "passage": "Waivers above SGD 500 require approval from the area head."
+            },
+            {
+              "docId": "DOC-CRD-022",
+              "section": "§7.2",
+              "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "warning",
+          "short": "Source is 22 months old and overdue for review",
+          "summary": "DOC-OPS-045 was last updated 22 months ago, past its 12-month review cycle. It has not been superseded.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 3",
+              "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "pass",
+          "short": "Figures match current policy",
+          "summary": "Every figure agrees with the approved sources retrieved for the same point.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 3",
+              "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "pass",
+          "short": "All 3 claims match a source",
+          "summary": "3 of 3 claims match a source passage. 2 of them rest on a document overdue for review.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 3",
+              "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+            },
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 4",
+              "passage": "Waivers above SGD 500 require approval from the area head."
+            },
+            {
+              "docId": "DOC-CRD-022",
+              "section": "§7.2",
+              "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "Doesn’t contradict itself",
+          "summary": "The answer does not contradict itself or another approved document.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 4",
+              "passage": "Waivers above SGD 500 require approval from the area head."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "warning",
+          "short": "Last sentence is off-topic",
+          "summary": "The question is about an SME business account. The final sentence answers a nearby question about retail credit cards.",
+          "evidence": [
+            {
+              "kind": "question"
+            },
+            {
+              "docId": "DOC-CRD-022",
+              "section": "§7.2",
+              "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+            }
+          ]
+        }
+      ],
+      "score": 69,
+      "parts": {
+        "claimPts": 36,
+        "checkPts": 33,
+        "capped": false,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "medium",
+        "label": "Medium",
+        "min": 50,
+        "status": "caution"
+      },
+      "matchedQuestion": null
+    },
+    "collateral-crypto": {
+      "noSource": true,
+      "explanation": "No approved document covers crypto or digital-asset collateral, and the answer cites nothing. Every claim here is unverified. Treat it as unknown until a reviewer confirms policy.",
+      "headline": "No policy covers this",
+      "guidance": "Treat crypto collateral as not permitted until a reviewer confirms policy.",
+      "retrieved": [],
+      "search": {
+        "documentsSearched": 7,
+        "query": "crypto digital asset collateral haircut custodian",
+        "topMatch": 0.21,
+        "threshold": 0.6
+      },
+      "claims": [
+        {
+          "id": "collateral-crypto-c1",
+          "start": 5,
+          "end": 111,
+          "status": "no-source",
+          "check": "groundedness",
+          "source": null,
+          "short": "No policy on crypto collateral",
+          "reason": "No source found. Retrieval returned no passage above the relevance threshold."
+        },
+        {
+          "id": "collateral-crypto-c2",
+          "start": 113,
+          "end": 162,
+          "status": "no-source",
+          "check": "groundedness",
+          "source": null,
+          "short": "Custodian rule not found",
+          "reason": "No source found. No approved document mentions custodians."
+        },
+        {
+          "id": "collateral-crypto-c3",
+          "start": 164,
+          "end": 194,
+          "status": "no-source",
+          "check": "groundedness",
+          "source": null,
+          "short": "Daily valuation rule not found",
+          "reason": "No source found. No approved document sets a valuation frequency for this asset class."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "fail",
+          "short": "Cites no documents",
+          "summary": "The answer cites no documents.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "na",
+          "short": "No source to check",
+          "summary": "No source to check.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "na",
+          "short": "Nothing to compare against",
+          "summary": "No approved source to compare against.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "fail",
+          "short": "0 of 3 claims backed",
+          "summary": "0 of 3 claims are supported. No approved passage was retrieved.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "Doesn’t contradict itself",
+          "summary": "The answer does not contradict itself.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "The question asks whether crypto is acceptable collateral. The answer addresses that.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 10,
+      "parts": {
+        "claimPts": 0,
+        "checkPts": 20,
+        "capped": true,
+        "cap": 10,
+        "counted": 4
+      },
+      "band": {
+        "id": "low",
+        "label": "Low",
+        "min": 0,
+        "status": "unsupported"
+      },
+      "matchedQuestion": null
+    },
+    "fallback": {
+      "explanation": "The reply makes no policy claims, so there is nothing to verify. No score is given.",
+      "headline": "Nothing to verify",
+      "retrieved": [],
+      "claims": [],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "na",
+          "short": "Nothing cited, nothing claimed",
+          "summary": "No documents cited and no claims made.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "na",
+          "short": "No source to check",
+          "summary": "No source to check.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "na",
+          "short": "Nothing to compare against",
+          "summary": "No approved source to compare against.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "na",
+          "short": "No claims to check",
+          "summary": "No factual claims to check.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "na",
+          "short": "No claims to compare",
+          "summary": "No claims to compare.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Says plainly it has no answer",
+          "summary": "The reply says plainly that it has no answer, rather than guessing.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": null,
+      "parts": null,
+      "band": {
+        "id": "none",
+        "label": "Not scored",
+        "status": "unknown"
+      },
+      "matchedQuestion": null
+    },
+    "sme-limit~corrected": {
+      "explanation": "All three claims now match current policy. The limit cites the current Cross-Border Payments Standard instead of the superseded circular.",
+      "headline": "Now matches current policy",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "sme-limit~corrected-c1",
+          "start": 30,
+          "end": 120,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-SME-112",
+            "section": "§3.1",
+            "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+          },
+          "reason": "Matches the current relationship manager limit."
+        },
+        {
+          "id": "sme-limit~corrected-c2",
+          "start": 172,
+          "end": 277,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-SME-104",
+            "section": "§5.2",
+            "passage": "Transfers above the relationship manager limit require approval from the Business Banking Credit Committee before release."
+          },
+          "reason": "Matches the escalation rule."
+        },
+        {
+          "id": "sme-limit~corrected-c3",
+          "start": 279,
+          "end": 364,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-SME-112",
+            "section": "§3.4",
+            "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+          },
+          "reason": "Matches the processing rule."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "Both cited documents exist in the approved library, and every figure in the 3 cited claims appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.1",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+            },
+            {
+              "docId": "DOC-SME-104",
+              "section": "§5.2",
+              "passage": "Transfers above the relationship manager limit require approval from the Business Banking Credit Committee before release."
+            },
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.4",
+              "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "pass",
+          "short": "All sources up to date",
+          "summary": "All 2 sources were updated within their 12-month review cycle (oldest: DOC-SME-112, 4 months ago).",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.1",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "pass",
+          "short": "Figures match current policy",
+          "summary": "Every figure agrees with the approved sources retrieved for the same point.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.1",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "pass",
+          "short": "All 3 claims backed",
+          "summary": "3 of 3 claims are supported by a current approved source.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.1",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+            },
+            {
+              "docId": "DOC-SME-104",
+              "section": "§5.2",
+              "passage": "Transfers above the relationship manager limit require approval from the Business Banking Credit Committee before release."
+            },
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.4",
+              "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "Doesn’t contradict itself",
+          "summary": "No contradiction with any approved document.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.1",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "States the limit asked for and the escalation path.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 95,
+      "parts": {
+        "claimPts": 60,
+        "checkPts": 40,
+        "capped": true,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "high",
+        "label": "High",
+        "min": 80,
+        "status": "verified"
+      },
+      "matchedQuestion": null
+    },
+    "fx-override~corrected": {
+      "explanation": "All three claims match the FX Rate Override Guidelines word for word. The treasury-mandate exception has been removed.",
+      "headline": "Now matches the guideline",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "fx-override~corrected-c1",
+          "start": 4,
+          "end": 78,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-FX-019",
+            "section": "§2.1",
+            "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+          },
+          "reason": "Matches the authority limit."
+        },
+        {
+          "id": "fx-override~corrected-c2",
+          "start": 80,
+          "end": 166,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-FX-019",
+            "section": "§2.2",
+            "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+          },
+          "reason": "Matches the approval rule."
+        },
+        {
+          "id": "fx-override~corrected-c3",
+          "start": 186,
+          "end": 255,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-FX-019",
+            "section": "§3.1",
+            "passage": "Every override must be recorded in the deal ticket with a reason code."
+          },
+          "reason": "Matches the record-keeping rule."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "The cited document exists in the approved library, and every figure in the 3 cited claims appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.1",
+              "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+            },
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            },
+            {
+              "docId": "DOC-FX-019",
+              "section": "§3.1",
+              "passage": "Every override must be recorded in the deal ticket with a reason code."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "pass",
+          "short": "All sources up to date",
+          "summary": "DOC-FX-019 was updated within its 12-month review cycle (oldest: DOC-FX-019, 2 months ago).",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.1",
+              "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "pass",
+          "short": "Figures match current policy",
+          "summary": "Every figure agrees with the approved sources retrieved for the same point.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.1",
+              "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "pass",
+          "short": "All 3 claims backed",
+          "summary": "3 of 3 claims are supported.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.1",
+              "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+            },
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "Doesn’t contradict itself",
+          "summary": "No contradiction with the guideline.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "Answers whether approval is needed.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 95,
+      "parts": {
+        "claimPts": 60,
+        "checkPts": 40,
+        "capped": true,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "high",
+        "label": "High",
+        "min": 80,
+        "status": "verified"
+      },
+      "matchedQuestion": null
+    },
+    "fees-waiver~corrected": {
+      "explanation": "The off-topic sentence is gone. The limits still rest on a matrix that is overdue for review, so the score stays Medium until Branch Operations confirms it.",
+      "headline": "Fixed, but the source is still overdue",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "fees-waiver~corrected-c1",
+          "start": 5,
+          "end": 90,
+          "status": "stale",
+          "check": "freshness",
+          "source": {
+            "docId": "DOC-OPS-045",
+            "section": "Row 3",
+            "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+          },
+          "short": "Right limit, but the source is overdue for review",
+          "reason": "Matches the source, which is overdue for review."
+        },
+        {
+          "id": "fees-waiver~corrected-c2",
+          "start": 96,
+          "end": 150,
+          "status": "stale",
+          "check": "freshness",
+          "source": {
+            "docId": "DOC-OPS-045",
+            "section": "Row 4",
+            "passage": "Waivers above SGD 500 require approval from the area head."
+          },
+          "short": "Right rule, but the source is overdue for review",
+          "reason": "Matches the source, which is overdue for review."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "The cited document exists in the approved library, and every figure in the 2 cited claims appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 3",
+              "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+            },
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 4",
+              "passage": "Waivers above SGD 500 require approval from the area head."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "warning",
+          "short": "Source is 22 months old and overdue for review",
+          "summary": "DOC-OPS-045 was last updated 22 months ago, past its 12-month review cycle. It has not been superseded.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 3",
+              "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "pass",
+          "short": "Figures match current policy",
+          "summary": "Every figure agrees with the approved sources retrieved for the same point.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 3",
+              "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "pass",
+          "short": "Both claims match a source",
+          "summary": "2 of 2 claims match a source passage.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 3",
+              "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+            },
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 4",
+              "passage": "Waivers above SGD 500 require approval from the area head."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "Doesn’t contradict itself",
+          "summary": "No contradiction with any approved document.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 4",
+              "passage": "Waivers above SGD 500 require approval from the area head."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "Answers only about the SME business account asked about.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 73,
+      "parts": {
+        "claimPts": 36,
+        "checkPts": 37,
+        "capped": false,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "medium",
+        "label": "Medium",
+        "min": 50,
+        "status": "caution"
+      },
+      "matchedQuestion": null
+    },
+    "collateral-crypto~corrected": {
+      "explanation": "The corrected reply makes no policy claims. It states that no policy exists, which is what retrieval found.",
+      "headline": "Correctly says no policy exists",
+      "retrieved": [],
+      "claims": [],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "na",
+          "short": "Nothing cited, nothing claimed",
+          "summary": "No documents cited and no claims made.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "na",
+          "short": "No source to check",
+          "summary": "No source to check.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "na",
+          "short": "Nothing to compare against",
+          "summary": "No approved source to compare against.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "na",
+          "short": "No policy claims to check",
+          "summary": "No factual policy claims.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "Matches the empty search result",
+          "summary": "Consistent with the empty retrieval result.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "Answers the question asked.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": null,
+      "parts": null,
+      "band": {
+        "id": "none",
+        "label": "Not scored",
+        "status": "unknown"
+      },
+      "matchedQuestion": null
+    }
+  },
+  "assessParaphrased": {
+    "sme-limit": {
+      "explanation": "Two of three claims match current policy. The SGD 250,000 limit comes only from a circular that was superseded in May 2026. The current standard sets SGD 200,000. Confirm the limit before acting on it.",
+      "headline": "Confirm the limit before acting",
+      "guidance": "The current limit is SGD 200,000. Anything above it needs Credit Committee approval.",
+      "retrieved": [
+        "DOC-SME-112"
+      ],
+      "claims": [
+        {
+          "id": "sme-limit-c1",
+          "start": 30,
+          "end": 120,
+          "status": "unsupported",
+          "check": "freshness",
+          "source": {
+            "docId": "DOC-SME-087",
+            "section": "§2",
+            "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 250,000."
+          },
+          "counter": {
+            "docId": "DOC-SME-112",
+            "section": "§3.1",
+            "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+          },
+          "short": "SGD 250k is outdated. It is now SGD 200k",
+          "reason": "No current approved source supports SGD 250,000. The only passage stating it is in a superseded circular, so it counts as unsupported rather than conflicting: the agent copied its source faithfully, but the source is no longer approved. The current standard sets SGD 200,000."
+        },
+        {
+          "id": "sme-limit-c2",
+          "start": 122,
+          "end": 227,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-SME-104",
+            "section": "§5.2",
+            "passage": "Transfers above the relationship manager limit require approval from the Business Banking Credit Committee before release."
+          },
+          "reason": "Matches the escalation rule in the SME Lending Policy."
+        },
+        {
+          "id": "sme-limit-c3",
+          "start": 229,
+          "end": 314,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-SME-112",
+            "section": "§3.4",
+            "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+          },
+          "reason": "Matches the current Cross-Border Payments Standard. The agent did not cite this document; Assessment AI retrieved it independently."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "Both cited documents exist in the approved library, and every figure in the 2 cited claims appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-087",
+              "section": "§2",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 250,000."
+            },
+            {
+              "docId": "DOC-SME-104",
+              "section": "§5.2",
+              "passage": "Transfers above the relationship manager limit require approval from the Business Banking Credit Committee before release."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "fail",
+          "short": "Cited source was replaced on 20 May 2026",
+          "summary": "DOC-SME-087 was last updated 14 months ago and has been superseded by DOC-SME-112.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.1",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "warning",
+          "short": "Current policy says SGD 200,000",
+          "summary": "The answer states SGD 250,000; the current approved source (DOC-SME-112 §3.1) states SGD 200,000.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.1",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "warning",
+          "short": "1 claim rests on a replaced circular",
+          "summary": "2 of 3 claims are supported by a current approved source. 1 claim rests only on a superseded document.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-087",
+              "section": "§2",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 250,000."
+            },
+            {
+              "docId": "DOC-SME-104",
+              "section": "§5.2",
+              "passage": "Transfers above the relationship manager limit require approval from the Business Banking Credit Committee before release."
+            },
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.4",
+              "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "Doesn’t contradict itself",
+          "summary": "The answer does not contradict itself. The limit discrepancy is reported under cross-referencing.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-104",
+              "section": "§5.1",
+              "passage": "Relationship managers may approve SME cross-border transfers within the limits set by the current Cross-Border Payments Standard."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "warning",
+          "short": "Matched to a similar question",
+          "summary": "Your question was matched to the scripted question “What's the approval limit for a cross-border transfer under the SME lending policy?”. The answer may not address exactly what you asked.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 63,
+      "parts": {
+        "claimPts": 40,
+        "checkPts": 23,
+        "capped": false,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "medium",
+        "label": "Medium",
+        "min": 50,
+        "status": "caution"
+      },
+      "matchedQuestion": "What's the approval limit for a cross-border transfer under the SME lending policy?"
+    },
+    "kyc-ubo": {
+      "explanation": "All four claims match the current Customer Due Diligence Procedures, updated seven months ago. No conflicts with other approved documents.",
+      "headline": "Safe to use",
+      "guidance": "Safe to use as written. Every requirement matches the current procedure.",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "kyc-ubo-c1",
+          "start": 4,
+          "end": 60,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-KYC-031",
+            "section": "§4.1",
+            "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+          },
+          "reason": "Matches the 25% ownership threshold."
+        },
+        {
+          "id": "kyc-ubo-c2",
+          "start": 62,
+          "end": 166,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-KYC-031",
+            "section": "§4.2",
+            "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+          },
+          "reason": "Matches the identity evidence requirement."
+        },
+        {
+          "id": "kyc-ubo-c3",
+          "start": 182,
+          "end": 245,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-KYC-031",
+            "section": "§4.3",
+            "passage": "Obtain the company's latest business profile from the company registry."
+          },
+          "reason": "Matches the company records requirement."
+        },
+        {
+          "id": "kyc-ubo-c4",
+          "start": 251,
+          "end": 317,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-KYC-031",
+            "section": "§4.4",
+            "passage": "The ownership structure must be confirmed in writing by a director of the company."
+          },
+          "reason": "Matches the ownership confirmation requirement."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "The cited document exists in the approved library, and every figure in the 4 cited claims appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.1",
+              "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+            },
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            },
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.3",
+              "passage": "Obtain the company's latest business profile from the company registry."
+            },
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.4",
+              "passage": "The ownership structure must be confirmed in writing by a director of the company."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "pass",
+          "short": "All sources up to date",
+          "summary": "DOC-KYC-031 was updated within its 12-month review cycle (oldest: DOC-KYC-031, 7 months ago).",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.1",
+              "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "pass",
+          "short": "Figures match current policy",
+          "summary": "Every figure agrees with the approved sources retrieved for the same point.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.1",
+              "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "pass",
+          "short": "All 4 claims backed by policy",
+          "summary": "4 of 4 claims are supported by an approved source.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.1",
+              "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+            },
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            },
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.3",
+              "passage": "Obtain the company's latest business profile from the company registry."
+            },
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.4",
+              "passage": "The ownership structure must be confirmed in writing by a director of the company."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "Doesn’t contradict itself",
+          "summary": "The answer does not contradict itself or another approved document.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.4",
+              "passage": "The ownership structure must be confirmed in writing by a director of the company."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "warning",
+          "short": "Matched to a similar question",
+          "summary": "Your question was matched to the scripted question “What documents do I need to verify the beneficial owners of a new SME client?”. The answer may not address exactly what you asked.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 95,
+      "parts": {
+        "claimPts": 60,
+        "checkPts": 37,
+        "capped": true,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "high",
+        "label": "High",
+        "min": 80,
+        "status": "verified"
+      },
+      "matchedQuestion": "What documents do I need to verify the beneficial owners of a new SME client?"
+    },
+    "fx-override": {
+      "explanation": "The answer contradicts its own cited source. The FX guidelines cap relationship-manager overrides at 10 basis points, not 50, and nothing in the library mentions a treasury-mandate exception. Do not act on this answer.",
+      "headline": "Don’t act on this answer",
+      "guidance": "Don’t rely on this answer. Policy allows overrides up to 10 bps; above that, get the Treasury desk head’s approval first.",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "fx-override-c1",
+          "start": 5,
+          "end": 106,
+          "status": "conflicting",
+          "check": "consistency",
+          "source": {
+            "docId": "DOC-FX-019",
+            "section": "§2.2",
+            "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+          },
+          "counter": {
+            "docId": "DOC-FX-019",
+            "section": "§2.1",
+            "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+          },
+          "short": "Says 50 bps, but policy caps it at 10 bps",
+          "reason": "The guideline caps relationship-manager overrides at 10 basis points. Anything above needs prior approval from the Treasury desk head."
+        },
+        {
+          "id": "fx-override-c2",
+          "start": 108,
+          "end": 160,
+          "status": "unsupported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-FX-019",
+            "section": "§2.1",
+            "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+          },
+          "nearest": true,
+          "short": "Mandate exception isn’t in any policy",
+          "reason": "No retrieved passage mentions a treasury-mandate condition. The nearest passage, shown here, sets the authority limit without any exception."
+        },
+        {
+          "id": "fx-override-c3",
+          "start": 162,
+          "end": 231,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-FX-019",
+            "section": "§3.1",
+            "passage": "Every override must be recorded in the deal ticket with a reason code."
+          },
+          "reason": "Matches the record-keeping rule."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "fail",
+          "short": "Cited source says 10 basis points, not 50 basis points",
+          "summary": "DOC-FX-019 exists, but the answer cites it for 50 basis points and the passage says 10 basis points.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "pass",
+          "short": "All sources up to date",
+          "summary": "DOC-FX-019 was updated within its 12-month review cycle (oldest: DOC-FX-019, 2 months ago).",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "fail",
+          "short": "Current policy says 10 basis points",
+          "summary": "The answer states 50 basis points; the current approved source (DOC-FX-019 §2.1) states 10 basis points.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.1",
+              "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "fail",
+          "short": "Only 1 of 3 claims backed",
+          "summary": "1 of 3 claims is supported. 1 conflicts with the source and 1 has no supporting passage.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.1",
+              "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+            },
+            {
+              "docId": "DOC-FX-019",
+              "section": "§3.1",
+              "passage": "Every override must be recorded in the deal ticket with a reason code."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "fail",
+          "short": "Says no approval needed, but policy requires it",
+          "summary": "The answer says no approval is needed; the cited guideline says approval is required above 10 bps.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "warning",
+          "short": "Matched to a similar question",
+          "summary": "Your question was matched to the scripted question “Can I override the FX rate for a corporate client without approval?”. The answer may not address exactly what you asked.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 30,
+      "parts": {
+        "claimPts": 20,
+        "checkPts": 10,
+        "capped": false,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "low",
+        "label": "Low",
+        "min": 0,
+        "status": "unsupported"
+      },
+      "matchedQuestion": "Can I override the FX rate for a corporate client without approval?"
+    },
+    "fees-waiver": {
+      "explanation": "The waiver limits match the Fee Waiver Authority Matrix, but that document is 22 months old and past its 12-month review. The last sentence answers a question about retail cards that was not asked.",
+      "headline": "Right limits, outdated source",
+      "guidance": "The SGD 500 limit matches the matrix, but the matrix is overdue for review. Confirm with Branch Operations before waiving.",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "fees-waiver-c1",
+          "start": 5,
+          "end": 90,
+          "status": "stale",
+          "check": "freshness",
+          "source": {
+            "docId": "DOC-OPS-045",
+            "section": "Row 3",
+            "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+          },
+          "short": "Right limit, but the source is overdue for review",
+          "reason": "Matches the source, but the source is 22 months old and overdue for its annual review. The limit may have changed."
+        },
+        {
+          "id": "fees-waiver-c2",
+          "start": 92,
+          "end": 146,
+          "status": "stale",
+          "check": "freshness",
+          "source": {
+            "docId": "DOC-OPS-045",
+            "section": "Row 4",
+            "passage": "Waivers above SGD 500 require approval from the area head."
+          },
+          "short": "Right rule, but the source is overdue for review",
+          "reason": "Matches the source, but the source is overdue for review."
+        },
+        {
+          "id": "fees-waiver-c3",
+          "start": 148,
+          "end": 231,
+          "status": "off-intent",
+          "check": "intent",
+          "source": {
+            "docId": "DOC-CRD-022",
+            "section": "§7.2",
+            "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+          },
+          "short": "About retail cards, not what you asked",
+          "reason": "Accurate, but it answers a different question: you asked about SME business accounts, not retail credit cards."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "Both cited documents exist in the approved library, and every figure in the 3 cited claims appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 3",
+              "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+            },
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 4",
+              "passage": "Waivers above SGD 500 require approval from the area head."
+            },
+            {
+              "docId": "DOC-CRD-022",
+              "section": "§7.2",
+              "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "warning",
+          "short": "Source is 22 months old and overdue for review",
+          "summary": "DOC-OPS-045 was last updated 22 months ago, past its 12-month review cycle. It has not been superseded.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 3",
+              "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "pass",
+          "short": "Figures match current policy",
+          "summary": "Every figure agrees with the approved sources retrieved for the same point.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 3",
+              "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "pass",
+          "short": "All 3 claims match a source",
+          "summary": "3 of 3 claims match a source passage. 2 of them rest on a document overdue for review.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 3",
+              "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+            },
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 4",
+              "passage": "Waivers above SGD 500 require approval from the area head."
+            },
+            {
+              "docId": "DOC-CRD-022",
+              "section": "§7.2",
+              "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "Doesn’t contradict itself",
+          "summary": "The answer does not contradict itself or another approved document.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 4",
+              "passage": "Waivers above SGD 500 require approval from the area head."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "warning",
+          "short": "Matched to a similar question",
+          "summary": "Your question was matched to the scripted question “Can a branch manager waive the annual fee on an SME business account?”. The answer may not address exactly what you asked.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 69,
+      "parts": {
+        "claimPts": 36,
+        "checkPts": 33,
+        "capped": false,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "medium",
+        "label": "Medium",
+        "min": 50,
+        "status": "caution"
+      },
+      "matchedQuestion": "Can a branch manager waive the annual fee on an SME business account?"
+    },
+    "collateral-crypto": {
+      "noSource": true,
+      "explanation": "No approved document covers crypto or digital-asset collateral, and the answer cites nothing. Every claim here is unverified. Treat it as unknown until a reviewer confirms policy.",
+      "headline": "No policy covers this",
+      "guidance": "Treat crypto collateral as not permitted until a reviewer confirms policy.",
+      "retrieved": [],
+      "search": {
+        "documentsSearched": 7,
+        "query": "crypto digital asset collateral haircut custodian",
+        "topMatch": 0.21,
+        "threshold": 0.6
+      },
+      "claims": [
+        {
+          "id": "collateral-crypto-c1",
+          "start": 5,
+          "end": 111,
+          "status": "no-source",
+          "check": "groundedness",
+          "source": null,
+          "short": "No policy on crypto collateral",
+          "reason": "No source found. Retrieval returned no passage above the relevance threshold."
+        },
+        {
+          "id": "collateral-crypto-c2",
+          "start": 113,
+          "end": 162,
+          "status": "no-source",
+          "check": "groundedness",
+          "source": null,
+          "short": "Custodian rule not found",
+          "reason": "No source found. No approved document mentions custodians."
+        },
+        {
+          "id": "collateral-crypto-c3",
+          "start": 164,
+          "end": 194,
+          "status": "no-source",
+          "check": "groundedness",
+          "source": null,
+          "short": "Daily valuation rule not found",
+          "reason": "No source found. No approved document sets a valuation frequency for this asset class."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "fail",
+          "short": "Cites no documents",
+          "summary": "The answer cites no documents.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "na",
+          "short": "No source to check",
+          "summary": "No source to check.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "na",
+          "short": "Nothing to compare against",
+          "summary": "No approved source to compare against.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "fail",
+          "short": "0 of 3 claims backed",
+          "summary": "0 of 3 claims are supported. No approved passage was retrieved.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "Doesn’t contradict itself",
+          "summary": "The answer does not contradict itself.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "warning",
+          "short": "Matched to a similar question",
+          "summary": "Your question was matched to the scripted question “Can an SME pledge crypto assets as collateral for a loan?”. The answer may not address exactly what you asked.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 10,
+      "parts": {
+        "claimPts": 0,
+        "checkPts": 15,
+        "capped": true,
+        "cap": 10,
+        "counted": 4
+      },
+      "band": {
+        "id": "low",
+        "label": "Low",
+        "min": 0,
+        "status": "unsupported"
+      },
+      "matchedQuestion": "Can an SME pledge crypto assets as collateral for a loan?"
+    }
+  },
+  "paraphrase": "free text question that is not the scripted one",
+  "metrics": {
+    "overall": {
+      "last": {
+        "answers": 2070,
+        "claims": 5664,
+        "unsupported": 836,
+        "conflicting": 188,
+        "stale": 533,
+        "noSource": 87,
+        "reviews": 298,
+        "accuracy": 0.8192090395480226,
+        "unsupportedRate": 0.1475988700564972,
+        "conflictingRate": 0.033192090395480225,
+        "staleRate": 0.09410310734463277,
+        "failureRate": 0.1807909604519774,
+        "noSourceRate": 0.042028985507246375
+      },
+      "prev": {
+        "answers": 2032,
+        "claims": 5625,
+        "unsupported": 851,
+        "conflicting": 202,
+        "stale": 494,
+        "noSource": 80,
+        "reviews": 290,
+        "accuracy": 0.8128,
+        "unsupportedRate": 0.1512888888888889,
+        "conflictingRate": 0.03591111111111111,
+        "staleRate": 0.08782222222222222,
+        "failureRate": 0.1872,
+        "noSourceRate": 0.03937007874015748
+      }
+    },
+    "series": [
+      {
+        "label": "13 Jul",
+        "answers": 503,
+        "claims": 1385,
+        "unsupported": 234,
+        "conflicting": 55,
+        "stale": 115,
+        "noSource": 19,
+        "reviews": 72,
+        "accuracy": 0.7913357400722022,
+        "unsupportedRate": 0.16895306859205775,
+        "conflictingRate": 0.039711191335740074,
+        "staleRate": 0.08303249097472924,
+        "failureRate": 0.20866425992779783,
+        "noSourceRate": 0.03777335984095427
+      },
+      {
+        "label": "20 Jul",
+        "answers": 470,
+        "claims": 1281,
+        "unsupported": 199,
+        "conflicting": 53,
+        "stale": 104,
+        "noSource": 19,
+        "reviews": 66,
+        "accuracy": 0.8032786885245902,
+        "unsupportedRate": 0.15534738485558158,
+        "conflictingRate": 0.04137392661982826,
+        "staleRate": 0.08118657298985169,
+        "failureRate": 0.19672131147540983,
+        "noSourceRate": 0.04042553191489362
+      },
+      {
+        "label": "27 Jul",
+        "answers": 473,
+        "claims": 1330,
+        "unsupported": 210,
+        "conflicting": 54,
+        "stale": 108,
+        "noSource": 18,
+        "reviews": 71,
+        "accuracy": 0.8015037593984963,
+        "unsupportedRate": 0.15789473684210525,
+        "conflictingRate": 0.0406015037593985,
+        "staleRate": 0.081203007518797,
+        "failureRate": 0.19849624060150375,
+        "noSourceRate": 0.03805496828752643
+      },
+      {
+        "label": "3 Aug",
+        "answers": 486,
+        "claims": 1341,
+        "unsupported": 206,
+        "conflicting": 57,
+        "stale": 118,
+        "noSource": 21,
+        "reviews": 68,
+        "accuracy": 0.8038777032065623,
+        "unsupportedRate": 0.15361670395227442,
+        "conflictingRate": 0.042505592841163314,
+        "staleRate": 0.08799403430275914,
+        "failureRate": 0.19612229679343773,
+        "noSourceRate": 0.043209876543209874
+      },
+      {
+        "label": "10 Aug",
+        "answers": 502,
+        "claims": 1424,
+        "unsupported": 207,
+        "conflicting": 52,
+        "stale": 123,
+        "noSource": 19,
+        "reviews": 72,
+        "accuracy": 0.8181179775280899,
+        "unsupportedRate": 0.14536516853932585,
+        "conflictingRate": 0.03651685393258427,
+        "staleRate": 0.08637640449438203,
+        "failureRate": 0.1818820224719101,
+        "noSourceRate": 0.037848605577689244
+      },
+      {
+        "label": "17 Aug",
+        "answers": 498,
+        "claims": 1378,
+        "unsupported": 212,
+        "conflicting": 54,
+        "stale": 120,
+        "noSource": 21,
+        "reviews": 71,
+        "accuracy": 0.806966618287373,
+        "unsupportedRate": 0.15384615384615385,
+        "conflictingRate": 0.03918722786647315,
+        "staleRate": 0.08708272859216255,
+        "failureRate": 0.193033381712627,
+        "noSourceRate": 0.04216867469879518
+      },
+      {
+        "label": "24 Aug",
+        "answers": 530,
+        "claims": 1443,
+        "unsupported": 226,
+        "conflicting": 51,
+        "stale": 136,
+        "noSource": 20,
+        "reviews": 76,
+        "accuracy": 0.808038808038808,
+        "unsupportedRate": 0.15661815661815662,
+        "conflictingRate": 0.035343035343035345,
+        "staleRate": 0.09424809424809424,
+        "failureRate": 0.19196119196119196,
+        "noSourceRate": 0.03773584905660377
+      },
+      {
+        "label": "31 Aug",
+        "answers": 502,
+        "claims": 1380,
+        "unsupported": 206,
+        "conflicting": 45,
+        "stale": 115,
+        "noSource": 20,
+        "reviews": 71,
+        "accuracy": 0.8181159420289855,
+        "unsupportedRate": 0.1492753623188406,
+        "conflictingRate": 0.03260869565217391,
+        "staleRate": 0.08333333333333333,
+        "failureRate": 0.18188405797101448,
+        "noSourceRate": 0.0398406374501992
+      },
+      {
+        "label": "7 Sep",
+        "answers": 523,
+        "claims": 1445,
+        "unsupported": 218,
+        "conflicting": 50,
+        "stale": 137,
+        "noSource": 21,
+        "reviews": 74,
+        "accuracy": 0.8145328719723184,
+        "unsupportedRate": 0.1508650519031142,
+        "conflictingRate": 0.03460207612456748,
+        "staleRate": 0.09480968858131487,
+        "failureRate": 0.18546712802768167,
+        "noSourceRate": 0.040152963671128104
+      },
+      {
+        "label": "14 Sep",
+        "answers": 490,
+        "claims": 1355,
+        "unsupported": 193,
+        "conflicting": 45,
+        "stale": 126,
+        "noSource": 21,
+        "reviews": 72,
+        "accuracy": 0.8243542435424354,
+        "unsupportedRate": 0.14243542435424356,
+        "conflictingRate": 0.033210332103321034,
+        "staleRate": 0.0929889298892989,
+        "failureRate": 0.17564575645756458,
+        "noSourceRate": 0.04285714285714286
+      },
+      {
+        "label": "21 Sep",
+        "answers": 516,
+        "claims": 1384,
+        "unsupported": 199,
+        "conflicting": 44,
+        "stale": 125,
+        "noSource": 23,
+        "reviews": 75,
+        "accuracy": 0.8244219653179191,
+        "unsupportedRate": 0.14378612716763006,
+        "conflictingRate": 0.031791907514450865,
+        "staleRate": 0.09031791907514451,
+        "failureRate": 0.1755780346820809,
+        "noSourceRate": 0.044573643410852716
+      },
+      {
+        "label": "28 Sep",
+        "answers": 541,
+        "claims": 1480,
+        "unsupported": 226,
+        "conflicting": 49,
+        "stale": 145,
+        "noSource": 22,
+        "reviews": 77,
+        "accuracy": 0.8141891891891893,
+        "unsupportedRate": 0.1527027027027027,
+        "conflictingRate": 0.03310810810810811,
+        "staleRate": 0.09797297297297297,
+        "failureRate": 0.1858108108108108,
+        "noSourceRate": 0.04066543438077634
+      }
+    ],
+    "topics": [
+      {
+        "id": "sme",
+        "name": "SME Lending",
+        "last": {
+          "answers": 481,
+          "claims": 1385,
+          "unsupported": 438,
+          "conflicting": 54,
+          "stale": 305,
+          "noSource": 9,
+          "reviews": 90,
+          "accuracy": 0.6447653429602889,
+          "unsupportedRate": 0.31624548736462094,
+          "conflictingRate": 0.03898916967509025,
+          "staleRate": 0.22021660649819494,
+          "failureRate": 0.3552346570397112,
+          "noSourceRate": 0.018711018711018712
+        },
+        "prev": {
+          "answers": 468,
+          "claims": 1320,
+          "unsupported": 408,
+          "conflicting": 52,
+          "stale": 273,
+          "noSource": 8,
+          "reviews": 90,
+          "accuracy": 0.6515151515151515,
+          "unsupportedRate": 0.3090909090909091,
+          "conflictingRate": 0.03939393939393939,
+          "staleRate": 0.20681818181818182,
+          "failureRate": 0.3484848484848485,
+          "noSourceRate": 0.017094017094017096
+        },
+        "trend": {
+          "id": "worsening",
+          "delta": 0.0201482332348758
+        },
+        "series": [
+          0.5476923076923077,
+          0.5277777777777778,
+          0.527331189710611,
+          0.5351681957186545,
+          0.5212121212121212,
+          0.5590062111801242,
+          0.5892351274787535,
+          0.5492063492063493,
+          0.5970588235294118,
+          0.5709779179810726,
+          0.5449101796407185,
+          0.5862944162436547
+        ]
+      },
+      {
+        "id": "collateral",
+        "name": "Collateral & Security",
+        "last": {
+          "answers": 163,
+          "claims": 363,
+          "unsupported": 134,
+          "conflicting": 8,
+          "stale": 4,
+          "noSource": 55,
+          "reviews": 60,
+          "accuracy": 0.6088154269972452,
+          "unsupportedRate": 0.3691460055096419,
+          "conflictingRate": 0.02203856749311295,
+          "staleRate": 0.011019283746556474,
+          "failureRate": 0.39118457300275483,
+          "noSourceRate": 0.3374233128834356
+        },
+        "prev": {
+          "answers": 151,
+          "claims": 339,
+          "unsupported": 135,
+          "conflicting": 8,
+          "stale": 4,
+          "noSource": 50,
+          "reviews": 53,
+          "accuracy": 0.5781710914454277,
+          "unsupportedRate": 0.39823008849557523,
+          "conflictingRate": 0.02359882005899705,
+          "staleRate": 0.011799410029498525,
+          "failureRate": 0.4218289085545723,
+          "noSourceRate": 0.33112582781456956
+        },
+        "trend": {
+          "id": "improving",
+          "delta": -0.0314244618347595
+        },
+        "series": [
+          0.43678160919540227,
+          0.4794520547945205,
+          0.47500000000000003,
+          0.4625,
+          0.43209876543209874,
+          0.4625,
+          0.41975308641975306,
+          0.422680412371134,
+          0.39759036144578314,
+          0.3854166666666667,
+          0.4042553191489362,
+          0.4222222222222222
+        ]
+      },
+      {
+        "id": "fees",
+        "name": "Fees & Charges",
+        "last": {
+          "answers": 405,
+          "claims": 972,
+          "unsupported": 86,
+          "conflicting": 26,
+          "stale": 158,
+          "noSource": 8,
+          "reviews": 46,
+          "accuracy": 0.8847736625514403,
+          "unsupportedRate": 0.08847736625514403,
+          "conflictingRate": 0.026748971193415638,
+          "staleRate": 0.16255144032921812,
+          "failureRate": 0.11522633744855967,
+          "noSourceRate": 0.019753086419753086
+        },
+        "prev": {
+          "answers": 399,
+          "claims": 981,
+          "unsupported": 91,
+          "conflicting": 28,
+          "stale": 141,
+          "noSource": 8,
+          "reviews": 44,
+          "accuracy": 0.8786952089704383,
+          "unsupportedRate": 0.09276248725790011,
+          "conflictingRate": 0.02854230377166157,
+          "staleRate": 0.1437308868501529,
+          "failureRate": 0.12130479102956167,
+          "noSourceRate": 0.020050125313283207
+        },
+        "trend": {
+          "id": "worsening",
+          "delta": 0.012742099898063242
+        },
+        "series": [
+          0.24596774193548387,
+          0.245,
+          0.24170616113744076,
+          0.2511415525114155,
+          0.26294820717131473,
+          0.26724137931034486,
+          0.26053639846743293,
+          0.27004219409282704,
+          0.2801556420233463,
+          0.26337448559670784,
+          0.28820960698689957,
+          0.27983539094650206
+        ]
+      },
+      {
+        "id": "fx",
+        "name": "FX & Treasury",
+        "last": {
+          "answers": 317,
+          "claims": 825,
+          "unsupported": 71,
+          "conflicting": 82,
+          "stale": 21,
+          "noSource": 7,
+          "reviews": 74,
+          "accuracy": 0.8145454545454546,
+          "unsupportedRate": 0.08606060606060606,
+          "conflictingRate": 0.0993939393939394,
+          "staleRate": 0.025454545454545455,
+          "failureRate": 0.18545454545454546,
+          "noSourceRate": 0.022082018927444796
+        },
+        "prev": {
+          "answers": 297,
+          "claims": 758,
+          "unsupported": 72,
+          "conflicting": 92,
+          "stale": 22,
+          "noSource": 6,
+          "reviews": 72,
+          "accuracy": 0.7836411609498681,
+          "unsupportedRate": 0.09498680738786279,
+          "conflictingRate": 0.12137203166226913,
+          "staleRate": 0.029023746701846966,
+          "failureRate": 0.21635883905013192,
+          "noSourceRate": 0.020202020202020204
+        },
+        "trend": {
+          "id": "improving",
+          "delta": -0.034473494842887975
+        },
+        "series": [
+          0.296875,
+          0.3036649214659686,
+          0.27860696517412936,
+          0.29081632653061223,
+          0.2578947368421053,
+          0.2535885167464115,
+          0.24719101123595505,
+          0.22099447513812154,
+          0.2303921568627451,
+          0.2122905027932961,
+          0.19907407407407407,
+          0.20353982300884957
+        ]
+      },
+      {
+        "id": "kyc",
+        "name": "KYC & Onboarding",
+        "last": {
+          "answers": 704,
+          "claims": 2119,
+          "unsupported": 107,
+          "conflicting": 18,
+          "stale": 45,
+          "noSource": 8,
+          "reviews": 28,
+          "accuracy": 0.9410099103350638,
+          "unsupportedRate": 0.05049551675318546,
+          "conflictingRate": 0.008494572911750826,
+          "staleRate": 0.021236432279377066,
+          "failureRate": 0.05899008966493629,
+          "noSourceRate": 0.011363636363636364
+        },
+        "prev": {
+          "answers": 717,
+          "claims": 2227,
+          "unsupported": 145,
+          "conflicting": 22,
+          "stale": 54,
+          "noSource": 8,
+          "reviews": 31,
+          "accuracy": 0.9250112258643916,
+          "unsupportedRate": 0.06511001347103727,
+          "conflictingRate": 0.009878760664571173,
+          "staleRate": 0.024247867085765602,
+          "failureRate": 0.07498877413560844,
+          "noSourceRate": 0.011157601115760111
+        },
+        "trend": {
+          "id": "improving",
+          "delta": -0.019010119277060686
+        },
+        "series": [
+          0.13133208255159473,
+          0.1172022684310019,
+          0.11954459203036052,
+          0.10982658959537572,
+          0.1048951048951049,
+          0.10093457943925234,
+          0.10350877192982455,
+          0.08727272727272728,
+          0.08912655971479501,
+          0.08461538461538462,
+          0.07632093933463796,
+          0.07020872865275142
+        ]
+      }
+    ],
+    "recommendations": [
+      {
+        "id": "doc-DOC-SME-087",
+        "kind": "retire-document",
+        "topic": "sme",
+        "docId": "DOC-SME-087",
+        "affected": 305,
+        "unit": "claims",
+        "title": "Retire DOC-SME-087 from the retrieval index",
+        "detail": "SME Cross-Border Transfer Limits Circular was superseded by DOC-SME-112 but is still being retrieved, so the agent keeps quoting its old figures. Redirect it to Cross-Border Payments Standard.",
+        "evidence": [
+          "SME Lending stale-source rate 22% (305 of 1,385 claims)",
+          "41 of 90 SME Lending reviews corrected an answer resting on it"
+        ],
+        "today": 0,
+        "priority": "High"
+      },
+      {
+        "id": "doc-DOC-OPS-045",
+        "kind": "review-document",
+        "topic": "fees",
+        "docId": "DOC-OPS-045",
+        "affected": 158,
+        "unit": "claims",
+        "title": "Schedule a review of DOC-OPS-045",
+        "detail": "Fee Waiver Authority Matrix is 22 months old and past its 12-month review cycle. Ask Branch Operations to confirm or update it.",
+        "evidence": [
+          "Fees & Charges stale-source rate 16% (158 of 972 claims)",
+          "8 of 46 Fees & Charges reviews corrected an answer resting on it"
+        ],
+        "today": 0,
+        "priority": "High"
+      },
+      {
+        "id": "gap-collateral",
+        "kind": "add-source",
+        "topic": "collateral",
+        "affected": 134,
+        "unit": "claims",
+        "title": "Publish an approved policy on digital-asset collateral",
+        "detail": "Questions about crypto and digital-asset collateral find no approved document, and the agent answers anyway. Publish a policy, or instruct the agent to decline these questions.",
+        "evidence": [
+          "55 of 163 Collateral & Security answers had no source found (34%)",
+          "42 of 60 Collateral & Security reviews rejected for a missing source"
+        ],
+        "today": 0,
+        "priority": "Medium"
+      },
+      {
+        "id": "prompt-overstated-authority-fx",
+        "kind": "tighten-prompt",
+        "topic": "fx",
+        "affected": 82,
+        "unit": "claims",
+        "title": "Tighten the agent prompt on approval authority",
+        "detail": "Reviewers keep correcting answers that overstate how much a role can approve. Require the agent to quote numeric limits verbatim from the source, and to say when approval is needed.",
+        "evidence": [
+          "29 of 74 FX & Treasury reviews corrected for this reason",
+          "Conflicting-claim rate 10% (82 claims)"
+        ],
+        "today": 0,
+        "priority": "Medium"
+      },
+      {
+        "id": "prompt-off-intent-fees",
+        "kind": "tighten-prompt",
+        "topic": "fees",
+        "affected": 9,
+        "unit": "answers",
+        "title": "Keep answers to the product the employee asked about",
+        "detail": "Answers drift into nearby products — for example retail cards when the question is about SME accounts. Instruct the agent to answer only for the product named in the question.",
+        "evidence": [
+          "9 of 46 Fees & Charges reviews corrected for this reason",
+          "9 answers corrected for answering a different question"
+        ],
+        "today": 0,
+        "priority": "Low"
+      }
+    ],
+    "recommendationsWithLive": [
+      {
+        "id": "doc-DOC-SME-087",
+        "kind": "retire-document",
+        "topic": "sme",
+        "docId": "DOC-SME-087",
+        "affected": 305,
+        "unit": "claims",
+        "title": "Retire DOC-SME-087 from the retrieval index",
+        "detail": "SME Cross-Border Transfer Limits Circular was superseded by DOC-SME-112 but is still being retrieved, so the agent keeps quoting its old figures. Redirect it to Cross-Border Payments Standard.",
+        "evidence": [
+          "SME Lending stale-source rate 22% (305 of 1,385 claims)",
+          "42 of 91 SME Lending reviews corrected an answer resting on it · 1 today"
+        ],
+        "today": 1,
+        "priority": "High"
+      },
+      {
+        "id": "doc-DOC-OPS-045",
+        "kind": "review-document",
+        "topic": "fees",
+        "docId": "DOC-OPS-045",
+        "affected": 158,
+        "unit": "claims",
+        "title": "Schedule a review of DOC-OPS-045",
+        "detail": "Fee Waiver Authority Matrix is 22 months old and past its 12-month review cycle. Ask Branch Operations to confirm or update it.",
+        "evidence": [
+          "Fees & Charges stale-source rate 16% (158 of 972 claims)",
+          "8 of 46 Fees & Charges reviews corrected an answer resting on it"
+        ],
+        "today": 0,
+        "priority": "High"
+      },
+      {
+        "id": "gap-collateral",
+        "kind": "add-source",
+        "topic": "collateral",
+        "affected": 134,
+        "unit": "claims",
+        "title": "Publish an approved policy on digital-asset collateral",
+        "detail": "Questions about crypto and digital-asset collateral find no approved document, and the agent answers anyway. Publish a policy, or instruct the agent to decline these questions.",
+        "evidence": [
+          "55 of 163 Collateral & Security answers had no source found (34%)",
+          "43 of 61 Collateral & Security reviews rejected for a missing source · 1 today"
+        ],
+        "today": 1,
+        "priority": "Medium"
+      },
+      {
+        "id": "prompt-overstated-authority-fx",
+        "kind": "tighten-prompt",
+        "topic": "fx",
+        "affected": 82,
+        "unit": "claims",
+        "title": "Tighten the agent prompt on approval authority",
+        "detail": "Reviewers keep correcting answers that overstate how much a role can approve. Require the agent to quote numeric limits verbatim from the source, and to say when approval is needed.",
+        "evidence": [
+          "30 of 75 FX & Treasury reviews corrected for this reason · 1 today",
+          "Conflicting-claim rate 10% (82 claims)"
+        ],
+        "today": 1,
+        "priority": "Medium"
+      },
+      {
+        "id": "prompt-off-intent-fees",
+        "kind": "tighten-prompt",
+        "topic": "fees",
+        "affected": 9,
+        "unit": "answers",
+        "title": "Keep answers to the product the employee asked about",
+        "detail": "Answers drift into nearby products — for example retail cards when the question is about SME accounts. Instruct the agent to answer only for the product named in the question.",
+        "evidence": [
+          "9 of 46 Fees & Charges reviews corrected for this reason",
+          "9 answers corrected for answering a different question"
+        ],
+        "today": 0,
+        "priority": "Low"
+      }
+    ],
+    "sampleLiveDecisions": [
+      {
+        "id": "RQ-9001",
+        "topic": "sme",
+        "docId": "DOC-SME-087",
+        "decision": "corrected",
+        "category": "stale-source"
+      },
+      {
+        "id": "RQ-9002",
+        "topic": "collateral",
+        "docId": null,
+        "decision": "rejected",
+        "category": "no-source"
+      },
+      {
+        "id": "RQ-9003",
+        "topic": "fx",
+        "docId": "DOC-FX-019",
+        "decision": "corrected",
+        "category": "overstated-authority"
+      }
+    ]
+  }
+}

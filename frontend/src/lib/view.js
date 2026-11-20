@@ -7,6 +7,7 @@ const GROUNDEDNESS = CHECKS.findIndex((c) => c.id === 'groundedness')
 export function visibleClaims(m) {
   if (!m) return []
   if (m.result) return m.result.claims
+  if (m.claims) return m.claims // backend mode: sent with the groundedness check
   const g = m.checks[GROUNDEDNESS]
   if (g && g.status !== 'queued' && g.status !== 'running') return scenarioById(m.scenarioId).verification.claims
   return []

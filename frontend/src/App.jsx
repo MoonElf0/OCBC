@@ -4,6 +4,8 @@ import Chat from './components/Chat'
 import VerifyPane from './components/VerifyPane'
 import ReviewQueue from './admin/ReviewQueue'
 import Trends from './admin/Trends'
+import TrustMap from './components/TrustMap'
+import Pitch from './pitch/Pitch'
 
 export default function App() {
   const { state } = useStore()
@@ -21,6 +23,8 @@ export default function App() {
         {state.view === 'review' && <ReviewQueue />}
         {state.view === 'trends' && <Trends />}
       </main>
+      <TrustMap />
+      {state.pitch && <Pitch />}
       {state.toast && (
         <div role="status" className="glass-dark rise-in fixed top-20 left-1/2 z-50 max-w-[calc(100vw-32px)] text-center lg:top-auto lg:bottom-6 -translate-x-1/2 rounded-full px-5 py-2.5 text-body-sm text-white shadow-md">
           {state.toast.text}

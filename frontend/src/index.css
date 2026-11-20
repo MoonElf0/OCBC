@@ -261,3 +261,34 @@
   scrollbar-width: thin;
   scrollbar-color: rgb(0 0 0 / 0.12) transparent;
 }
+
+/* -- Dark mode: overrides the same tokens, so every utility follows -- */
+html.dark {
+  color-scheme: dark;
+  --color-porcelain: #111113; --color-bone: #1b1b1e; --color-frost: #2c2d31;
+  --color-ink: #f5f5f7; --color-carbon: #d9dbe0; --color-smoke: #9b9ea5; --color-ash: #7d8087;
+  --color-obsidian-bar: #0a0a0b; --color-ocbc-red-tint: #3a1118;
+  --color-status-verified: #4cc38a; --color-status-verified-surface: #12261b;
+  --color-status-caution: #e0a23a; --color-status-caution-surface: #2b2010;
+  --color-status-unsupported: #ef6f86; --color-status-unsupported-surface: #2c1217;
+}
+html.dark .bg-carbon { background-color: #e5e7eb; color: #111113; }
+html.dark .hover\:bg-ink:hover { background-color: #fff; }
+html.theme-fade, html.theme-fade * { transition: background-color 300ms, color 300ms, border-color 300ms !important; }
+
+/* -- Trust Map & Challenger effects -- */
+@keyframes pop { from { opacity: 0; transform: translateY(14px) scale(.97); } }
+.pop { animation: pop 420ms cubic-bezier(.2,.8,.2,1) both; }
+@keyframes grow { from { transform: scaleY(0); } }
+.grow { transform-origin: top; animation: grow 480ms ease-out both; }
+@keyframes travel { from { top: 0; opacity: 0; } 15%, 85% { opacity: 1; } to { top: calc(100% - 8px); opacity: 0; } }
+.travel { animation: travel 1.8s ease-in-out infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+.shimmer { background: linear-gradient(90deg, transparent 30%, color-mix(in srgb, var(--color-ink) 14%, transparent) 50%, transparent 70%) 100% 0 / 200% 100%; animation: shimmer 1.4s linear infinite; }
+@keyframes aurora { 50% { transform: translate(8%, 6%) scale(1.15); } }
+.aurora { animation: aurora 9s ease-in-out infinite; filter: blur(60px); }
+.glass { background: color-mix(in srgb, var(--color-porcelain) 82%, transparent); backdrop-filter: blur(18px) saturate(1.4); }
+.chal-border { background: linear-gradient(var(--color-porcelain), var(--color-porcelain)) padding-box, linear-gradient(120deg, #e4002b, #7c5cff, #1f9d6b, #e4002b) border-box; border: 1px solid transparent; background-size: 100% 100%, 300% 100%; animation: chal 6s linear infinite; }
+@keyframes chal { to { background-position: 0 0, 300% 0; } }
+@keyframes growx { from { transform: scaleX(0); } }
+.growx { transform-origin: left; animation: growx 900ms 300ms ease-out both; }

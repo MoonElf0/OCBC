@@ -1,5 +1,6 @@
 import { MessageSquare, Inbox, ChartLine, ShieldCheck } from 'lucide-react'
 import { useStore } from '../state/store'
+import { BACKEND } from '../lib/backend'
 
 const LINKS = [
   { id: 'workspace', label: 'Assistant', Icon: MessageSquare },
@@ -41,7 +42,13 @@ export default function TopNav() {
           })}
         </div>
 
-        <span className="hidden w-9 sm:block" aria-hidden="true" />
+        <span
+          className="hidden items-center gap-1.5 rounded-full bg-black/[0.04] px-3 py-1 text-caption whitespace-nowrap text-carbon md:inline-flex"
+          title={BACKEND ? 'Connected to the backend: retrieval, rule checks, scores, routing, the review queue and the dashboard come from the server. Answers and judge verdicts are still scripted.' : 'Offline demo: everything runs in this browser tab and nothing is saved.'}
+        >
+          <span className={`size-1.5 rounded-full ${BACKEND ? 'bg-status-verified' : 'bg-smoke'}`} aria-hidden="true" />
+          {BACKEND ? 'Backend' : 'Offline demo'}
+        </span>
       </div>
     </nav>
   )

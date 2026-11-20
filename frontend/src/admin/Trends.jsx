@@ -1,10 +1,29 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { TrendingDown, TrendingUp, Minus, FileWarning, FilePlus, Wand2, Clock, ArrowRight } from 'lucide-react'
 import { useStore } from '../state/store'
 import { WEEKS, WINDOW_WEEKS } from '../fixtures'
 import { overallStats, weeklySeries, topicTable, recommendations, direction, pct } from '../lib/metrics'
 import { TONES } from '../lib/status'
 import { Eyebrow } from '../components/ui'
+import { BACKEND, api } from '../lib/backend'
+
+/**
+ * Dashboard figures. Demo mode computes them from the fixtures in the
+ * browser; backend mode reads the same computation from GET /api/metrics,
+ * which works from the database (seeded history + decisions recorded there).
+ */
+function useDashboard(liveDecisions) {
+  const [remote, setRemote] = useState(null)
+  const [failed, setFailed] = useState(false)
+  useEffect(() => {
+    if (BACKEND) api.metrics().then(setRemote, () => setFailed(true))
+  }, [liveDecisions.length])
+  if (!BACKEND) {
+    return { last: overallStats('last'), prev: overallStats('prev'), series: weeklySeries(), topics: topicTable(), recs: recommendations(liveDecisions) }
+  }
+  if (!remote) return { failed }
+  return { last: remote.overall.last, prev: remote.overall.prev, series: remote.series, topics: remote.topics, recs: remote.recommendations }
+}
 
 // Lower is better for every rate except accuracy.
 const KPIS = [
@@ -25,12 +44,11 @@ const TREND = {
 export default function Trends() {
   const { state } = useStore()
   const [metric, setMetric] = useState('accuracy')
-  const last = overallStats('last')
-  const prev = overallStats('prev')
-  const series = weeklySeries()
-  const topics = topicTable()
-  const recs = recommendations(state.liveDecisions)
+  const { last, prev, series, topics, recs, failed } = useDashboard(state.liveDecisions)
   const kpi = KPIS.find((k) => k.id === metric)
+  if (!last) {
+    return <div className="mx-auto max-w-[1200px] px-6 py-6 text-body-sm text-smoke">{failed ? 'Could not load the dashboard. Is the backend running on port 8000?' : 'Loading dashboard…'}</div>
+  }
 
   return (
     <div className="scroll-quiet h-full overflow-y-auto">
@@ -172,7 +190,7 @@ function SessionStrip() {
       <h2 id="session-title" className="text-subheading font-medium text-ink">
         This session
       </h2>
-      <p className="text-caption text-smoke">Activity in this browser tab. Reviewer decisions here update the recommendations above; nothing is saved after a refresh.</p>
+      <p className="text-caption text-smoke">{BACKEND ? 'Activity in this browser tab. Reviewer decisions are saved by the backend and update the recommendations above.' : 'Activity in this browser tab. Reviewer decisions here update the recommendations above; nothing is saved after a refresh.'}</p>
       <dl className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
         {items.map(([label, v]) => (
           <div key={label} className="rounded-2xl bg-bone p-4">
