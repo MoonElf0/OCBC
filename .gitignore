@@ -4,3 +4,9 @@
 # Frontend build output and dependencies
 node_modules/
 dist/
+
+# Backend
+backend/.venv/
+backend/data/*.db
+__pycache__/
+.pytest_cache/
