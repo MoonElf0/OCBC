@@ -4,6 +4,7 @@ import { useStore } from '../state/store'
 import { SCENARIOS, TOPICS } from '../fixtures'
 import { TONES, CHECKS, VERDICT, OUTCOME_META, bandFor, topicIcon } from '../lib/status'
 import { scenarioById } from '../lib/pipeline'
+import { BACKEND } from '../lib/backend'
 import { visibleClaims, checksDone } from '../lib/view'
 import AnswerText from './AnswerText'
 import { MiniRing } from './charts'
@@ -117,6 +118,16 @@ function AnswerBubble({ m }) {
                   ·
                 </span>
                 <span className="text-smoke">{TOPICS[scenarioById(m.scenarioId).topic].name}</span>
+              </>
+            )}
+            {m.generatedBy && (
+              <>
+                <span className="text-ash" aria-hidden="true">
+                  ·
+                </span>
+                <span className="text-smoke" title="Written by a language model from the synthetic policy library. Verified separately.">
+                  {m.generatedBy.model}
+                </span>
               </>
             )}
             {m.phase === 'streaming' && <span className="ml-auto text-smoke">Answering</span>}
@@ -264,6 +275,8 @@ function Composer({ compact }) {
   const [value, setValue] = useState('')
   const busy = state.messages.some((m) => m.kind === 'answer' && (m.phase === 'thinking' || m.phase === 'streaming'))
   const asked = new Set(state.messages.filter((m) => m.kind === 'user').map((m) => m.text))
+  const agent = state.health?.agent
+  const agentModel = BACKEND && agent?.provider && agent.provider !== 'scripted' && agent.available ? agent.model : null
 
   const submit = (text) => {
     const q = (text ?? value).trim()
@@ -321,7 +334,9 @@ function Composer({ compact }) {
             <ArrowUp size={20} strokeWidth={2.25} />
           </button>
         </form>
-        <p className="mt-2 text-center text-caption text-smoke">Scripted prototype with synthetic policy data</p>
+        <p className="mt-2 text-center text-caption text-smoke">
+          {agentModel ? `Prototype · answers written by ${agentModel} from synthetic policy data · verified separately` : 'Scripted prototype with synthetic policy data'}
+        </p>
       </div>
     </div>
   )

@@ -49,11 +49,31 @@ holds demo data. Collections: `policy_versions`, `topics`, `weekly_counts`,
 `POST /api/admin/reset`. Teammates sharing one cluster should each set their
 own `MONGODB_DB`, or one person's reset wipes everyone's demo state.
 
+## Models (optional): Qwen
+
+Two separate systems can each use a model, configured in `backend/.env`
+(see `.env.example`). Both use Qwen through DashScope's OpenAI-compatible
+API (`app/qwen.py`, standard library only, no extra package).
+
+- **Verifier** (`ASSESSMENT_MODEL_PROVIDER=qwen`, `ASSESSMENT_MODEL`): claim
+  extraction, claim judging and answer review in `app/pipeline.py`. Unset,
+  those steps are "Not run" and the result is partial; never scripted.
+- **Answering agent** (`AGENT_MODEL_PROVIDER=qwen`, `AGENT_MODEL`): the
+  Assistant page sends `POST /api/ask {agent: "model"}`; the agent retrieves
+  passages from the library and the model writes the answer and citations.
+  That answer has no scenario, so it goes through the full pipeline. The
+  Classic page sends `agent: "scripted"` and keeps the scripted storyline.
+  If the model fails, `/api/ask` returns 503 with the reason; it never falls
+  back to a scripted answer.
+
+Both need `DASHSCOPE_API_KEY`. `GET /api/health` reports `model` (verifier)
+and `agent`. Tests force both providers off and never call a model.
+
 ## What is computed and what is still scripted
 
 | Step | Backend mode | Replaced in phase 4 by |
 |---|---|---|
-| Agent answer | scripted (`app/agent.py`) | retrieval agent + LLM |
+| Agent answer | scripted (`app/agent.py`); Assistant page: Qwen over retrieved passages when `AGENT_MODEL_PROVIDER=qwen` | retrieval agent + LLM |
 | Claim spans | scripted | LLM extractor; offsets found by code, never by the model |
 | Retrieval | **computed**: IDF-weighted term coverage over the library (`app/retrieval.py`) | + embeddings (hybrid) |
 | Judge verdicts (groundedness, consistency, intent) | scripted | LLM judge |

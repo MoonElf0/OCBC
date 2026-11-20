@@ -11,9 +11,10 @@ figure conflicts, scoring, routing) is plain code and runs without a model.
 
 Configuration is server-side only. Nothing here is sent to the browser.
 
-  ASSESSMENT_MODEL_PROVIDER   none (default) | anthropic
-  ASSESSMENT_MODEL            model id, default claude-opus-5-5
+  ASSESSMENT_MODEL_PROVIDER   none (default) | anthropic | qwen
+  ASSESSMENT_MODEL            model id (default claude-opus-5-5 for anthropic, qwen-plus for qwen)
   ANTHROPIC_API_KEY           read by the Anthropic SDK (or `ant auth login`)
+  DASHSCOPE_API_KEY           Qwen via Alibaba Cloud Model Studio (see app/qwen.py)
 
 With the default (`none`) every model step reports itself as unavailable.
 The pipeline then marks those checks "Not run" and the result as partial;
@@ -200,8 +201,39 @@ class AnthropicProvider:
         )
 
 
+class QwenProvider:
+    """Qwen through DashScope's OpenAI-compatible API (app/qwen.py). Same three steps and prompts as Anthropic."""
+
+    name = "qwen"
+
+    def __init__(self, model: str | None = None):
+        from . import qwen
+
+        self._qwen = qwen
+        self.model = model or os.environ.get("ASSESSMENT_MODEL") or "qwen-plus"
+        ok, self._error = qwen.configured()
+
+    def status(self) -> dict:
+        return {"provider": self.name, "model": self.model, "available": self._error is None, "reason": self._error}
+
+    def _json(self, user: str, schema: dict) -> dict:
+        if self._error:
+            raise ModelUnavailable(self._error)
+        try:
+            return self._qwen.chat_json(self.model, SYSTEM, user, schema)
+        except self._qwen.QwenError as e:
+            raise ModelUnavailable(str(e))
+
+    # The prompts are the provider-neutral part: reuse them as they are.
+    extract_claims = AnthropicProvider.extract_claims
+    judge_claim = AnthropicProvider.judge_claim
+    review_answer = AnthropicProvider.review_answer
+
+
 def get_provider() -> Provider:
     which = (os.environ.get("ASSESSMENT_MODEL_PROVIDER") or "none").strip().lower()
     if which == "anthropic":
         return AnthropicProvider()
+    if which == "qwen":
+        return QwenProvider()
     return NoProvider()

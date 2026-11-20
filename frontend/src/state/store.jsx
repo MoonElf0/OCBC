@@ -79,6 +79,7 @@ function reducer(state, a) {
         asOf: a.reply.asOf ?? null,
         question: a.question,
         scenarioId: a.reply.scenarioId,
+        generatedBy: a.reply.generatedBy ?? null, // set when a model wrote the answer (backend mode)
         text: a.reply.text,
         citations: a.reply.citations,
         shown: 0,
@@ -344,8 +345,10 @@ export function StoreProvider({ children }) {
     const id = nextId.current++
     let reply
     try {
-      reply = await ask(question)
-    } catch {
+      // The assistant page asks the model-backed agent (if the server has one); the classic page keeps the scripted storyline.
+      reply = await ask(question, { agent: origin === 'classic' ? 'scripted' : 'model' })
+    } catch (e) {
+      if (e.fromServer) return dispatch({ type: 'toast', toast: { text: e.message } })
       return fail('Could not get an answer.')
     }
     dispatch({ type: 'ask', id, question, reply, origin })

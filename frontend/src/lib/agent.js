@@ -36,10 +36,13 @@ export function matchScenario(input) {
 
 /**
  * In backend mode the server's agent answers and stores the answer (answerId).
- * @returns {Promise<{ answerId?: string, scenarioId: string, text: string, citations: string[] }>}
+ * `agent: 'model'` lets the server write the answer with its configured model
+ * (AGENT_MODEL_PROVIDER, e.g. Qwen); such answers have no scenarioId and are
+ * verified by the full pipeline. Demo mode is always scripted and offline.
+ * @returns {Promise<{ answerId?: string, scenarioId: string | null, text: string, citations: string[], generatedBy?: { provider: string, model: string } }>}
  */
-export async function ask(question) {
-  if (BACKEND) return api.ask(question)
+export async function ask(question, { agent = 'scripted' } = {}) {
+  if (BACKEND) return api.ask(question, agent)
   const s = matchScenario(question)
   return { scenarioId: s.id, text: s.answer.text, citations: s.answer.citations }
 }

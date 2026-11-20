@@ -55,7 +55,7 @@ export default function TopNav() {
 
         <span
           className="hidden items-center gap-1.5 rounded-full bg-line/[0.04] px-3 py-1 text-caption whitespace-nowrap text-carbon xl:inline-flex"
-          title={BACKEND ? 'Backend mode: retrieval, rule checks, the reliability index, routing and the dashboard are computed by the backend. Policy Assistant answers and their judge verdicts are scripted; submitted answers and corrections run the pipeline, with model steps only if a provider is configured.' : 'Offline demo: everything runs in this browser tab and nothing is saved.'}
+          title={BACKEND ? backendNote(state.health) : 'Offline demo: everything runs in this browser tab and nothing is saved.'}
         >
           <span className={`size-1.5 rounded-full ${BACKEND ? 'bg-status-verified' : 'bg-smoke'}`} aria-hidden="true" />
           {BACKEND ? 'Backend' : 'Offline demo'}
@@ -81,4 +81,16 @@ function ThemeToggle() {
       <Moon size={17} aria-hidden="true" className={`absolute transition-all duration-500 ${dark ? 'rotate-90 scale-50 opacity-0' : 'rotate-0 opacity-100'}`} />
     </button>
   )
+}
+
+/** What backend mode computes and what is still scripted, from /api/health. Never claims more than it does. */
+function backendNote(health) {
+  const agent = health?.agent
+  const model = health?.model
+  const agentLine =
+    agent?.provider && agent.provider !== 'scripted'
+      ? `Assistant page answers are written by ${agent.model} from the synthetic policy library and verified by the full pipeline. Classic page answers and their judge verdicts are scripted.`
+      : 'Policy Assistant answers and their judge verdicts are scripted.'
+  const modelLine = model?.available ? `Verifier model steps run on ${model.model}.` : 'Verifier model steps are not run (no provider configured).'
+  return `Backend mode: retrieval, rule checks, the reliability index, routing and the dashboard are computed by the backend. ${agentLine} ${modelLine} Submitted answers and corrections run the pipeline.`
 }
