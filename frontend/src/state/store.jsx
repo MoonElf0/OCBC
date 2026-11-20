@@ -35,7 +35,7 @@ export function reviewReasons(result, highStakes) {
 const freshChecks = () => CHECKS.map(() => ({ status: 'queued' }))
 
 const initial = {
-  view: 'workspace', // 'workspace' | 'verify' | 'review' | 'library' | 'trends' | 'evaluation'
+  view: 'workspace', // 'workspace' | 'verify' | 'review' | 'library' | 'trends' | 'evaluation' | 'versions'
   messages: [],
   paneId: null, // answer the verify pane is open for; null = pane closed
   focusClaimId: null, // claim the employee last clicked, in chat or pane

@@ -1409,6 +1409,1892 @@
         "status": "unknown"
       },
       "matchedQuestion": null
+    },
+    "eval-sme-limit-v2": {
+      "explanation": "Both claims match current policy. The limit comes from the current Cross-Border Payments Standard, not the superseded circular.",
+      "headline": "Safe to use",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "eval-sme-limit-v2-c1",
+          "start": 0,
+          "end": 90,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-SME-112",
+            "section": "§3.1",
+            "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+          },
+          "reason": "Matches the current relationship manager limit."
+        },
+        {
+          "id": "eval-sme-limit-v2-c2",
+          "start": 92,
+          "end": 213,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-SME-104",
+            "section": "§5.2",
+            "passage": "Transfers above the relationship manager limit require approval from the Business Banking Credit Committee before release."
+          },
+          "reason": "Matches the escalation rule."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "Both cited documents exist in the approved library, and every figure in the 2 cited claims appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.1",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+            },
+            {
+              "docId": "DOC-SME-104",
+              "section": "§5.2",
+              "passage": "Transfers above the relationship manager limit require approval from the Business Banking Credit Committee before release."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "pass",
+          "short": "All sources up to date",
+          "summary": "All 2 sources were updated within their 12-month review cycle (oldest: DOC-SME-112, 4 months ago).",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.1",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "pass",
+          "short": "Figures match current policy",
+          "summary": "Every figure agrees with the approved sources retrieved for the same point.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.1",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "pass",
+          "short": "Both claims backed by current policy",
+          "summary": "2 of 2 claims are supported by a current approved source.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.1",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+            },
+            {
+              "docId": "DOC-SME-104",
+              "section": "§5.2",
+              "passage": "Transfers above the relationship manager limit require approval from the Business Banking Credit Committee before release."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "No contradictions",
+          "summary": "No contradiction with any approved document.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.1",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "States the limit asked for and the escalation path.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 95,
+      "parts": {
+        "claimPts": 60,
+        "checkPts": 40,
+        "capped": true,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "high",
+        "label": "High",
+        "min": 80,
+        "status": "verified"
+      },
+      "matchedQuestion": null
+    },
+    "eval-sme-cutoff-v1": {
+      "explanation": "The 3:00 pm cut-off comes only from a circular that was superseded in May 2026. The current standard sets 2:30 pm.",
+      "headline": "Cut-off is outdated",
+      "retrieved": [
+        "DOC-SME-112"
+      ],
+      "claims": [
+        {
+          "id": "eval-sme-cutoff-v1-c1",
+          "start": 0,
+          "end": 85,
+          "status": "unsupported",
+          "check": "freshness",
+          "source": {
+            "docId": "DOC-SME-087",
+            "section": "§4",
+            "passage": "Transfers approved before 3:00 pm Singapore time are targeted for same-day processing, subject to correspondent bank availability."
+          },
+          "counter": {
+            "docId": "DOC-SME-112",
+            "section": "§3.4",
+            "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+          },
+          "short": "3:00 pm cut-off is outdated — now 2:30 pm",
+          "reason": "No current approved source supports 3:00 pm. The only passage stating it is in a superseded circular; the current Cross-Border Payments Standard sets 2:30 pm."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "The cited document exists in the approved library, and every figure in the 1 cited claim appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-087",
+              "section": "§4",
+              "passage": "Transfers approved before 3:00 pm Singapore time are targeted for same-day processing, subject to correspondent bank availability."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "fail",
+          "short": "Cited source was replaced on 20 May 2026",
+          "summary": "DOC-SME-087 was last updated 14 months ago and has been superseded by DOC-SME-112.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.1",
+              "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "warning",
+          "short": "Current policy says 2:30 pm",
+          "summary": "The answer states 3:00 pm; the current approved source (DOC-SME-112 §3.4) states 2:30 pm.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.4",
+              "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "fail",
+          "short": "Claim rests on a replaced circular",
+          "summary": "0 of 1 claims is supported by a current approved source.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-087",
+              "section": "§4",
+              "passage": "Transfers approved before 3:00 pm Singapore time are targeted for same-day processing, subject to correspondent bank availability."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "No contradictions",
+          "summary": "The answer does not contradict itself. The cut-off discrepancy is reported under cross-referencing.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-087",
+              "section": "§4",
+              "passage": "Transfers approved before 3:00 pm Singapore time are targeted for same-day processing, subject to correspondent bank availability."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "The question asks for the cut-off. The answer states one.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 23,
+      "parts": {
+        "claimPts": 0,
+        "checkPts": 23,
+        "capped": false,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "low",
+        "label": "Low",
+        "min": 0,
+        "status": "unsupported"
+      },
+      "matchedQuestion": null
+    },
+    "eval-sme-cutoff-v2": {
+      "explanation": "Both claims match the current Cross-Border Payments Standard.",
+      "headline": "Safe to use",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "eval-sme-cutoff-v2-c1",
+          "start": 0,
+          "end": 85,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-SME-112",
+            "section": "§3.4",
+            "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+          },
+          "reason": "Matches the current processing cut-off."
+        },
+        {
+          "id": "eval-sme-cutoff-v2-c2",
+          "start": 87,
+          "end": 145,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-SME-112",
+            "section": "§3.4",
+            "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+          },
+          "reason": "Matches the processing rule."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "The cited document exists in the approved library, and every figure in the 2 cited claims appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.4",
+              "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+            },
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.4",
+              "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "pass",
+          "short": "All sources up to date",
+          "summary": "DOC-SME-112 was updated within its 12-month review cycle (oldest: DOC-SME-112, 4 months ago).",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.4",
+              "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "pass",
+          "short": "Figures match current policy",
+          "summary": "Every figure agrees with the approved sources retrieved for the same point.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.4",
+              "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "pass",
+          "short": "Both claims backed",
+          "summary": "2 of 2 claims are supported by a current approved source.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.4",
+              "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "No contradictions",
+          "summary": "No contradiction with any approved document.",
+          "evidence": [
+            {
+              "docId": "DOC-SME-112",
+              "section": "§3.4",
+              "passage": "Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "States the cut-off asked for.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 95,
+      "parts": {
+        "claimPts": 60,
+        "checkPts": 40,
+        "capped": true,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "high",
+        "label": "High",
+        "min": 80,
+        "status": "verified"
+      },
+      "matchedQuestion": null
+    },
+    "eval-kyc-ubo-v2": {
+      "explanation": "Three of four claims match the due-diligence procedure, but the ownership threshold is wrong: the procedure says 25%, the answer says 20%. v1 stated this correctly.",
+      "headline": "Wrong ownership threshold",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "eval-kyc-ubo-v2-c1",
+          "start": 4,
+          "end": 60,
+          "status": "conflicting",
+          "check": "consistency",
+          "source": {
+            "docId": "DOC-KYC-031",
+            "section": "§4.1",
+            "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+          },
+          "counter": {
+            "docId": "DOC-KYC-031",
+            "section": "§4.1",
+            "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+          },
+          "short": "Says 20% — policy threshold is 25%",
+          "reason": "The procedure identifies beneficial owners at 25% or more. The answer restates the threshold as 20%, so it contradicts its own cited source."
+        },
+        {
+          "id": "eval-kyc-ubo-v2-c2",
+          "start": 62,
+          "end": 166,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-KYC-031",
+            "section": "§4.2",
+            "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+          },
+          "reason": "Matches the identity evidence requirement."
+        },
+        {
+          "id": "eval-kyc-ubo-v2-c3",
+          "start": 182,
+          "end": 245,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-KYC-031",
+            "section": "§4.3",
+            "passage": "Obtain the company's latest business profile from the company registry."
+          },
+          "reason": "Matches the company records requirement."
+        },
+        {
+          "id": "eval-kyc-ubo-v2-c4",
+          "start": 251,
+          "end": 317,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-KYC-031",
+            "section": "§4.4",
+            "passage": "The ownership structure must be confirmed in writing by a director of the company."
+          },
+          "reason": "Matches the ownership confirmation requirement."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "fail",
+          "short": "Cited source says 25%, not 20%",
+          "summary": "DOC-KYC-031 exists, but the answer cites it for 20% and the passage says 25%.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.1",
+              "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "pass",
+          "short": "All sources up to date",
+          "summary": "DOC-KYC-031 was updated within its 12-month review cycle (oldest: DOC-KYC-031, 7 months ago).",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.1",
+              "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "fail",
+          "short": "Current policy says 25%",
+          "summary": "The answer states 20%; the current approved source (DOC-KYC-031 §4.1) states 25%.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.1",
+              "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "warning",
+          "short": "3 of 4 claims backed",
+          "summary": "3 of 4 claims are supported. 1 contradicts the cited source.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.1",
+              "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+            },
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "fail",
+          "short": "Says 20% — procedure says 25%",
+          "summary": "The answer gives a 20% ownership threshold; the cited procedure sets 25%.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.1",
+              "passage": "Identify every beneficial owner who holds 25% or more of the company's shares or voting rights."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "The question asks which documents are needed. The answer lists them.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 62,
+      "parts": {
+        "claimPts": 45,
+        "checkPts": 17,
+        "capped": false,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "medium",
+        "label": "Medium",
+        "min": 50,
+        "status": "caution"
+      },
+      "matchedQuestion": null
+    },
+    "eval-kyc-address-v1": {
+      "explanation": "Both claims match the identity evidence requirement in the current due-diligence procedure.",
+      "headline": "Safe to use",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "eval-kyc-address-v1-c1",
+          "start": 0,
+          "end": 71,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-KYC-031",
+            "section": "§4.2",
+            "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+          },
+          "reason": "Matches the three-month requirement."
+        },
+        {
+          "id": "eval-kyc-address-v1-c2",
+          "start": 83,
+          "end": 137,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-KYC-031",
+            "section": "§4.2",
+            "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+          },
+          "reason": "Matches the identity evidence requirement."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "The cited document exists in the approved library, and every figure in the 2 cited claims appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            },
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "pass",
+          "short": "All sources up to date",
+          "summary": "DOC-KYC-031 was updated within its 12-month review cycle (oldest: DOC-KYC-031, 7 months ago).",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "pass",
+          "short": "Figures match current policy",
+          "summary": "Every figure agrees with the approved sources retrieved for the same point.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "pass",
+          "short": "Both claims backed",
+          "summary": "2 of 2 claims are supported.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "No contradictions",
+          "summary": "No contradiction with any approved document.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "States how recent the proof of address must be.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 95,
+      "parts": {
+        "claimPts": 60,
+        "checkPts": 40,
+        "capped": true,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "high",
+        "label": "High",
+        "min": 80,
+        "status": "verified"
+      },
+      "matchedQuestion": null
+    },
+    "eval-kyc-address-v2": {
+      "explanation": "Both claims match the identity evidence requirement in the current due-diligence procedure.",
+      "headline": "Safe to use",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "eval-kyc-address-v2-c1",
+          "start": 35,
+          "end": 98,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-KYC-031",
+            "section": "§4.2",
+            "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+          },
+          "reason": "Matches the three-month requirement."
+        },
+        {
+          "id": "eval-kyc-address-v2-c2",
+          "start": 114,
+          "end": 142,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-KYC-031",
+            "section": "§4.2",
+            "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+          },
+          "reason": "Matches the identity evidence requirement."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "The cited document exists in the approved library, and every figure in the 2 cited claims appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            },
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "pass",
+          "short": "All sources up to date",
+          "summary": "DOC-KYC-031 was updated within its 12-month review cycle (oldest: DOC-KYC-031, 7 months ago).",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "pass",
+          "short": "Figures match current policy",
+          "summary": "Every figure agrees with the approved sources retrieved for the same point.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "pass",
+          "short": "Both claims backed",
+          "summary": "2 of 2 claims are supported.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "No contradictions",
+          "summary": "No contradiction with any approved document.",
+          "evidence": [
+            {
+              "docId": "DOC-KYC-031",
+              "section": "§4.2",
+              "passage": "For each beneficial owner, obtain a government-issued photo ID and proof of residential address dated within the last three months."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "States how recent the proof of address must be.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 95,
+      "parts": {
+        "claimPts": 60,
+        "checkPts": 40,
+        "capped": true,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "high",
+        "label": "High",
+        "min": 80,
+        "status": "verified"
+      },
+      "matchedQuestion": null
+    },
+    "eval-fx-override-v2": {
+      "explanation": "All three claims match the FX Rate Override Guidelines.",
+      "headline": "Safe to use",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "eval-fx-override-v2-c1",
+          "start": 28,
+          "end": 102,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-FX-019",
+            "section": "§2.1",
+            "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+          },
+          "reason": "Matches the authority limit."
+        },
+        {
+          "id": "eval-fx-override-v2-c2",
+          "start": 104,
+          "end": 190,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-FX-019",
+            "section": "§2.2",
+            "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+          },
+          "reason": "Matches the approval rule."
+        },
+        {
+          "id": "eval-fx-override-v2-c3",
+          "start": 192,
+          "end": 261,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-FX-019",
+            "section": "§3.1",
+            "passage": "Every override must be recorded in the deal ticket with a reason code."
+          },
+          "reason": "Matches the record-keeping rule."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "The cited document exists in the approved library, and every figure in the 3 cited claims appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.1",
+              "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+            },
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            },
+            {
+              "docId": "DOC-FX-019",
+              "section": "§3.1",
+              "passage": "Every override must be recorded in the deal ticket with a reason code."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "pass",
+          "short": "All sources up to date",
+          "summary": "DOC-FX-019 was updated within its 12-month review cycle (oldest: DOC-FX-019, 2 months ago).",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.1",
+              "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "pass",
+          "short": "Figures match current policy",
+          "summary": "Every figure agrees with the approved sources retrieved for the same point.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.1",
+              "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "pass",
+          "short": "All 3 claims backed",
+          "summary": "3 of 3 claims are supported.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.1",
+              "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
+            },
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            },
+            {
+              "docId": "DOC-FX-019",
+              "section": "§3.1",
+              "passage": "Every override must be recorded in the deal ticket with a reason code."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "No contradictions",
+          "summary": "No contradiction with the guideline.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "Answers whether approval is needed.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 95,
+      "parts": {
+        "claimPts": 60,
+        "checkPts": 40,
+        "capped": true,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "high",
+        "label": "High",
+        "min": 80,
+        "status": "verified"
+      },
+      "matchedQuestion": null
+    },
+    "eval-fx-approver-v1": {
+      "explanation": "The approver is right, but the guideline requires approval before the override, not after. No approved document allows approval after booking.",
+      "headline": "Approval timing is wrong",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "eval-fx-approver-v1-c1",
+          "start": 0,
+          "end": 80,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-FX-019",
+            "section": "§2.2",
+            "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+          },
+          "reason": "Matches the approval rule."
+        },
+        {
+          "id": "eval-fx-approver-v1-c2",
+          "start": 82,
+          "end": 152,
+          "status": "unsupported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-FX-019",
+            "section": "§2.2",
+            "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+          },
+          "nearest": true,
+          "short": "Approval after booking isn’t in any policy",
+          "reason": "No retrieved passage allows approval after the deal is booked. The nearest passage, shown here, requires prior approval."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "The cited document exists in the approved library, and every figure in the 2 cited claims appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            },
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "pass",
+          "short": "All sources up to date",
+          "summary": "DOC-FX-019 was updated within its 12-month review cycle (oldest: DOC-FX-019, 2 months ago).",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "pass",
+          "short": "Figures match current policy",
+          "summary": "Every figure agrees with the approved sources retrieved for the same point.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "warning",
+          "short": "1 of 2 claims backed",
+          "summary": "1 of 2 claims is supported. 1 has no supporting passage.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "warning",
+          "short": "Timing contradicts “prior approval”",
+          "summary": "The answer allows approval after booking; the guideline requires prior approval.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "Names who approves.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 63,
+      "parts": {
+        "claimPts": 30,
+        "checkPts": 33,
+        "capped": false,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "medium",
+        "label": "Medium",
+        "min": 50,
+        "status": "caution"
+      },
+      "matchedQuestion": null
+    },
+    "eval-fx-approver-v2": {
+      "explanation": "Both claims match the FX Rate Override Guidelines.",
+      "headline": "Safe to use",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "eval-fx-approver-v2-c1",
+          "start": 0,
+          "end": 86,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-FX-019",
+            "section": "§2.2",
+            "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+          },
+          "reason": "Matches the approval rule."
+        },
+        {
+          "id": "eval-fx-approver-v2-c2",
+          "start": 88,
+          "end": 157,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-FX-019",
+            "section": "§3.1",
+            "passage": "Every override must be recorded in the deal ticket with a reason code."
+          },
+          "reason": "Matches the record-keeping rule."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "The cited document exists in the approved library, and every figure in the 2 cited claims appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            },
+            {
+              "docId": "DOC-FX-019",
+              "section": "§3.1",
+              "passage": "Every override must be recorded in the deal ticket with a reason code."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "pass",
+          "short": "All sources up to date",
+          "summary": "DOC-FX-019 was updated within its 12-month review cycle (oldest: DOC-FX-019, 2 months ago).",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "pass",
+          "short": "Figures match current policy",
+          "summary": "Every figure agrees with the approved sources retrieved for the same point.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "pass",
+          "short": "Both claims backed",
+          "summary": "2 of 2 claims are supported.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            },
+            {
+              "docId": "DOC-FX-019",
+              "section": "§3.1",
+              "passage": "Every override must be recorded in the deal ticket with a reason code."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "No contradictions",
+          "summary": "No contradiction with the guideline.",
+          "evidence": [
+            {
+              "docId": "DOC-FX-019",
+              "section": "§2.2",
+              "passage": "Any override above 10 basis points requires prior approval from the Treasury desk head."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "Names who approves.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 95,
+      "parts": {
+        "claimPts": 60,
+        "checkPts": 40,
+        "capped": true,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "high",
+        "label": "High",
+        "min": 80,
+        "status": "verified"
+      },
+      "matchedQuestion": null
+    },
+    "eval-fees-waiver-v2": {
+      "explanation": "Both limits match the Fee Waiver Authority Matrix, but that document is 22 months old and past its 12-month review. No agent change fixes this; the document needs reviewing.",
+      "headline": "Right limits, outdated source",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "eval-fees-waiver-v2-c1",
+          "start": 5,
+          "end": 90,
+          "status": "stale",
+          "check": "freshness",
+          "source": {
+            "docId": "DOC-OPS-045",
+            "section": "Row 3",
+            "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+          },
+          "short": "SGD 500 limit — source overdue for review",
+          "reason": "Matches the source, but the source is 22 months old and overdue for its annual review."
+        },
+        {
+          "id": "eval-fees-waiver-v2-c2",
+          "start": 92,
+          "end": 146,
+          "status": "stale",
+          "check": "freshness",
+          "source": {
+            "docId": "DOC-OPS-045",
+            "section": "Row 4",
+            "passage": "Waivers above SGD 500 require approval from the area head."
+          },
+          "short": "Area-head rule — source overdue",
+          "reason": "Matches the source, but the source is overdue for review."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "The cited document exists in the approved library, and every figure in the 2 cited claims appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 3",
+              "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+            },
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 4",
+              "passage": "Waivers above SGD 500 require approval from the area head."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "warning",
+          "short": "Source is 22 months old and overdue for review",
+          "summary": "DOC-OPS-045 was last updated 22 months ago, past its 12-month review cycle. It has not been superseded.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 3",
+              "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "pass",
+          "short": "Figures match current policy",
+          "summary": "Every figure agrees with the approved sources retrieved for the same point.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 3",
+              "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "pass",
+          "short": "Both claims match a source",
+          "summary": "2 of 2 claims match a source passage. Both rest on a document overdue for review.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 3",
+              "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
+            },
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 4",
+              "passage": "Waivers above SGD 500 require approval from the area head."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "No contradictions",
+          "summary": "No contradiction with any approved document.",
+          "evidence": [
+            {
+              "docId": "DOC-OPS-045",
+              "section": "Row 4",
+              "passage": "Waivers above SGD 500 require approval from the area head."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "Answers only about the SME business account asked about.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 73,
+      "parts": {
+        "claimPts": 36,
+        "checkPts": 37,
+        "capped": false,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "medium",
+        "label": "Medium",
+        "min": 50,
+        "status": "caution"
+      },
+      "matchedQuestion": null
+    },
+    "eval-fees-cards-v1": {
+      "explanation": "The claim matches the current Cards Servicing Handbook.",
+      "headline": "Safe to use",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "eval-fees-cards-v1-c1",
+          "start": 0,
+          "end": 82,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-CRD-022",
+            "section": "§7.2",
+            "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+          },
+          "reason": "Matches the handbook."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "The cited document exists in the approved library, and every figure in the 1 cited claim appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-CRD-022",
+              "section": "§7.2",
+              "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "pass",
+          "short": "All sources up to date",
+          "summary": "DOC-CRD-022 was updated within its 12-month review cycle (oldest: DOC-CRD-022, 5 months ago).",
+          "evidence": [
+            {
+              "docId": "DOC-CRD-022",
+              "section": "§7.2",
+              "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "pass",
+          "short": "Figures match current policy",
+          "summary": "Every figure agrees with the approved sources retrieved for the same point.",
+          "evidence": [
+            {
+              "docId": "DOC-CRD-022",
+              "section": "§7.2",
+              "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "pass",
+          "short": "Claim backed by policy",
+          "summary": "1 of 1 claims is supported.",
+          "evidence": [
+            {
+              "docId": "DOC-CRD-022",
+              "section": "§7.2",
+              "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "No contradictions",
+          "summary": "No contradiction with any approved document.",
+          "evidence": [
+            {
+              "docId": "DOC-CRD-022",
+              "section": "§7.2",
+              "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "Names the team asked about.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 95,
+      "parts": {
+        "claimPts": 60,
+        "checkPts": 40,
+        "capped": true,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "high",
+        "label": "High",
+        "min": 80,
+        "status": "verified"
+      },
+      "matchedQuestion": null
+    },
+    "eval-fees-cards-v2": {
+      "explanation": "The claim matches the current Cards Servicing Handbook.",
+      "headline": "Safe to use",
+      "retrieved": [],
+      "claims": [
+        {
+          "id": "eval-fees-cards-v2-c1",
+          "start": 0,
+          "end": 75,
+          "status": "supported",
+          "check": "groundedness",
+          "source": {
+            "docId": "DOC-CRD-022",
+            "section": "§7.2",
+            "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+          },
+          "reason": "Matches the handbook."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "pass",
+          "short": "Cited documents exist and match",
+          "summary": "The cited document exists in the approved library, and every figure in the 1 cited claim appears in its passage.",
+          "evidence": [
+            {
+              "docId": "DOC-CRD-022",
+              "section": "§7.2",
+              "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "pass",
+          "short": "All sources up to date",
+          "summary": "DOC-CRD-022 was updated within its 12-month review cycle (oldest: DOC-CRD-022, 5 months ago).",
+          "evidence": [
+            {
+              "docId": "DOC-CRD-022",
+              "section": "§7.2",
+              "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "pass",
+          "short": "Figures match current policy",
+          "summary": "Every figure agrees with the approved sources retrieved for the same point.",
+          "evidence": [
+            {
+              "docId": "DOC-CRD-022",
+              "section": "§7.2",
+              "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "pass",
+          "short": "Claim backed by policy",
+          "summary": "1 of 1 claims is supported.",
+          "evidence": [
+            {
+              "docId": "DOC-CRD-022",
+              "section": "§7.2",
+              "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "No contradictions",
+          "summary": "No contradiction with any approved document.",
+          "evidence": [
+            {
+              "docId": "DOC-CRD-022",
+              "section": "§7.2",
+              "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "Names the team asked about.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 95,
+      "parts": {
+        "claimPts": 60,
+        "checkPts": 40,
+        "capped": true,
+        "cap": 95,
+        "counted": 6
+      },
+      "band": {
+        "id": "high",
+        "label": "High",
+        "min": 80,
+        "status": "verified"
+      },
+      "matchedQuestion": null
+    },
+    "eval-collateral-crypto-v2": {
+      "explanation": "The reply makes no policy claims. It says plainly that no approved policy covers this, which is what retrieval found.",
+      "headline": "Declines — no policy exists",
+      "retrieved": [],
+      "claims": [],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "na",
+          "short": "Nothing cited, nothing claimed",
+          "summary": "No documents cited and no claims made.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "na",
+          "short": "No source to check",
+          "summary": "No source to check.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "na",
+          "short": "Nothing to compare against",
+          "summary": "No approved source to compare against.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "na",
+          "short": "No policy claims to check",
+          "summary": "The reply makes no factual policy claims.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "Matches the empty search result",
+          "summary": "Consistent with the empty retrieval result.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Says plainly there is no policy",
+          "summary": "The reply addresses the question by saying no approved policy covers it, rather than guessing.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": null,
+      "parts": null,
+      "band": {
+        "id": "none",
+        "label": "Not scored",
+        "status": "unknown"
+      },
+      "matchedQuestion": null
+    },
+    "eval-collateral-gold-v1": {
+      "noSource": true,
+      "explanation": "No approved document covers gold or ETF collateral, and the answer cites nothing. Both claims are unverified.",
+      "headline": "No policy covers this",
+      "retrieved": [],
+      "search": {
+        "documentsSearched": 7,
+        "query": "gold etf collateral haircut custody",
+        "topMatch": 0.17,
+        "threshold": 0.5
+      },
+      "claims": [
+        {
+          "id": "eval-collateral-gold-v1-c1",
+          "start": 5,
+          "end": 58,
+          "status": "no-source",
+          "check": "groundedness",
+          "source": null,
+          "short": "No policy on gold ETF collateral",
+          "reason": "No source found. Retrieval returned no passage above the relevance threshold."
+        },
+        {
+          "id": "eval-collateral-gold-v1-c2",
+          "start": 64,
+          "end": 112,
+          "status": "no-source",
+          "check": "groundedness",
+          "source": null,
+          "short": "Custody rule not found",
+          "reason": "No source found. No approved document mentions custody accounts."
+        }
+      ],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "fail",
+          "short": "Cites no documents",
+          "summary": "The answer cites no documents.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "na",
+          "short": "No source to check",
+          "summary": "No source to check.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "na",
+          "short": "Nothing to compare against",
+          "summary": "No approved source to compare against.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "fail",
+          "short": "0 of 2 claims backed",
+          "summary": "0 of 2 claims are supported. No approved passage was retrieved.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "No contradictions",
+          "summary": "The answer does not contradict itself.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Answers the question asked",
+          "summary": "The question asks whether gold ETFs are acceptable collateral. The answer addresses that.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": 10,
+      "parts": {
+        "claimPts": 0,
+        "checkPts": 20,
+        "capped": true,
+        "cap": 10,
+        "counted": 4
+      },
+      "band": {
+        "id": "low",
+        "label": "Low",
+        "min": 0,
+        "status": "unsupported"
+      },
+      "matchedQuestion": null
+    },
+    "eval-collateral-gold-v2": {
+      "explanation": "The reply makes no policy claims. It says plainly that no approved policy covers this, which is what retrieval found.",
+      "headline": "Declines — no policy exists",
+      "retrieved": [],
+      "claims": [],
+      "checks": [
+        {
+          "id": "citation",
+          "status": "na",
+          "short": "Nothing cited, nothing claimed",
+          "summary": "No documents cited and no claims made.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "freshness",
+          "status": "na",
+          "short": "No source to check",
+          "summary": "No source to check.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "crossref",
+          "status": "na",
+          "short": "Nothing to compare against",
+          "summary": "No approved source to compare against.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "groundedness",
+          "status": "na",
+          "short": "No policy claims to check",
+          "summary": "The reply makes no factual policy claims.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "consistency",
+          "status": "pass",
+          "short": "Matches the empty search result",
+          "summary": "Consistent with the empty retrieval result.",
+          "evidence": [
+            {
+              "kind": "search"
+            }
+          ]
+        },
+        {
+          "id": "intent",
+          "status": "pass",
+          "short": "Says plainly there is no policy",
+          "summary": "The reply addresses the question by saying no approved policy covers it, rather than guessing.",
+          "evidence": [
+            {
+              "kind": "question"
+            }
+          ]
+        }
+      ],
+      "score": null,
+      "parts": null,
+      "band": {
+        "id": "none",
+        "label": "Not scored",
+        "status": "unknown"
+      },
+      "matchedQuestion": null
     }
   },
   "assessParaphrased": {
@@ -2872,6 +4758,627 @@
         "docId": "DOC-FX-019",
         "decision": "corrected",
         "category": "overstated-authority"
+      }
+    ]
+  },
+  "evaluation": {
+    "versions": [
+      {
+        "id": "v1",
+        "label": "Agent v1",
+        "stage": "In production",
+        "summary": "The agent employees use today. Every answer in the workspace comes from v1.",
+        "changes": []
+      },
+      {
+        "id": "v2",
+        "label": "Agent v2",
+        "stage": "Release candidate",
+        "summary": "Built from the Trends recommendations. Not used in the workspace until it passes this check.",
+        "changes": [
+          "Retrieval index excludes superseded documents",
+          "Prompt: quote numeric limits verbatim and say when approval is needed",
+          "Prompt: answer only for the product named in the question",
+          "Prompt: decline when no approved source is found",
+          "New step: summarise long passages before answering"
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "id": "q-sme-limit",
+        "topic": "sme",
+        "question": "What's the approval limit for a cross-border transfer under the SME lending policy?",
+        "baseId": "sme-limit",
+        "candidateId": "eval-sme-limit-v2",
+        "base": {
+          "score": 67,
+          "band": "medium",
+          "claims": 3,
+          "flags": [
+            {
+              "id": "sme-limit-c1",
+              "status": "unsupported",
+              "short": "SGD 250k is outdated. It is now SGD 200k",
+              "docId": "DOC-SME-087"
+            }
+          ],
+          "declined": false,
+          "worst": 2
+        },
+        "candidate": {
+          "score": 95,
+          "band": "high",
+          "claims": 2,
+          "flags": [],
+          "declined": false,
+          "worst": 0
+        },
+        "change": "fixed"
+      },
+      {
+        "id": "q-sme-cutoff",
+        "topic": "sme",
+        "question": "What's the same-day processing cut-off for SME cross-border transfers?",
+        "baseId": "eval-sme-cutoff-v1",
+        "candidateId": "eval-sme-cutoff-v2",
+        "base": {
+          "score": 23,
+          "band": "low",
+          "claims": 1,
+          "flags": [
+            {
+              "id": "eval-sme-cutoff-v1-c1",
+              "status": "unsupported",
+              "short": "3:00 pm cut-off is outdated — now 2:30 pm",
+              "docId": "DOC-SME-087"
+            }
+          ],
+          "declined": false,
+          "worst": 2
+        },
+        "candidate": {
+          "score": 95,
+          "band": "high",
+          "claims": 2,
+          "flags": [],
+          "declined": false,
+          "worst": 0
+        },
+        "change": "fixed"
+      },
+      {
+        "id": "q-kyc-ubo",
+        "topic": "kyc",
+        "question": "What documents do I need to verify the beneficial owners of a new SME client?",
+        "baseId": "kyc-ubo",
+        "candidateId": "eval-kyc-ubo-v2",
+        "base": {
+          "score": 95,
+          "band": "high",
+          "claims": 4,
+          "flags": [],
+          "declined": false,
+          "worst": 0
+        },
+        "candidate": {
+          "score": 62,
+          "band": "medium",
+          "claims": 4,
+          "flags": [
+            {
+              "id": "eval-kyc-ubo-v2-c1",
+              "status": "conflicting",
+              "short": "Says 20% — policy threshold is 25%",
+              "docId": "DOC-KYC-031"
+            }
+          ],
+          "declined": false,
+          "worst": 3
+        },
+        "change": "regressed"
+      },
+      {
+        "id": "q-kyc-address",
+        "topic": "kyc",
+        "question": "How recent must a beneficial owner's proof of address be?",
+        "baseId": "eval-kyc-address-v1",
+        "candidateId": "eval-kyc-address-v2",
+        "base": {
+          "score": 95,
+          "band": "high",
+          "claims": 2,
+          "flags": [],
+          "declined": false,
+          "worst": 0
+        },
+        "candidate": {
+          "score": 95,
+          "band": "high",
+          "claims": 2,
+          "flags": [],
+          "declined": false,
+          "worst": 0
+        },
+        "change": "unchanged"
+      },
+      {
+        "id": "q-fx-override",
+        "topic": "fx",
+        "question": "Can I override the FX rate for a corporate client without approval?",
+        "baseId": "fx-override",
+        "candidateId": "eval-fx-override-v2",
+        "base": {
+          "score": 33,
+          "band": "low",
+          "claims": 3,
+          "flags": [
+            {
+              "id": "fx-override-c1",
+              "status": "conflicting",
+              "short": "Says 50 bps, but policy caps it at 10 bps",
+              "docId": "DOC-FX-019"
+            },
+            {
+              "id": "fx-override-c2",
+              "status": "unsupported",
+              "short": "Mandate exception isn’t in any policy",
+              "docId": "DOC-FX-019"
+            }
+          ],
+          "declined": false,
+          "worst": 3
+        },
+        "candidate": {
+          "score": 95,
+          "band": "high",
+          "claims": 3,
+          "flags": [],
+          "declined": false,
+          "worst": 0
+        },
+        "change": "fixed"
+      },
+      {
+        "id": "q-fx-approver",
+        "topic": "fx",
+        "question": "Who approves an FX rate override above 10 basis points?",
+        "baseId": "eval-fx-approver-v1",
+        "candidateId": "eval-fx-approver-v2",
+        "base": {
+          "score": 63,
+          "band": "medium",
+          "claims": 2,
+          "flags": [
+            {
+              "id": "eval-fx-approver-v1-c2",
+              "status": "unsupported",
+              "short": "Approval after booking isn’t in any policy",
+              "docId": "DOC-FX-019"
+            }
+          ],
+          "declined": false,
+          "worst": 2
+        },
+        "candidate": {
+          "score": 95,
+          "band": "high",
+          "claims": 2,
+          "flags": [],
+          "declined": false,
+          "worst": 0
+        },
+        "change": "fixed"
+      },
+      {
+        "id": "q-fees-waiver",
+        "topic": "fees",
+        "question": "Can a branch manager waive the annual fee on an SME business account?",
+        "baseId": "fees-waiver",
+        "candidateId": "eval-fees-waiver-v2",
+        "base": {
+          "score": 69,
+          "band": "medium",
+          "claims": 3,
+          "flags": [
+            {
+              "id": "fees-waiver-c1",
+              "status": "stale",
+              "short": "Right limit, but the source is overdue for review",
+              "docId": "DOC-OPS-045"
+            },
+            {
+              "id": "fees-waiver-c2",
+              "status": "stale",
+              "short": "Right rule, but the source is overdue for review",
+              "docId": "DOC-OPS-045"
+            },
+            {
+              "id": "fees-waiver-c3",
+              "status": "off-intent",
+              "short": "About retail cards, not what you asked",
+              "docId": "DOC-CRD-022"
+            }
+          ],
+          "declined": false,
+          "worst": 1
+        },
+        "candidate": {
+          "score": 73,
+          "band": "medium",
+          "claims": 2,
+          "flags": [
+            {
+              "id": "eval-fees-waiver-v2-c1",
+              "status": "stale",
+              "short": "SGD 500 limit — source overdue for review",
+              "docId": "DOC-OPS-045"
+            },
+            {
+              "id": "eval-fees-waiver-v2-c2",
+              "status": "stale",
+              "short": "Area-head rule — source overdue",
+              "docId": "DOC-OPS-045"
+            }
+          ],
+          "declined": false,
+          "worst": 1
+        },
+        "change": "improved"
+      },
+      {
+        "id": "q-fees-cards",
+        "topic": "fees",
+        "question": "Who handles annual fee reversals for retail credit cards?",
+        "baseId": "eval-fees-cards-v1",
+        "candidateId": "eval-fees-cards-v2",
+        "base": {
+          "score": 95,
+          "band": "high",
+          "claims": 1,
+          "flags": [],
+          "declined": false,
+          "worst": 0
+        },
+        "candidate": {
+          "score": 95,
+          "band": "high",
+          "claims": 1,
+          "flags": [],
+          "declined": false,
+          "worst": 0
+        },
+        "change": "unchanged"
+      },
+      {
+        "id": "q-collateral-crypto",
+        "topic": "collateral",
+        "question": "Can an SME pledge crypto assets as collateral for a loan?",
+        "baseId": "collateral-crypto",
+        "candidateId": "eval-collateral-crypto-v2",
+        "base": {
+          "score": 10,
+          "band": "low",
+          "claims": 3,
+          "flags": [
+            {
+              "id": "collateral-crypto-c1",
+              "status": "no-source",
+              "short": "No policy on crypto collateral",
+              "docId": null
+            },
+            {
+              "id": "collateral-crypto-c2",
+              "status": "no-source",
+              "short": "Custodian rule not found",
+              "docId": null
+            },
+            {
+              "id": "collateral-crypto-c3",
+              "status": "no-source",
+              "short": "Daily valuation rule not found",
+              "docId": null
+            }
+          ],
+          "declined": false,
+          "worst": 2
+        },
+        "candidate": {
+          "score": null,
+          "band": "none",
+          "claims": 0,
+          "flags": [],
+          "declined": true,
+          "worst": 0
+        },
+        "change": "fixed"
+      },
+      {
+        "id": "q-collateral-gold",
+        "topic": "collateral",
+        "question": "Can an SME pledge a gold ETF as collateral for a term loan?",
+        "baseId": "eval-collateral-gold-v1",
+        "candidateId": "eval-collateral-gold-v2",
+        "base": {
+          "score": 10,
+          "band": "low",
+          "claims": 2,
+          "flags": [
+            {
+              "id": "eval-collateral-gold-v1-c1",
+              "status": "no-source",
+              "short": "No policy on gold ETF collateral",
+              "docId": null
+            },
+            {
+              "id": "eval-collateral-gold-v1-c2",
+              "status": "no-source",
+              "short": "Custody rule not found",
+              "docId": null
+            }
+          ],
+          "declined": false,
+          "worst": 2
+        },
+        "candidate": {
+          "score": null,
+          "band": "none",
+          "claims": 0,
+          "flags": [],
+          "declined": true,
+          "worst": 0
+        },
+        "change": "fixed"
+      }
+    ],
+    "topics": [
+      {
+        "id": "sme",
+        "name": "SME Lending",
+        "questions": 2,
+        "base": {
+          "answers": 2,
+          "claims": 4,
+          "flagged": 2,
+          "unsupported": 2,
+          "conflicting": 0,
+          "stale": 0,
+          "offIntent": 0,
+          "noSource": 0,
+          "declined": 0,
+          "high": 0,
+          "withoutSource": 0,
+          "flagRate": 0.5,
+          "failureRate": 0.5,
+          "staleRate": 0
+        },
+        "candidate": {
+          "answers": 2,
+          "claims": 4,
+          "flagged": 0,
+          "unsupported": 0,
+          "conflicting": 0,
+          "stale": 0,
+          "offIntent": 0,
+          "noSource": 0,
+          "declined": 0,
+          "high": 2,
+          "withoutSource": 0,
+          "flagRate": 0,
+          "failureRate": 0,
+          "staleRate": 0
+        },
+        "verdict": "improved"
+      },
+      {
+        "id": "kyc",
+        "name": "KYC & Onboarding",
+        "questions": 2,
+        "base": {
+          "answers": 2,
+          "claims": 6,
+          "flagged": 0,
+          "unsupported": 0,
+          "conflicting": 0,
+          "stale": 0,
+          "offIntent": 0,
+          "noSource": 0,
+          "declined": 0,
+          "high": 2,
+          "withoutSource": 0,
+          "flagRate": 0,
+          "failureRate": 0,
+          "staleRate": 0
+        },
+        "candidate": {
+          "answers": 2,
+          "claims": 6,
+          "flagged": 1,
+          "unsupported": 0,
+          "conflicting": 1,
+          "stale": 0,
+          "offIntent": 0,
+          "noSource": 0,
+          "declined": 0,
+          "high": 1,
+          "withoutSource": 0,
+          "flagRate": 0.16666666666666666,
+          "failureRate": 0.16666666666666666,
+          "staleRate": 0
+        },
+        "verdict": "regressed"
+      },
+      {
+        "id": "fx",
+        "name": "FX & Treasury",
+        "questions": 2,
+        "base": {
+          "answers": 2,
+          "claims": 5,
+          "flagged": 3,
+          "unsupported": 2,
+          "conflicting": 1,
+          "stale": 0,
+          "offIntent": 0,
+          "noSource": 0,
+          "declined": 0,
+          "high": 0,
+          "withoutSource": 0,
+          "flagRate": 0.6,
+          "failureRate": 0.6,
+          "staleRate": 0
+        },
+        "candidate": {
+          "answers": 2,
+          "claims": 5,
+          "flagged": 0,
+          "unsupported": 0,
+          "conflicting": 0,
+          "stale": 0,
+          "offIntent": 0,
+          "noSource": 0,
+          "declined": 0,
+          "high": 2,
+          "withoutSource": 0,
+          "flagRate": 0,
+          "failureRate": 0,
+          "staleRate": 0
+        },
+        "verdict": "improved"
+      },
+      {
+        "id": "fees",
+        "name": "Fees & Charges",
+        "questions": 2,
+        "base": {
+          "answers": 2,
+          "claims": 4,
+          "flagged": 3,
+          "unsupported": 0,
+          "conflicting": 0,
+          "stale": 2,
+          "offIntent": 1,
+          "noSource": 0,
+          "declined": 0,
+          "high": 1,
+          "withoutSource": 0,
+          "flagRate": 0.75,
+          "failureRate": 0,
+          "staleRate": 0.5
+        },
+        "candidate": {
+          "answers": 2,
+          "claims": 3,
+          "flagged": 2,
+          "unsupported": 0,
+          "conflicting": 0,
+          "stale": 2,
+          "offIntent": 0,
+          "noSource": 0,
+          "declined": 0,
+          "high": 1,
+          "withoutSource": 0,
+          "flagRate": 0.6666666666666666,
+          "failureRate": 0,
+          "staleRate": 0.6666666666666666
+        },
+        "verdict": "improved"
+      },
+      {
+        "id": "collateral",
+        "name": "Collateral & Security",
+        "questions": 2,
+        "base": {
+          "answers": 2,
+          "claims": 5,
+          "flagged": 5,
+          "unsupported": 0,
+          "conflicting": 0,
+          "stale": 0,
+          "offIntent": 0,
+          "noSource": 5,
+          "declined": 0,
+          "high": 0,
+          "withoutSource": 2,
+          "flagRate": 1,
+          "failureRate": 1,
+          "staleRate": 0
+        },
+        "candidate": {
+          "answers": 2,
+          "claims": 0,
+          "flagged": 0,
+          "unsupported": 0,
+          "conflicting": 0,
+          "stale": 0,
+          "offIntent": 0,
+          "noSource": 0,
+          "declined": 2,
+          "high": 0,
+          "withoutSource": 0,
+          "flagRate": null,
+          "failureRate": null,
+          "staleRate": null
+        },
+        "verdict": "improved"
+      }
+    ],
+    "overall": {
+      "base": {
+        "answers": 10,
+        "claims": 24,
+        "flagged": 13,
+        "unsupported": 4,
+        "conflicting": 1,
+        "stale": 2,
+        "offIntent": 1,
+        "noSource": 5,
+        "declined": 0,
+        "high": 3,
+        "withoutSource": 2,
+        "flagRate": 0.5416666666666666,
+        "failureRate": 0.4166666666666667,
+        "staleRate": 0.08333333333333333
+      },
+      "candidate": {
+        "answers": 10,
+        "claims": 18,
+        "flagged": 3,
+        "unsupported": 0,
+        "conflicting": 1,
+        "stale": 2,
+        "offIntent": 0,
+        "noSource": 0,
+        "declined": 2,
+        "high": 6,
+        "withoutSource": 0,
+        "flagRate": 0.16666666666666666,
+        "failureRate": 0.05555555555555555,
+        "staleRate": 0.1111111111111111
+      }
+    },
+    "counts": {
+      "fixed": 6,
+      "improved": 1,
+      "unchanged": 2,
+      "regressed": 1
+    },
+    "release": {
+      "id": "hold",
+      "title": "Hold Agent v2: it improves 7 of 10 questions but regresses 1",
+      "detail": [
+        "KYC & Onboarding: Says 20% — policy threshold is 25% (Agent v1 answered this correctly)"
+      ]
+    },
+    "notes": [
+      {
+        "kind": "stale-document",
+        "docId": "DOC-OPS-045",
+        "text": "2 claims in Agent v2 still rest on DOC-OPS-045, which is 22 months old and past its review cycle. No agent release fixes this: Branch Operations needs to review the document."
+      },
+      {
+        "kind": "declined",
+        "text": "Agent v2 declines 2 questions that Agent v1 answered with no source. Counted as fixed: no approved policy covers them, so saying so is the correct answer."
       }
     ]
   }

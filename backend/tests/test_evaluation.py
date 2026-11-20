@@ -1,4 +1,5 @@
 """The evaluation harness reports what it recorded, and nothing else."""
+import mongomock
 import pytest
 from fastapi.testclient import TestClient
 
@@ -68,7 +69,7 @@ def test_without_a_model_nothing_is_confirmed_and_nothing_is_guessed():
 
 
 def test_runs_are_recorded_through_the_api(tmp_path, monkeypatch):
-    monkeypatch.setattr(api, "_conn", db.connect(tmp_path / "e.db"))
+    monkeypatch.setattr(api, "_conn", db.connect(client=mongomock.MongoClient()))
     monkeypatch.setattr(api, "_provider", NoProvider())
     c = TestClient(api.app)
     r = c.post("/api/eval/run", json={"split": "heldout"}).json()

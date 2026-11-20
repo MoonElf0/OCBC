@@ -28,6 +28,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import agent, db, evaluation, fixtures, library, pipeline
+from .release_check import compare_versions
 from .freshness import freshness_of
 from .metrics import Metrics
 from .models import get_provider
@@ -184,7 +185,7 @@ def _ensure_seed_answers(c) -> None:
     global _seeding
     if _seeding:
         return
-    rows = c.execute("SELECT * FROM reviews WHERE answer_id IS NULL").fetchall()
+    rows = db.unlinked_reviews(c)
     if not rows:
         return
     _seeding = True
@@ -197,15 +198,14 @@ def _ensure_seed_answers(c) -> None:
 def _seed_answers(c, rows) -> None:
     with _lock:
         for r in rows:
-            sc = fixtures.scenario_by_id(r["scenario_id"])
+            sc = fixtures.scenario_by_id(r["scenarioId"])
             aid = db.add_answer(c, kind="asked", question=sc["question"], text=sc["answer"]["text"], citations=sc["answer"]["citations"],
                                 as_of=db.today(c), scenario_id=sc["id"], topic=sc["topic"])
             a = db.get_answer(c, aid)
             result, topic = assess_answer(a)
-            reasons = json.loads(r["reasons"])
+            reasons = r["reasons"]
             db.add_assessment(c, aid, "initial", result, versions_used(result), {"reasons": reasons, "mandatory": True}, "review-required", topic)
-            with c:
-                c.execute("UPDATE reviews SET answer_id=? WHERE id=?", (aid, r["id"]))
+            db.link_review(c, r["id"], aid)
             db.log(c, "routed for review", answer_id=aid, review_id=r["id"], reasons=reasons, seeded=True)
 
 
@@ -386,7 +386,7 @@ def reverify(answer_id: str):
 @app.get("/api/answers/{answer_id}/history")
 def history(answer_id: str):
     a = _get(answer_id)
-    related = [answer_id] + [r["id"] for r in conn().execute("SELECT id FROM answers WHERE parent_id=?", (answer_id,))]
+    related = [answer_id] + db.child_answer_ids(conn(), answer_id)
     corrections = [answer_view(db.get_answer(conn(), i)) for i in related[1:]]
     return {"answer": answer_view(a), "assessments": db.assessments_of(conn(), answer_id), "corrections": corrections,
             "correctionAssessments": {c["id"]: db.assessments_of(conn(), c["id"]) for c in corrections},
@@ -604,6 +604,23 @@ def edit_section(doc_id: str, section_id: str, body: LegacySectionIn):
 def metrics():
     data, live = db.metrics_data(conn())
     return {**Metrics(data, db.today(conn()), live).dashboard(), "liveDecisions": live}
+
+
+@app.get("/api/release-check")
+def release_check():
+    """
+    Agent release check: the verifier scores agent v1 and agent v2 on the fixed
+    test set, then the versions are compared. Answers are scripted; retrieval,
+    rule checks, scores and the comparison are computed here.
+    """
+    f = fixtures.load()
+    docs, index = library_docs()
+    today = db.today(conn())
+    ids = [sid for q in f["EVAL_SET"] for sid in q["answers"].values()]
+    results = {sid: verify(fixtures.scenario_by_id(sid), docs, today, index=index) for sid in ids}
+    report = compare_versions(f, docs, results.__getitem__, lambda d: freshness_of(d, docs, today))
+    answers = {sid: {"text": fixtures.scenario_by_id(sid)["answer"]["text"], "result": results[sid]} for sid in ids}
+    return {**report, "answers": answers, "provenance": PROVENANCE}
 
 
 @app.get("/api/eval")

@@ -1,4 +1,4 @@
-import { MessageSquare, Inbox, ChartLine, ShieldCheck, ClipboardPaste, Library, FlaskConical, Sun, Moon } from 'lucide-react'
+import { MessageSquare, Inbox, ChartLine, ShieldCheck, ClipboardPaste, Library, FlaskConical, GitBranch, Sun, Moon } from 'lucide-react'
 import { useStore } from '../state/store'
 import { BACKEND } from '../lib/backend'
 import { useTheme } from '../lib/theme'
@@ -10,6 +10,7 @@ const LINKS = [
   { id: 'library', label: 'Library', Icon: Library },
   { id: 'trends', label: 'Trends', Icon: ChartLine },
   { id: 'evaluation', label: 'Evaluation', Icon: FlaskConical },
+  { id: 'versions', label: 'Versions', Icon: GitBranch },
 ]
 
 export default function TopNav() {

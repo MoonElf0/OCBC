@@ -2,11 +2,13 @@
  * Assemble a full verification result: computed rule checks + the judge's
  * scripted verdicts + a computed score. Pure, so tests and the UI agree.
  */
-import { SCENARIOS, FALLBACK, CORRECTIONS } from '../fixtures'
+import { SCENARIOS, FALLBACK, CORRECTIONS, EVAL_ANSWERS } from '../fixtures'
 import { CHECKS, bandFor } from './status'
 import { citationCheck, freshnessCheck, crossrefCheck } from './rules'
 
-const ALL = [...SCENARIOS, FALLBACK, ...Object.values(CORRECTIONS)]
+// Every scripted answer the verifier can score. EVAL_ANSWERS are reachable
+// only from the release check, never from the workspace agent.
+const ALL = [...SCENARIOS, FALLBACK, ...Object.values(CORRECTIONS), ...EVAL_ANSWERS]
 
 export function scenarioById(id) {
   return ALL.find((s) => s.id === id) ?? FALLBACK

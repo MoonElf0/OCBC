@@ -524,6 +524,432 @@ export const CORRECTIONS = {
   }),
 }
 
+// ─── Agent release check: v1 vs v2 on a fixed test set ─────────────────────
+// The same verifier scores both versions on the same questions; the
+// comparison (src/lib/releaseCheck.js) is computed from those results. Agent v1
+// is the agent in the workspace — its answers to the five demo questions are
+// the SCENARIOS above. Agent v2 is a candidate release that exists only here:
+// it is never used to answer questions in the workspace.
+
+export const AGENT_VERSIONS = [
+  {
+    id: 'v1',
+    label: 'Agent v1',
+    stage: 'In production',
+    summary: 'The agent employees use today. Every answer in the workspace comes from v1.',
+    changes: [],
+  },
+  {
+    id: 'v2',
+    label: 'Agent v2',
+    stage: 'Release candidate',
+    summary: 'Built from the Trends recommendations. Not used in the workspace until it passes this check.',
+    changes: [
+      'Retrieval index excludes superseded documents',
+      'Prompt: quote numeric limits verbatim and say when approval is needed',
+      'Prompt: answer only for the product named in the question',
+      'Prompt: decline when no approved source is found',
+      'New step: summarise long passages before answering',
+    ],
+  },
+]
+
+const DECLINE_CHECKS = [
+  { id: 'groundedness', status: 'na', short: 'No policy claims to check', summary: 'The reply makes no factual policy claims.', evidence: [{ kind: 'search' }] },
+  { id: 'consistency', status: 'pass', short: 'Matches the empty search result', summary: 'Consistent with the empty retrieval result.', evidence: [{ kind: 'search' }] },
+  { id: 'intent', status: 'pass', short: 'Says plainly there is no policy', summary: 'The reply addresses the question by saying no approved policy covers it, rather than guessing.', evidence: [{ kind: 'question' }] },
+]
+
+// Answers written for the test set. v1's answers to the five demo questions
+// are reused from SCENARIOS, so the test set and the workspace agree.
+export const EVAL_ANSWERS = [
+  // SME · limit — v2 retrieves the current standard, not the superseded circular.
+  scenario({
+    id: 'eval-sme-limit-v2',
+    topic: 'sme',
+    question: "What's the approval limit for a cross-border transfer under the SME lending policy?",
+    answer: {
+      text: 'A relationship manager can approve a single SME cross-border transfer of up to SGD 200,000. Transfers above the relationship manager limit require approval from the Business Banking Credit Committee before release.',
+      citations: ['DOC-SME-112', 'DOC-SME-104'],
+    },
+    verification: {
+      explanation: 'Both claims match current policy. The limit comes from the current Cross-Border Payments Standard, not the superseded circular.',
+      headline: 'Safe to use',
+      retrieved: [],
+      claims: [
+        { quote: 'A relationship manager can approve a single SME cross-border transfer of up to SGD 200,000', status: 'supported', check: 'groundedness', source: passageOf('DOC-SME-112', '§3.1'), reason: 'Matches the current relationship manager limit.' },
+        { quote: 'Transfers above the relationship manager limit require approval from the Business Banking Credit Committee before release', status: 'supported', check: 'groundedness', source: passageOf('DOC-SME-104', '§5.2'), reason: 'Matches the escalation rule.' },
+      ],
+      checks: [
+        { id: 'groundedness', status: 'pass', short: 'Both claims backed by current policy', summary: '2 of 2 claims are supported by a current approved source.', evidence: [passageOf('DOC-SME-112', '§3.1'), passageOf('DOC-SME-104', '§5.2')] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-SME-112', '§3.1')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'States the limit asked for and the escalation path.', evidence: [{ kind: 'question' }] },
+      ],
+    },
+  }),
+
+  // SME · cut-off — v1 quotes the superseded circular's 3:00 pm.
+  scenario({
+    id: 'eval-sme-cutoff-v1',
+    topic: 'sme',
+    question: "What's the same-day processing cut-off for SME cross-border transfers?",
+    answer: {
+      text: 'Transfers approved before 3:00 pm Singapore time are targeted for same-day processing, subject to correspondent bank availability.',
+      citations: ['DOC-SME-087'],
+    },
+    verification: {
+      explanation: 'The 3:00 pm cut-off comes only from a circular that was superseded in May 2026. The current standard sets 2:30 pm.',
+      headline: 'Cut-off is outdated',
+      retrieved: ['DOC-SME-112'],
+      claims: [
+        {
+          quote: 'Transfers approved before 3:00 pm Singapore time are targeted for same-day processing',
+          status: 'unsupported',
+          check: 'freshness',
+          source: passageOf('DOC-SME-087', '§4'),
+          counter: passageOf('DOC-SME-112', '§3.4'),
+          short: '3:00 pm cut-off is outdated — now 2:30 pm',
+          reason: 'No current approved source supports 3:00 pm. The only passage stating it is in a superseded circular; the current Cross-Border Payments Standard sets 2:30 pm.',
+        },
+      ],
+      checks: [
+        { id: 'groundedness', status: 'fail', short: 'Claim rests on a replaced circular', summary: '0 of 1 claims is supported by a current approved source.', evidence: [passageOf('DOC-SME-087', '§4')] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'The answer does not contradict itself. The cut-off discrepancy is reported under cross-referencing.', evidence: [passageOf('DOC-SME-087', '§4')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'The question asks for the cut-off. The answer states one.', evidence: [{ kind: 'question' }] },
+      ],
+    },
+  }),
+  scenario({
+    id: 'eval-sme-cutoff-v2',
+    topic: 'sme',
+    question: "What's the same-day processing cut-off for SME cross-border transfers?",
+    answer: {
+      text: 'Transfers approved before 2:30 pm Singapore time are targeted for same-day processing. Same-day processing depends on correspondent bank cut-offs.',
+      citations: ['DOC-SME-112'],
+    },
+    verification: {
+      explanation: 'Both claims match the current Cross-Border Payments Standard.',
+      headline: 'Safe to use',
+      retrieved: [],
+      claims: [
+        { quote: 'Transfers approved before 2:30 pm Singapore time are targeted for same-day processing', status: 'supported', check: 'groundedness', source: passageOf('DOC-SME-112', '§3.4'), reason: 'Matches the current processing cut-off.' },
+        { quote: 'Same-day processing depends on correspondent bank cut-offs', status: 'supported', check: 'groundedness', source: passageOf('DOC-SME-112', '§3.4'), reason: 'Matches the processing rule.' },
+      ],
+      checks: [
+        { id: 'groundedness', status: 'pass', short: 'Both claims backed', summary: '2 of 2 claims are supported by a current approved source.', evidence: [passageOf('DOC-SME-112', '§3.4')] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-SME-112', '§3.4')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'States the cut-off asked for.', evidence: [{ kind: 'question' }] },
+      ],
+    },
+  }),
+
+  // KYC · documents — v2's new summarising step changes the 25% threshold. A regression.
+  scenario({
+    id: 'eval-kyc-ubo-v2',
+    topic: 'kyc',
+    question: 'What documents do I need to verify the beneficial owners of a new SME client?',
+    answer: {
+      text: "For each beneficial owner holding 20% or more of the company, collect a government-issued photo ID and proof of residential address dated within the last three months. You also need the company's latest business profile from the company registry, and the ownership structure must be confirmed in writing by a director.",
+      citations: ['DOC-KYC-031'],
+    },
+    verification: {
+      explanation: 'Three of four claims match the due-diligence procedure, but the ownership threshold is wrong: the procedure says 25%, the answer says 20%. v1 stated this correctly.',
+      headline: 'Wrong ownership threshold',
+      retrieved: [],
+      claims: [
+        {
+          quote: 'each beneficial owner holding 20% or more of the company',
+          status: 'conflicting',
+          check: 'consistency',
+          source: passageOf('DOC-KYC-031', '§4.1'),
+          counter: passageOf('DOC-KYC-031', '§4.1'),
+          short: 'Says 20% — policy threshold is 25%',
+          reason: 'The procedure identifies beneficial owners at 25% or more. The answer restates the threshold as 20%, so it contradicts its own cited source.',
+        },
+        { quote: 'collect a government-issued photo ID and proof of residential address dated within the last three months', status: 'supported', check: 'groundedness', source: passageOf('DOC-KYC-031', '§4.2'), reason: 'Matches the identity evidence requirement.' },
+        { quote: "the company's latest business profile from the company registry", status: 'supported', check: 'groundedness', source: passageOf('DOC-KYC-031', '§4.3'), reason: 'Matches the company records requirement.' },
+        { quote: 'the ownership structure must be confirmed in writing by a director', status: 'supported', check: 'groundedness', source: passageOf('DOC-KYC-031', '§4.4'), reason: 'Matches the ownership confirmation requirement.' },
+      ],
+      checks: [
+        { id: 'groundedness', status: 'warning', short: '3 of 4 claims backed', summary: '3 of 4 claims are supported. 1 contradicts the cited source.', evidence: [passageOf('DOC-KYC-031', '§4.1'), passageOf('DOC-KYC-031', '§4.2')] },
+        { id: 'consistency', status: 'fail', short: 'Says 20% — procedure says 25%', summary: 'The answer gives a 20% ownership threshold; the cited procedure sets 25%.', evidence: [passageOf('DOC-KYC-031', '§4.1')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'The question asks which documents are needed. The answer lists them.', evidence: [{ kind: 'question' }] },
+      ],
+    },
+  }),
+
+  // KYC · address — both versions answer correctly.
+  scenario({
+    id: 'eval-kyc-address-v1',
+    topic: 'kyc',
+    question: "How recent must a beneficial owner's proof of address be?",
+    answer: {
+      text: 'Proof of residential address must be dated within the last three months, alongside a government-issued photo ID for each beneficial owner.',
+      citations: ['DOC-KYC-031'],
+    },
+    verification: {
+      explanation: 'Both claims match the identity evidence requirement in the current due-diligence procedure.',
+      headline: 'Safe to use',
+      retrieved: [],
+      claims: [
+        { quote: 'Proof of residential address must be dated within the last three months', status: 'supported', check: 'groundedness', source: passageOf('DOC-KYC-031', '§4.2'), reason: 'Matches the three-month requirement.' },
+        { quote: 'a government-issued photo ID for each beneficial owner', status: 'supported', check: 'groundedness', source: passageOf('DOC-KYC-031', '§4.2'), reason: 'Matches the identity evidence requirement.' },
+      ],
+      checks: [
+        { id: 'groundedness', status: 'pass', short: 'Both claims backed', summary: '2 of 2 claims are supported.', evidence: [passageOf('DOC-KYC-031', '§4.2')] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-KYC-031', '§4.2')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'States how recent the proof of address must be.', evidence: [{ kind: 'question' }] },
+      ],
+    },
+  }),
+  scenario({
+    id: 'eval-kyc-address-v2',
+    topic: 'kyc',
+    question: "How recent must a beneficial owner's proof of address be?",
+    answer: {
+      text: 'Each beneficial owner must provide proof of residential address dated within the last three months, together with a government-issued photo ID.',
+      citations: ['DOC-KYC-031'],
+    },
+    verification: {
+      explanation: 'Both claims match the identity evidence requirement in the current due-diligence procedure.',
+      headline: 'Safe to use',
+      retrieved: [],
+      claims: [
+        { quote: 'proof of residential address dated within the last three months', status: 'supported', check: 'groundedness', source: passageOf('DOC-KYC-031', '§4.2'), reason: 'Matches the three-month requirement.' },
+        { quote: 'a government-issued photo ID', status: 'supported', check: 'groundedness', source: passageOf('DOC-KYC-031', '§4.2'), reason: 'Matches the identity evidence requirement.' },
+      ],
+      checks: [
+        { id: 'groundedness', status: 'pass', short: 'Both claims backed', summary: '2 of 2 claims are supported.', evidence: [passageOf('DOC-KYC-031', '§4.2')] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-KYC-031', '§4.2')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'States how recent the proof of address must be.', evidence: [{ kind: 'question' }] },
+      ],
+    },
+  }),
+
+  // FX · override — v2 quotes the 10 bps limit verbatim.
+  scenario({
+    id: 'eval-fx-override-v2',
+    topic: 'fx',
+    question: 'Can I override the FX rate for a corporate client without approval?',
+    answer: {
+      text: 'Only within your authority. Relationship managers may apply FX rate overrides of up to 10 basis points. Any override above 10 basis points requires prior approval from the Treasury desk head. Every override must be recorded in the deal ticket with a reason code.',
+      citations: ['DOC-FX-019'],
+    },
+    verification: {
+      explanation: 'All three claims match the FX Rate Override Guidelines.',
+      headline: 'Safe to use',
+      retrieved: [],
+      claims: [
+        { quote: 'Relationship managers may apply FX rate overrides of up to 10 basis points', status: 'supported', check: 'groundedness', source: passageOf('DOC-FX-019', '§2.1'), reason: 'Matches the authority limit.' },
+        { quote: 'Any override above 10 basis points requires prior approval from the Treasury desk head', status: 'supported', check: 'groundedness', source: passageOf('DOC-FX-019', '§2.2'), reason: 'Matches the approval rule.' },
+        { quote: 'Every override must be recorded in the deal ticket with a reason code', status: 'supported', check: 'groundedness', source: passageOf('DOC-FX-019', '§3.1'), reason: 'Matches the record-keeping rule.' },
+      ],
+      checks: [
+        { id: 'groundedness', status: 'pass', short: 'All 3 claims backed', summary: '3 of 3 claims are supported.', evidence: [passageOf('DOC-FX-019', '§2.1'), passageOf('DOC-FX-019', '§2.2'), passageOf('DOC-FX-019', '§3.1')] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with the guideline.', evidence: [passageOf('DOC-FX-019', '§2.2')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'Answers whether approval is needed.', evidence: [{ kind: 'question' }] },
+      ],
+    },
+  }),
+
+  // FX · approver — v1 invents approval after booking.
+  scenario({
+    id: 'eval-fx-approver-v1',
+    topic: 'fx',
+    question: 'Who approves an FX rate override above 10 basis points?',
+    answer: {
+      text: 'Any override above 10 basis points requires approval from the Treasury desk head. The Treasury desk head can give that approval after the deal is booked.',
+      citations: ['DOC-FX-019'],
+    },
+    verification: {
+      explanation: 'The approver is right, but the guideline requires approval before the override, not after. No approved document allows approval after booking.',
+      headline: 'Approval timing is wrong',
+      retrieved: [],
+      claims: [
+        { quote: 'Any override above 10 basis points requires approval from the Treasury desk head', status: 'supported', check: 'groundedness', source: passageOf('DOC-FX-019', '§2.2'), reason: 'Matches the approval rule.' },
+        {
+          quote: 'The Treasury desk head can give that approval after the deal is booked',
+          status: 'unsupported',
+          check: 'groundedness',
+          source: passageOf('DOC-FX-019', '§2.2'),
+          nearest: true,
+          short: 'Approval after booking isn’t in any policy',
+          reason: 'No retrieved passage allows approval after the deal is booked. The nearest passage, shown here, requires prior approval.',
+        },
+      ],
+      checks: [
+        { id: 'groundedness', status: 'warning', short: '1 of 2 claims backed', summary: '1 of 2 claims is supported. 1 has no supporting passage.', evidence: [passageOf('DOC-FX-019', '§2.2')] },
+        { id: 'consistency', status: 'warning', short: 'Timing contradicts “prior approval”', summary: 'The answer allows approval after booking; the guideline requires prior approval.', evidence: [passageOf('DOC-FX-019', '§2.2')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'Names who approves.', evidence: [{ kind: 'question' }] },
+      ],
+    },
+  }),
+  scenario({
+    id: 'eval-fx-approver-v2',
+    topic: 'fx',
+    question: 'Who approves an FX rate override above 10 basis points?',
+    answer: {
+      text: 'Any override above 10 basis points requires prior approval from the Treasury desk head. Every override must be recorded in the deal ticket with a reason code.',
+      citations: ['DOC-FX-019'],
+    },
+    verification: {
+      explanation: 'Both claims match the FX Rate Override Guidelines.',
+      headline: 'Safe to use',
+      retrieved: [],
+      claims: [
+        { quote: 'Any override above 10 basis points requires prior approval from the Treasury desk head', status: 'supported', check: 'groundedness', source: passageOf('DOC-FX-019', '§2.2'), reason: 'Matches the approval rule.' },
+        { quote: 'Every override must be recorded in the deal ticket with a reason code', status: 'supported', check: 'groundedness', source: passageOf('DOC-FX-019', '§3.1'), reason: 'Matches the record-keeping rule.' },
+      ],
+      checks: [
+        { id: 'groundedness', status: 'pass', short: 'Both claims backed', summary: '2 of 2 claims are supported.', evidence: [passageOf('DOC-FX-019', '§2.2'), passageOf('DOC-FX-019', '§3.1')] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with the guideline.', evidence: [passageOf('DOC-FX-019', '§2.2')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'Names who approves.', evidence: [{ kind: 'question' }] },
+      ],
+    },
+  }),
+
+  // Fees · waiver — v2 drops the off-topic sentence; the matrix is still overdue.
+  scenario({
+    id: 'eval-fees-waiver-v2',
+    topic: 'fees',
+    question: 'Can a branch manager waive the annual fee on an SME business account?',
+    answer: {
+      text: 'Yes. A branch manager can waive account service fees of up to SGD 500 per account per year. Waivers above SGD 500 need approval from the area head.',
+      citations: ['DOC-OPS-045'],
+    },
+    verification: {
+      explanation: 'Both limits match the Fee Waiver Authority Matrix, but that document is 22 months old and past its 12-month review. No agent change fixes this; the document needs reviewing.',
+      headline: 'Right limits, outdated source',
+      retrieved: [],
+      claims: [
+        { quote: 'A branch manager can waive account service fees of up to SGD 500 per account per year', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 3'), short: 'SGD 500 limit — source overdue for review', reason: 'Matches the source, but the source is 22 months old and overdue for its annual review.' },
+        { quote: 'Waivers above SGD 500 need approval from the area head', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 4'), short: 'Area-head rule — source overdue', reason: 'Matches the source, but the source is overdue for review.' },
+      ],
+      checks: [
+        { id: 'groundedness', status: 'pass', short: 'Both claims match a source', summary: '2 of 2 claims match a source passage. Both rest on a document overdue for review.', evidence: [passageOf('DOC-OPS-045', 'Row 3'), passageOf('DOC-OPS-045', 'Row 4')] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-OPS-045', 'Row 4')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'Answers only about the SME business account asked about.', evidence: [{ kind: 'question' }] },
+      ],
+    },
+  }),
+
+  // Fees · cards — both versions answer correctly.
+  scenario({
+    id: 'eval-fees-cards-v1',
+    topic: 'fees',
+    question: 'Who handles annual fee reversals for retail credit cards?',
+    answer: {
+      text: 'Annual fee reversals for retail credit cards are handled by the Cards Service team.',
+      citations: ['DOC-CRD-022'],
+    },
+    verification: {
+      explanation: 'The claim matches the current Cards Servicing Handbook.',
+      headline: 'Safe to use',
+      retrieved: [],
+      claims: [{ quote: 'Annual fee reversals for retail credit cards are handled by the Cards Service team', status: 'supported', check: 'groundedness', source: passageOf('DOC-CRD-022', '§7.2'), reason: 'Matches the handbook.' }],
+      checks: [
+        { id: 'groundedness', status: 'pass', short: 'Claim backed by policy', summary: '1 of 1 claims is supported.', evidence: [passageOf('DOC-CRD-022', '§7.2')] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-CRD-022', '§7.2')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'Names the team asked about.', evidence: [{ kind: 'question' }] },
+      ],
+    },
+  }),
+  scenario({
+    id: 'eval-fees-cards-v2',
+    topic: 'fees',
+    question: 'Who handles annual fee reversals for retail credit cards?',
+    answer: {
+      text: 'The Cards Service team handles annual fee reversals for retail credit cards.',
+      citations: ['DOC-CRD-022'],
+    },
+    verification: {
+      explanation: 'The claim matches the current Cards Servicing Handbook.',
+      headline: 'Safe to use',
+      retrieved: [],
+      claims: [{ quote: 'The Cards Service team handles annual fee reversals for retail credit cards', status: 'supported', check: 'groundedness', source: passageOf('DOC-CRD-022', '§7.2'), reason: 'Matches the handbook.' }],
+      checks: [
+        { id: 'groundedness', status: 'pass', short: 'Claim backed by policy', summary: '1 of 1 claims is supported.', evidence: [passageOf('DOC-CRD-022', '§7.2')] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-CRD-022', '§7.2')] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'Names the team asked about.', evidence: [{ kind: 'question' }] },
+      ],
+    },
+  }),
+
+  // Collateral — no approved policy exists. v1 answers anyway; v2 declines.
+  scenario({
+    id: 'eval-collateral-crypto-v2',
+    topic: 'collateral',
+    question: 'Can an SME pledge crypto assets as collateral for a loan?',
+    answer: {
+      text: "I couldn't find an approved policy on accepting crypto or digital assets as collateral, so I can't confirm this. Refer the question to Business Banking Credit Risk before discussing it with the client.",
+      citations: [],
+    },
+    verification: {
+      explanation: 'The reply makes no policy claims. It says plainly that no approved policy covers this, which is what retrieval found.',
+      headline: 'Declines — no policy exists',
+      retrieved: [],
+      claims: [],
+      checks: DECLINE_CHECKS,
+    },
+  }),
+  scenario({
+    id: 'eval-collateral-gold-v1',
+    topic: 'collateral',
+    question: 'Can an SME pledge a gold ETF as collateral for a term loan?',
+    answer: {
+      text: 'Yes. Gold ETFs are accepted as collateral at a 30% haircut, and the units must be held in a bank custody account.',
+      citations: [],
+    },
+    verification: {
+      noSource: true,
+      explanation: 'No approved document covers gold or ETF collateral, and the answer cites nothing. Both claims are unverified.',
+      headline: 'No policy covers this',
+      retrieved: [],
+      search: { documentsSearched: 7, query: 'gold etf collateral haircut custody', topMatch: 0.17, threshold: 0.5 },
+      claims: [
+        { quote: 'Gold ETFs are accepted as collateral at a 30% haircut', status: 'no-source', check: 'groundedness', source: null, short: 'No policy on gold ETF collateral', reason: 'No source found. Retrieval returned no passage above the relevance threshold.' },
+        { quote: 'the units must be held in a bank custody account', status: 'no-source', check: 'groundedness', source: null, short: 'Custody rule not found', reason: 'No source found. No approved document mentions custody accounts.' },
+      ],
+      checks: [
+        { id: 'groundedness', status: 'fail', short: '0 of 2 claims backed', summary: '0 of 2 claims are supported. No approved passage was retrieved.', evidence: [{ kind: 'search' }] },
+        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'The answer does not contradict itself.', evidence: [{ kind: 'search' }] },
+        { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'The question asks whether gold ETFs are acceptable collateral. The answer addresses that.', evidence: [{ kind: 'question' }] },
+      ],
+    },
+  }),
+  scenario({
+    id: 'eval-collateral-gold-v2',
+    topic: 'collateral',
+    question: 'Can an SME pledge a gold ETF as collateral for a term loan?',
+    answer: {
+      text: "I couldn't find an approved policy on accepting gold or ETF units as collateral, so I can't confirm this. Refer the question to Business Banking Credit Risk.",
+      citations: [],
+    },
+    verification: {
+      explanation: 'The reply makes no policy claims. It says plainly that no approved policy covers this, which is what retrieval found.',
+      headline: 'Declines — no policy exists',
+      retrieved: [],
+      claims: [],
+      checks: DECLINE_CHECKS,
+    },
+  }),
+]
+
+// Two questions per topic: the demo question, and one more. Deliberately
+// weighted to known failure cases, so its rates run higher than Trends.
+export const EVAL_SET = [
+  { id: 'q-sme-limit', topic: 'sme', question: "What's the approval limit for a cross-border transfer under the SME lending policy?", answers: { v1: 'sme-limit', v2: 'eval-sme-limit-v2' } },
+  { id: 'q-sme-cutoff', topic: 'sme', question: "What's the same-day processing cut-off for SME cross-border transfers?", answers: { v1: 'eval-sme-cutoff-v1', v2: 'eval-sme-cutoff-v2' } },
+  { id: 'q-kyc-ubo', topic: 'kyc', question: 'What documents do I need to verify the beneficial owners of a new SME client?', answers: { v1: 'kyc-ubo', v2: 'eval-kyc-ubo-v2' } },
+  { id: 'q-kyc-address', topic: 'kyc', question: "How recent must a beneficial owner's proof of address be?", answers: { v1: 'eval-kyc-address-v1', v2: 'eval-kyc-address-v2' } },
+  { id: 'q-fx-override', topic: 'fx', question: 'Can I override the FX rate for a corporate client without approval?', answers: { v1: 'fx-override', v2: 'eval-fx-override-v2' } },
+  { id: 'q-fx-approver', topic: 'fx', question: 'Who approves an FX rate override above 10 basis points?', answers: { v1: 'eval-fx-approver-v1', v2: 'eval-fx-approver-v2' } },
+  { id: 'q-fees-waiver', topic: 'fees', question: 'Can a branch manager waive the annual fee on an SME business account?', answers: { v1: 'fees-waiver', v2: 'eval-fees-waiver-v2' } },
+  { id: 'q-fees-cards', topic: 'fees', question: 'Who handles annual fee reversals for retail credit cards?', answers: { v1: 'eval-fees-cards-v1', v2: 'eval-fees-cards-v2' } },
+  { id: 'q-collateral-crypto', topic: 'collateral', question: 'Can an SME pledge crypto assets as collateral for a loan?', answers: { v1: 'collateral-crypto', v2: 'eval-collateral-crypto-v2' } },
+  { id: 'q-collateral-gold', topic: 'collateral', question: 'Can an SME pledge a gold ETF as collateral for a term loan?', answers: { v1: 'eval-collateral-gold-v1', v2: 'eval-collateral-gold-v2' } },
+]
+
 // ─── Reviewer outcomes, last 4 weeks (7 Sep – 4 Oct 2026) ──────────────────
 // Every review is tagged with a decision and a root cause. Counts per topic
 // add up to that topic's review volume in WEEKLY — a test enforces this.
