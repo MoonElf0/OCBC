@@ -31,7 +31,7 @@ export default function VerifyAnswerPage() {
         <div className="mx-auto w-full max-w-[780px] space-y-6 px-4 pt-8 pb-10 sm:px-6">
           <header className="rise-in">
             <div className="glass-soft mb-5 inline-flex items-center gap-2 rounded-full py-1.5 pr-3 pl-1.5 text-body-sm text-carbon">
-              <span className="grid size-6 place-items-center rounded-full bg-ink text-white">
+              <span className="grid size-6 place-items-center rounded-full bg-inverse text-white">
                 <ClipboardPaste size={13} strokeWidth={2.25} />
               </span>
               For answers from any AI tool, not just the Policy Assistant
@@ -63,13 +63,13 @@ export default function VerifyAnswerPage() {
 
 function BackendNotice() {
   return (
-    <div role="note" className="rise-in flex gap-3 rounded-2xl border border-dashed border-black/15 bg-bone/70 p-4">
+    <div role="note" className="rise-in flex gap-3 rounded-2xl border border-dashed border-line/15 bg-bone/70 p-4">
       <ServerOff size={18} className="mt-0.5 shrink-0 text-status-unknown" aria-hidden="true" />
       <div className="text-body-sm text-carbon">
         <div className="font-semibold text-ink">Needs backend mode</div>
         <p className="mt-0.5">
           Checking an answer you paste in runs the backend’s verification pipeline, which this offline demo does not have. Nothing here is scripted, so it stays switched off rather than showing a made-up result. Start backend mode with{' '}
-          <code className="rounded-lg bg-white/80 px-1.5 py-0.5 text-caption">npm run dev:backend</code>.
+          <code className="rounded-lg bg-surface/80 px-1.5 py-0.5 text-caption">npm run dev:backend</code>.
         </p>
       </div>
     </div>
@@ -104,7 +104,7 @@ function SubmitForm() {
     }
   }
 
-  const field = 'w-full rounded-2xl border border-black/10 bg-white/80 px-3.5 py-2.5 text-body-sm text-ink placeholder:text-smoke focus:border-ocbc-red/40 focus:outline-none disabled:cursor-not-allowed disabled:bg-black/[0.03]'
+  const field = 'w-full rounded-2xl border border-line/10 bg-surface/80 px-3.5 py-2.5 text-body-sm text-ink placeholder:text-smoke focus:border-ocbc-red/40 focus:outline-none disabled:cursor-not-allowed disabled:bg-line/[0.03]'
   const label = 'text-caption font-semibold text-carbon'
 
   return (
@@ -135,13 +135,13 @@ function SubmitForm() {
         </label>
         <input id="va-c" value={cites} onChange={(e) => setCites(e.target.value)} disabled={!BACKEND} placeholder="e.g. DOC-FX-019 §2.1, DOC-SME-104" className={`mt-1.5 ${field}`} />
       </div>
-      <div className="flex flex-wrap items-center gap-3 border-t border-black/[0.06] pt-4">
+      <div className="flex flex-wrap items-center gap-3 border-t border-line/[0.06] pt-4">
         {BACKEND && (
           <button type="button" onClick={() => (setQ(EXAMPLE.question), setA(EXAMPLE.answer), setCites(EXAMPLE.citations))} className="inline-flex items-center gap-1.5 text-caption font-medium text-carbon underline underline-offset-4 hover:text-ink">
             <Sparkles size={13} aria-hidden="true" /> Fill in an example
           </button>
         )}
-        <button type="submit" disabled={!ready} className="ml-auto inline-flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-body-sm font-medium text-white shadow-md transition-all hover:bg-carbon active:scale-[0.98] disabled:bg-black/10 disabled:text-smoke disabled:shadow-none">
+        <button type="submit" disabled={!ready} className="ml-auto inline-flex items-center gap-2 rounded-full bg-inverse px-5 py-2.5 text-body-sm font-medium text-white shadow-md transition-all hover:bg-inverse-hover active:scale-[0.98] disabled:bg-line/10 disabled:text-smoke disabled:shadow-none">
           {sending ? <LoaderCircle size={16} className="spin" aria-hidden="true" /> : <ShieldCheck size={16} aria-hidden="true" />} Verify answer
         </button>
       </div>

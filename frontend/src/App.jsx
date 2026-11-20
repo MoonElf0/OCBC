@@ -21,13 +21,13 @@ export default function App() {
       <TopNav />
       <main className="relative z-10 min-h-0 flex-1 overflow-hidden">
         {state.view === 'workspace' && (
-          <div className="mx-auto flex h-full max-w-[1440px] gap-4 px-2 pb-2 lg:px-4 lg:pb-4">
+          <div className="mx-auto flex h-full max-w-[1440px] gap-4 px-2 pt-2 pb-2 lg:px-4 lg:pt-4 lg:pb-4">
             <Chat />
             {paneOn('workspace') && <VerifyPane />}
           </div>
         )}
         {state.view === 'verify' && (
-          <div className="mx-auto flex h-full max-w-[1440px] gap-4 px-2 pb-2 lg:px-4 lg:pb-4">
+          <div className="mx-auto flex h-full max-w-[1440px] gap-4 px-2 pt-2 pb-2 lg:px-4 lg:pt-4 lg:pb-4">
             <VerifyAnswerPage />
             {paneOn('verify') && <VerifyPane />}
           </div>

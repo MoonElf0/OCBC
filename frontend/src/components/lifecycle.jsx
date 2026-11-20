@@ -39,7 +39,7 @@ export function StateCard({ m }) {
   const t = TONES[st.tone]
   const ch = m.evidenceChanged
   return (
-    <section aria-label="Answer status" className="rise-in flex items-start gap-3 rounded-2xl border border-black/[0.06] bg-white/70 p-3.5">
+    <section aria-label="Answer status" className="rise-in flex items-start gap-3 rounded-2xl border border-line/[0.06] bg-surface/70 p-3.5">
       <span className={`grid size-8 shrink-0 place-items-center rounded-xl ${t.surface} ${t.text}`} aria-hidden="true">
         <st.Icon size={16} strokeWidth={2.25} />
       </span>
@@ -67,7 +67,7 @@ export function PartialNotice({ assessment }) {
   if (!assessment?.partial) return null
   const reasons = [...new Set(assessment.unavailable.map((u) => u.reason.replace(/^Claims were split by sentence instead of by the model\. /, '')))]
   return (
-    <div className="rise-in flex gap-3 rounded-2xl border border-dashed border-black/15 bg-bone/70 p-3.5">
+    <div className="rise-in flex gap-3 rounded-2xl border border-dashed border-line/15 bg-bone/70 p-3.5">
       <CircleDashed size={18} className="mt-0.5 shrink-0 text-status-unknown" aria-hidden="true" />
       <div className="min-w-0 text-body-sm text-carbon">
         <div className="font-semibold text-ink">Partial assessment · not fully verified</div>
@@ -113,7 +113,7 @@ export function AssessmentHistory({ m }) {
         </h3>
         <span className="ml-auto text-caption text-carbon">{list.length}</span>
       </div>
-      <ol className="divide-y divide-black/[0.06] overflow-hidden rounded-2xl border border-black/[0.06] bg-white/70">
+      <ol className="divide-y divide-line/[0.06] overflow-hidden rounded-2xl border border-line/[0.06] bg-surface/70">
         {list.map((a, i) => (
           <li key={a.id} className="px-3.5 py-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -157,7 +157,7 @@ function Comparison({ before, after, text }) {
   const old = Object.fromEntries(before.result.claims.map((c) => [key(c), c]))
   const rows = after.result.claims.map((c) => ({ c, was: old[key(c)] }))
   return (
-    <div className="mt-3 rounded-2xl border border-black/[0.06] bg-white/70 p-3.5">
+    <div className="mt-3 rounded-2xl border border-line/[0.06] bg-surface/70 p-3.5">
       <div className="text-caption font-semibold text-smoke">Before → after re-verification</div>
       <ul className="mt-2 space-y-2">
         {rows.map(({ c, was }) => {
@@ -199,7 +199,7 @@ function Comparison({ before, after, text }) {
 
 export function AuditTrail({ events }) {
   return (
-    <ol className="rise-in mt-2 space-y-1.5 rounded-2xl bg-black/[0.03] p-3 text-caption text-carbon">
+    <ol className="rise-in mt-2 space-y-1.5 rounded-2xl bg-line/[0.03] p-3 text-caption text-carbon">
       {events.map((e) => (
         <li key={e.id} className="flex flex-wrap gap-x-2">
           <span className="text-smoke tabular-nums">{formatTime(e.at)}</span>

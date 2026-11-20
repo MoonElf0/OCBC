@@ -56,7 +56,7 @@ export default function AnswerText({ text, shown = text.length, claims = [], act
             style={{ animationDelay: `${i * 70}ms` }}
           >
             {numbers?.[p.claim.id] != null && (
-              <span className="mr-1 inline-grid size-[18px] -translate-y-px place-items-center rounded-full bg-ink align-middle text-[11px] leading-none font-semibold text-white tabular-nums" aria-hidden="true">
+              <span className="mr-1 inline-grid size-[18px] -translate-y-px place-items-center rounded-full bg-inverse align-middle text-[11px] leading-none font-semibold text-white tabular-nums" aria-hidden="true">
                 {numbers[p.claim.id]}
               </span>
             )}

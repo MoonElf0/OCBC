@@ -33,7 +33,7 @@ export default function Chat() {
   return (
     <section aria-label="Policy Assistant chat" className="relative flex min-h-0 min-w-0 flex-1 flex-col">
       <div ref={scroller} onScroll={onScroll} className="scroll-quiet min-h-0 flex-1 overflow-y-auto">
-        <div className={`mx-auto w-full max-w-[780px] px-4 sm:px-6 ${empty ? 'flex min-h-full flex-col py-8' : 'space-y-7 pt-8 pb-6'}`}>
+        <div className={`mx-auto w-full max-w-[780px] px-4 sm:px-6 ${empty ? 'flex min-h-full flex-col py-8' : 'space-y-7 pt-3 pb-6'}`}>
           {empty ? <Welcome /> : messages.map((m) => (m.kind === 'user' ? <UserBubble key={m.id} text={m.text} /> : <AnswerBubble key={m.id} m={m} />))}
         </div>
       </div>
@@ -44,8 +44,8 @@ export default function Chat() {
 
 function AgentAvatar() {
   return (
-    <span className="glass-soft hidden size-9 shrink-0 place-items-center rounded-full text-carbon sm:grid" aria-hidden="true">
-      <Sparkles size={16} strokeWidth={2} />
+    <span className="glass hidden size-10 shrink-0 place-items-center rounded-2xl text-carbon sm:grid" aria-hidden="true">
+      <Sparkles size={17} strokeWidth={2} />
     </span>
   )
 }
@@ -73,7 +73,7 @@ function Welcome() {
               disabled={state.messages.some((m) => m.phase === 'thinking' || m.phase === 'streaming')}
               className={`glass group flex items-center gap-3.5 rounded-2xl p-3.5 text-left transition-transform hover:-translate-y-0.5 active:scale-[0.99] ${i === 0 ? 'sm:col-span-2' : ''}`}
             >
-              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-white to-ocbc-red-tint text-ocbc-red ring-1 ring-white">
+              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-surface to-ocbc-red-tint text-ocbc-red ring-1 ring-surface">
                 <Icon size={20} strokeWidth={1.75} />
               </span>
               <span className="min-w-0 flex-1">
@@ -92,7 +92,7 @@ function Welcome() {
 function UserBubble({ text }) {
   return (
     <div className="rise-in flex justify-end">
-      <div className="max-w-[560px] rounded-3xl rounded-br-lg bg-ink px-5 py-3 text-body text-white shadow-md">{text}</div>
+      <div className="user-bubble max-w-[560px] rounded-3xl rounded-br-lg px-5 py-3 text-body font-medium text-ink">{text}</div>
     </div>
   )
 }
@@ -108,7 +108,19 @@ function AnswerBubble({ m }) {
     <article aria-label={`Answer to: ${m.question}`} className="rise-in flex gap-3">
       <AgentAvatar />
       <div className="min-w-0 flex-1">
-        <div className={`glass rounded-3xl rounded-tl-lg px-5 py-4 transition-shadow ${open ? 'ring-2 ring-ocbc-red/25' : ''}`}>
+        <div className={`glass rounded-3xl rounded-tl-lg px-5 pt-3.5 pb-4 transition-shadow ${open ? 'ring-2 ring-line/15' : ''}`}>
+          <div className="mb-2 flex items-center gap-2 text-caption">
+            <span className="font-semibold text-carbon">Policy Assistant</span>
+            {TOPICS[scenarioById(m.scenarioId)?.topic] && (
+              <>
+                <span className="text-ash" aria-hidden="true">
+                  ·
+                </span>
+                <span className="text-smoke">{TOPICS[scenarioById(m.scenarioId).topic].name}</span>
+              </>
+            )}
+            {m.phase === 'streaming' && <span className="ml-auto text-smoke">Answering</span>}
+          </div>
           {m.phase === 'thinking' ? (
             <div className="flex items-center gap-2 py-1 text-body-sm text-smoke">
               <span className="flex gap-1" aria-hidden="true">
@@ -166,7 +178,7 @@ export function VerifyButton({ m, open }) {
           onClick={() => verifyAnswer(m)}
           className="glass inline-flex items-center gap-2 rounded-full py-1.5 pr-4 pl-2 text-body-sm font-medium text-ink transition-transform hover:-translate-y-px active:scale-[0.98]"
         >
-          <span className="grid size-6 place-items-center rounded-full bg-ink text-white">
+          <span className="grid size-6 place-items-center rounded-full bg-inverse text-white">
             <ShieldCheck size={14} strokeWidth={2.25} />
           </span>
           Verify
@@ -197,28 +209,31 @@ export function VerifyButton({ m, open }) {
       onClick={() => dispatch(open ? { type: 'closePane' } : { type: 'openPane', id: m.id })}
       aria-pressed={open}
       aria-label={`${open ? 'Hide' : 'Show'} verification: ${m.result.score ?? 'not scored'} out of 100, ${v.tag}`}
-      className={`inline-flex items-center gap-2 rounded-full py-1.5 pr-3.5 pl-1.5 text-body-sm font-medium transition-all active:scale-[0.98] ${open ? 'bg-ink text-white shadow-md' : 'glass text-ink hover:-translate-y-px'}`}
+      className={`inline-flex items-center gap-2 rounded-full py-1.5 pr-3.5 pl-1.5 text-body-sm font-medium transition-all active:scale-[0.98] ${open ? 'glass text-ink ring-1 ring-line/15' : 'glass text-ink hover:-translate-y-px'}`}
     >
       {m.result.score != null ? (
         <span className="relative grid place-items-center">
           <MiniRing value={m.result.score} tone={band.status} size={28} stroke={3} />
-          <span className={`absolute text-[10px] font-semibold tabular-nums ${open ? 'text-white' : 'text-ink'}`}>{m.result.score}</span>
+          <span className={`absolute text-[10px] font-semibold tabular-nums text-ink`}>{m.result.score}</span>
         </span>
       ) : (
         <span className="grid size-7 place-items-center">
           <CircleHelp size={16} />
         </span>
       )}
-      <span className={`inline-flex items-center gap-1 ${open ? 'text-white' : t.text}`}>
+      <span className="text-caption font-medium text-carbon tabular-nums">
+        {m.result.score != null ? `${m.result.score}/100 · ${band.label}` : band.label}
+      </span>
+      <span className={`inline-flex items-center gap-1 ${t.text}`}>
         <Icon size={15} strokeWidth={2.25} aria-hidden="true" />
         {v.tag}
       </span>
       {m.routed && !m.outcome && (
-        <span className={`inline-flex items-center gap-1 text-caption ${open ? 'text-white/80' : 'text-carbon'}`}>
+        <span className={`inline-flex items-center gap-1 text-caption text-carbon`}>
           <Inbox size={13} aria-hidden="true" /> With reviewer
         </span>
       )}
-      <span className={`ml-0.5 text-caption ${open ? 'text-white/70' : 'text-smoke'}`}>{open ? 'Hide' : 'Details'}</span>
+      <span className="ml-0.5 rounded-full bg-line/[0.05] px-2 py-0.5 text-caption text-carbon">{open ? 'Hide' : 'Details'}</span>
     </button>
   )
 }
@@ -301,7 +316,7 @@ function Composer({ compact }) {
             type="submit"
             disabled={!value.trim() || busy}
             aria-label="Send question"
-            className="grid size-11 shrink-0 place-items-center rounded-full bg-ink text-white shadow-md transition-all hover:bg-carbon active:scale-95 disabled:bg-black/10 disabled:text-white disabled:shadow-none"
+            className="grid size-11 shrink-0 place-items-center rounded-full bg-inverse text-white shadow-md transition-all hover:bg-inverse-hover active:scale-95 disabled:bg-line/10 disabled:text-white disabled:shadow-none"
           >
             <ArrowUp size={20} strokeWidth={2.25} />
           </button>

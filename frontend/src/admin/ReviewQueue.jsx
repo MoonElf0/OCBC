@@ -168,11 +168,11 @@ export default function ReviewQueue() {
                     role="tab"
                     aria-selected={active}
                     onClick={() => setTab(t)}
-                    className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-body-sm font-semibold transition-colors ${active ? 'bg-ink text-white shadow-md' : 'text-carbon hover:bg-white/70'}`}
+                    className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-body-sm font-semibold transition-colors ${active ? 'bg-inverse text-white shadow-md' : 'text-carbon hover:bg-surface/70'}`}
                   >
                     <Icon size={15} aria-hidden="true" />
                     {label}
-                    <span className={`rounded-full px-2 py-px text-caption tabular-nums ${active ? 'bg-white/20 text-white' : 'bg-black/[0.06] text-carbon'}`}>{counts[t]}</span>
+                    <span className={`rounded-full px-2 py-px text-caption tabular-nums ${active ? 'bg-white/20 text-white' : 'bg-line/[0.06] text-carbon'}`}>{counts[t]}</span>
                   </button>
                 )
               })}
@@ -400,7 +400,7 @@ function ReviewDetail({ item, onDecided }) {
             <AnswerText text={k.text} claims={v.claims} activeClaimId={focus} onClaim={jump} vocab="status" numbers={numbers} />
           </div>
           {flags.length > 0 && <p className="mt-2 text-caption text-smoke">Numbers match the flagged claims below. Select one to jump to its source.</p>}
-          <div className="mt-4 flex gap-3 rounded-2xl bg-black/[0.03] p-4">
+          <div className="mt-4 flex gap-3 rounded-2xl bg-line/[0.03] p-4">
             <ScanSearch size={18} className="mt-0.5 shrink-0 text-carbon" aria-hidden="true" />
             <div>
               <div className="text-caption font-semibold text-ink">Assessment AI summary</div>
@@ -467,11 +467,11 @@ function CaseHeader({ item, k }) {
             <span className="rq-dot size-2 rounded-full bg-ocbc-red" aria-hidden="true" /> Awaiting your review
           </span>
         ) : (
-          <span className="inline-flex items-center gap-2 rounded-full bg-black/[0.06] px-3 py-1 text-caption font-semibold text-carbon">
+          <span className="inline-flex items-center gap-2 rounded-full bg-line/[0.06] px-3 py-1 text-caption font-semibold text-carbon">
             <Check size={13} aria-hidden="true" /> Resolved
           </span>
         )}
-        <span className="inline-flex items-center gap-1 rounded-full bg-black/[0.05] px-2.5 py-1 text-caption font-semibold text-carbon tabular-nums">
+        <span className="inline-flex items-center gap-1 rounded-full bg-line/[0.05] px-2.5 py-1 text-caption font-semibold text-carbon tabular-nums">
           <Hash size={12} aria-hidden="true" />
           {item.id}
         </span>
@@ -489,7 +489,7 @@ function CaseHeader({ item, k }) {
         </div>
       </div>
       {item.note && (
-        <div className="mt-4 flex gap-3 rounded-2xl border border-black/[0.08] bg-white/70 p-4 dark:bg-white/[0.05]">
+        <div className="mt-4 flex gap-3 rounded-2xl border border-line/[0.08] bg-surface/70 p-4">
           <MessageSquare size={18} className="mt-0.5 shrink-0 text-carbon" aria-hidden="true" />
           <div>
             <div className="text-caption font-semibold text-smoke">{item.routedBy === 'auto' ? 'Employee note' : 'Why the employee escalated'}</div>
@@ -497,7 +497,7 @@ function CaseHeader({ item, k }) {
           </div>
         </div>
       )}
-      <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-black/[0.06] pt-4">
+      <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t border-line/[0.06] pt-4">
         <MetaItem Icon={User}>{item.askedBy}</MetaItem>
         <MetaItem Icon={TopicIcon}>{k.topicName}</MetaItem>
         {k.submitted && <MetaItem Icon={FileText}>Submitted for verification · not from the Policy Assistant</MetaItem>}
@@ -584,7 +584,7 @@ function WhyFlagged({ item, v }) {
               ))}
             </ul>
           )}
-          {stale.length > 0 && <p className="mt-3 border-t border-black/[0.06] pt-2 text-caption text-carbon">{plural(stale.length, 'document')} past review or superseded.</p>}
+          {stale.length > 0 && <p className="mt-3 border-t border-line/[0.06] pt-2 text-caption text-carbon">{plural(stale.length, 'document')} past review or superseded.</p>}
         </div>
       </div>
     </section>
@@ -640,7 +640,7 @@ function ClaimCard({ n, c, sc, text, focused, search, sameSearchAs }) {
   return (
     <article id={`flag-${c.id}`} className={`rq-glass scroll-mt-6 overflow-hidden rounded-3xl transition-shadow ${focused ? 'ring-2 ring-carbon/40' : ''}`}>
       <header className={`flex flex-wrap items-center gap-x-3 gap-y-2 border-l-4 px-5 py-4 ${t.border} ${t.surface}`}>
-        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-ink text-caption font-semibold text-white tabular-nums">{n}</span>
+        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-inverse text-caption font-semibold text-white tabular-nums">{n}</span>
         <ClaimPill status={c.status} />
         <span className="min-w-0 basis-full text-body-sm font-semibold text-ink sm:flex-1 sm:basis-0">{reason}</span>
       </header>
@@ -655,7 +655,7 @@ function ClaimCard({ n, c, sc, text, focused, search, sameSearchAs }) {
             {ctx.after}
           </p>
         </div>
-        <div className="border-t border-black/[0.06] bg-white/45 p-5 md:border-t-0 md:border-l dark:bg-white/[0.03]">
+        <div className="border-t border-line/[0.06] bg-surface/45 p-5 md:border-t-0 md:border-l">
           <PanelLabel Icon={BookOpen}>The source says</PanelLabel>
           {c.source ? (
             <div className="space-y-3">
@@ -726,7 +726,7 @@ function Evidence({ source, label }) {
           </span>
         </div>
       )}
-      <blockquote className="mt-2.5 rounded-xl border-l-[3px] border-carbon/25 bg-white/70 px-3.5 py-2.5 text-body-sm text-ink dark:bg-white/[0.04]">“{source.passage}”</blockquote>
+      <blockquote className="mt-2.5 rounded-xl border-l-[3px] border-carbon/25 bg-surface/70 px-3.5 py-2.5 text-body-sm text-ink">“{source.passage}”</blockquote>
       {source.screened && <p className="mt-1.5 text-caption text-carbon">Instruction-like text in this document was removed and never used as evidence.</p>}
       {section && (
         <>
@@ -735,7 +735,7 @@ function Evidence({ source, label }) {
             {open ? 'Hide full section' : 'Read full section'}
           </button>
           {open && (
-            <div className="rise-in mt-1 rounded-xl border border-black/[0.06] bg-white/60 p-3 text-body-sm dark:bg-white/[0.04]">
+            <div className="rise-in mt-1 rounded-xl border border-line/[0.06] bg-surface/60 p-3 text-body-sm">
               <p className="text-carbon">
                 <span className="font-semibold text-ink">
                   {section.id} {section.heading}.
@@ -819,7 +819,7 @@ function ScoreCard({ v, flags }) {
           <div className="mt-1 text-caption text-smoke">{verdict.action}</div>
         </div>
       </div>
-      <dl className="mt-4 grid grid-cols-3 divide-x divide-black/[0.06] rounded-2xl bg-black/[0.03] py-3 text-center">
+      <dl className="mt-4 grid grid-cols-3 divide-x divide-line/[0.06] rounded-2xl bg-line/[0.03] py-3 text-center">
         {[
           [`${flags.length}/${v.claims.length}`, 'Claims flagged', 'text-status-unsupported', Flag],
           [`${sourced}/${v.claims.length}`, 'Have a source', 'text-status-verified', BookOpen],
@@ -932,17 +932,17 @@ function Decision({ item, sc, k, v, flags, onDecided }) {
               role="radio"
               aria-checked={on}
               onClick={() => (setDecision(on ? null : id), setTried(false), setAck(false))}
-              className={`flex items-center gap-3 rounded-2xl border-2 px-3 ${!decision || on ? 'py-2.5' : 'py-1.5'} text-left transition-colors ${on ? 'border-ink bg-white shadow-md dark:bg-white/10' : 'border-transparent bg-white/55 hover:border-black/15 dark:bg-white/[0.04]'}`}
+              className={`flex items-center gap-3 rounded-2xl border-2 px-3 ${!decision || on ? 'py-2.5' : 'py-1.5'} text-left transition-colors ${on ? 'border-ink bg-surface shadow-md' : 'border-transparent bg-surface/55 hover:border-line/15'}`}
             >
-              <span className={`grid ${!decision || on ? 'size-9' : 'size-7'} shrink-0 place-items-center rounded-xl ${on ? 'bg-ink text-white' : 'bg-black/[0.05] text-carbon'}`} aria-hidden="true">
+              <span className={`grid ${!decision || on ? 'size-9' : 'size-7'} shrink-0 place-items-center rounded-xl ${on ? 'bg-inverse text-white' : 'bg-line/[0.05] text-carbon'}`} aria-hidden="true">
                 <opt.Icon size={17} />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-body-sm font-semibold text-ink">{opt.label}</span>
                 {(!decision || on) && <span className="block text-caption text-smoke">{opt.desc}</span>}
               </span>
-              <span className={`grid size-5 shrink-0 place-items-center rounded-full border-2 ${on ? 'border-ink bg-ink' : 'border-black/20'}`} aria-hidden="true">
-                {on && <Check size={12} strokeWidth={3} className="text-white" />}
+              <span className={`grid size-5 shrink-0 place-items-center rounded-full border-2 ${on ? 'border-ink bg-ink' : 'border-line/20'}`} aria-hidden="true">
+                {on && <Check size={12} strokeWidth={3} className="text-porcelain" />}
               </span>
             </button>
           )
@@ -1031,7 +1031,7 @@ function Decision({ item, sc, k, v, flags, onDecided }) {
       <button
         onClick={submit}
         disabled={!decision || sending}
-        className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-body font-medium transition-colors ${decision ? 'bg-ocbc-red text-white shadow-md hover:bg-ocbc-red-deep' : 'cursor-not-allowed bg-black/[0.06] text-smoke'}`}
+        className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-body font-medium transition-colors ${decision ? 'bg-ocbc-red text-white shadow-md hover:bg-ocbc-red-deep' : 'cursor-not-allowed bg-line/[0.06] text-smoke'}`}
       >
         {sending ? <LoaderCircle size={17} className="spin" aria-hidden="true" /> : d ? <d.Icon size={17} aria-hidden="true" /> : <ArrowUp size={17} aria-hidden="true" />}
         {d ? d.verb : 'Choose an outcome'}
