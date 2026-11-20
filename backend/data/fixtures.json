@@ -164,6 +164,166 @@
           "text": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
         }
       ]
+    },
+    "DOC-KYC-040": {
+      "id": "DOC-KYC-040",
+      "title": "Personal Account Opening Procedures",
+      "version": "v2.0",
+      "topic": "kyc",
+      "owner": "Retail Banking Operations",
+      "updated": "2026-04-20",
+      "reviewCycleMonths": 12,
+      "supersededBy": null,
+      "sections": [
+        {
+          "id": "§2.1",
+          "heading": "Eligibility",
+          "text": "Individuals aged 16 and above may open a personal savings account. Applicants under 21 need a parent or legal guardian to sign as joint signatory."
+        },
+        {
+          "id": "§2.2",
+          "heading": "Identity documents",
+          "text": "Singapore citizens and permanent residents must present their NRIC. Foreign applicants must present a valid passport and an employment pass, dependant's pass or student pass with at least six months' validity remaining."
+        },
+        {
+          "id": "§2.3",
+          "heading": "Local address",
+          "text": "Foreign applicants must also provide a utility bill or tenancy agreement showing a Singapore address."
+        },
+        {
+          "id": "§3.1",
+          "heading": "Initial deposit",
+          "text": "The minimum initial deposit for a personal savings account is SGD 1,000. There is no minimum initial deposit for applicants under 21."
+        },
+        {
+          "id": "§4.1",
+          "heading": "Screening",
+          "text": "Every applicant must be screened against sanctions and politically exposed persons lists before the account is activated."
+        }
+      ]
+    },
+    "DOC-DEP-015": {
+      "id": "DOC-DEP-015",
+      "title": "Personal Savings Account Terms",
+      "version": "v3.2",
+      "topic": "fees",
+      "owner": "Deposits Product Management",
+      "updated": "2026-02-10",
+      "reviewCycleMonths": 12,
+      "supersededBy": null,
+      "sections": [
+        {
+          "id": "§3.1",
+          "heading": "Minimum balance",
+          "text": "The minimum average daily balance for a personal savings account is SGD 3,000."
+        },
+        {
+          "id": "§3.2",
+          "heading": "Fall-below fee",
+          "text": "A fall-below fee of SGD 2 per month applies when the average daily balance in a calendar month is under SGD 3,000. The fee does not apply to account holders under 21 or aged 62 and above."
+        },
+        {
+          "id": "§4.1",
+          "heading": "Interest",
+          "text": "Base interest of 0.05% per annum is calculated on the daily balance and credited monthly."
+        },
+        {
+          "id": "§5.1",
+          "heading": "Dormant accounts",
+          "text": "An account with no customer-initiated transaction for 24 months is classified as dormant. A dormant account fee of SGD 2 per month applies until the account is reactivated."
+        }
+      ]
+    },
+    "DOC-CRD-030": {
+      "id": "DOC-CRD-030",
+      "title": "Card Dispute and Chargeback Procedures",
+      "version": "v1.4",
+      "topic": "fees",
+      "owner": "Cards & Payments",
+      "updated": "2026-05-28",
+      "reviewCycleMonths": 12,
+      "supersededBy": null,
+      "sections": [
+        {
+          "id": "§2.1",
+          "heading": "Time limit",
+          "text": "A cardholder must raise a dispute within 60 days of the statement date on which the transaction first appeared."
+        },
+        {
+          "id": "§2.2",
+          "heading": "Provisional credit",
+          "text": "For disputed amounts up to SGD 500, the Cards Service team may grant a provisional credit within 5 business days while the chargeback is investigated."
+        },
+        {
+          "id": "§3.1",
+          "heading": "Chargeback filing",
+          "text": "Disputes above SGD 500 must be filed as a chargeback with the card scheme, supported by the cardholder's signed dispute form."
+        },
+        {
+          "id": "§3.2",
+          "heading": "Fraudulent transactions",
+          "text": "A transaction reported as fraudulent requires the card to be blocked and replaced before the dispute is processed."
+        }
+      ]
+    },
+    "DOC-SME-130": {
+      "id": "DOC-SME-130",
+      "title": "SME Term Loan Repayment Guidelines",
+      "version": "v1.1",
+      "topic": "sme",
+      "owner": "Business Banking Credit Risk",
+      "updated": "2026-07-01",
+      "reviewCycleMonths": 12,
+      "supersededBy": null,
+      "sections": [
+        {
+          "id": "§2.1",
+          "heading": "Repayment schedule",
+          "text": "SME term loans are repaid in monthly instalments over a tenor of 12 to 60 months."
+        },
+        {
+          "id": "§2.2",
+          "heading": "Early repayment",
+          "text": "Full or partial early repayment is allowed with 30 days' written notice. A prepayment fee of 1.5% of the amount prepaid applies within the first 24 months of the loan."
+        },
+        {
+          "id": "§3.1",
+          "heading": "Missed instalments",
+          "text": "An instalment unpaid for 30 days incurs a late charge of 2% per annum above the contract rate on the overdue amount."
+        },
+        {
+          "id": "§3.2",
+          "heading": "Restructuring",
+          "text": "A request to extend the tenor or defer instalments must be referred to the Special Assets unit for assessment."
+        }
+      ]
+    },
+    "DOC-PAY-008": {
+      "id": "DOC-PAY-008",
+      "title": "Outward Remittance Fee Schedule",
+      "version": "v2.1",
+      "topic": "fees",
+      "owner": "Payments Operations",
+      "updated": "2026-03-15",
+      "reviewCycleMonths": 12,
+      "supersededBy": null,
+      "sections": [
+        {
+          "id": "§1.1",
+          "heading": "Telegraphic transfer commission",
+          "text": "An outward telegraphic transfer made at a branch incurs a commission of SGD 30. The same remittance made through digital banking incurs a commission of SGD 10."
+        },
+        {
+          "id": "§1.2",
+          "heading": "Intermediary charges",
+          "text": "Where the sender chooses to pay all charges (OUR), an additional SGD 20 is collected to cover charges levied by intermediary banks."
+        },
+        {
+          "id": "§2.1",
+          "heading": "Commission waiver",
+          "text": "Remittance commissions may be waived only for Premier Banking customers, and only for remittances made through digital banking."
+        }
+      ]
     }
   },
   "TOPICS": {

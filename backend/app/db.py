@@ -74,7 +74,28 @@ def connect(uri: str | None = None, name: str | None = None, client=None) -> Dat
             db.drop_collection(c)
         _indexes(db)
         seed(db)
+    else:
+        add_missing_documents(db)
     return db
+
+
+def add_missing_documents(db: Database) -> list[str]:
+    """
+    Documents added to the fixtures after this database was seeded are
+    inserted as approved versions, so the library grows without a reset (and
+    without wiping the review queue). Existing documents and their versions are
+    never touched: approved text is never edited in place.
+    """
+    docs = fixtures.load()["DOCUMENTS"]
+    have = set(db.policy_versions.distinct("docId"))
+    new = {k: d for k, d in docs.items() if d["id"] not in have}
+    if not new:
+        return []
+    for r in library.seed_records(docs):
+        if r["docId"] in new:
+            _insert_version(db, r)
+    db.meta.update_one({"_id": "library_rev"}, {"$set": {"value": uuid4().hex}})
+    return sorted(new)
 
 
 def _indexes(db: Database) -> None:
