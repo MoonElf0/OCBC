@@ -1,0 +1,41 @@
+# Render Blueprint: one web service that runs the FastAPI backend and serves
+# the frontend built in backend mode (backend/app/main.py mounts frontend/dist).
+# Hosted backend mode, not a production deployment. Policy Assistant answers are
+# still scripted, and the interface must not describe this as live.
+#
+# Secrets are marked sync: false, so Render asks for them when the Blueprint is
+# created. Copy them from backend/.env. MongoDB Atlas must allow 0.0.0.0/0
+# under Network Access, because Render's free tier has no fixed outbound IP.
+services:
+  - type: web
+    name: assessment-ai
+    runtime: python
+    plan: free
+    buildCommand: >-
+      cd frontend && npm ci && npm run build:backend &&
+      cd ../backend && pip install -r requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.3
+      - key: NODE_VERSION
+        value: "22"
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB
+        value: assessment
+      - key: DASHSCOPE_API_KEY
+        sync: false
+      - key: ASSESSMENT_MODEL_PROVIDER
+        value: qwen
+      - key: ASSESSMENT_MODEL
+        value: qwen-plus
+      - key: AGENT_MODEL_PROVIDER
+        value: qwen
+      - key: AGENT_MODEL
+        value: qwen3.8-flash
+      - key: SECOND_VERIFIER_PROVIDER
+        value: qwen
+      - key: SECOND_VERIFIER_MODEL
+        value: qwen4-max
