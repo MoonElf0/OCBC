@@ -15,7 +15,6 @@ HIGH_RISK_TOPICS = sorted({s["topic"] for s in fixtures.scenarios() if s.get("hi
 RULES = [
     {"id": "low-confidence", "label": "Low reliability index", "rule": "The reliability index is in the Low band (below 50)."},
     {"id": "conflicting", "label": "Conflicting evidence", "rule": "A claim conflicts with the approved policy in force."},
-    {"id": "unsupported", "label": "Unsupported claim", "rule": "A claim is not supported by the approved passage that addresses it."},
     {"id": "no-source", "label": "Insufficient evidence", "rule": "A claim has no approved passage that addresses it."},
     {"id": "partial", "label": "Partial assessment", "rule": "Part of the assessment could not run (for example, no model available), so it is not fully verified."},
     {"id": "high-stakes", "label": "High-risk topic", "rule": "The answer is about a designated high-risk topic. Applies at any reliability index."},
@@ -30,8 +29,6 @@ def review_reasons(result: dict, topic: str | None) -> list[str]:
         reasons.append("low-confidence")
     if any(c["status"] == "conflicting" for c in claims):
         reasons.append("conflicting")
-    if any(c["status"] == "unsupported" for c in claims):
-        reasons.append("unsupported")
     if any(c["status"] in ("no-source", "insufficient") for c in claims) or result.get("noSource"):
         reasons.append("no-source")
     if (result.get("assessment") or {}).get("partial"):

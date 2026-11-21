@@ -10,7 +10,7 @@ Port of frontend/src/lib/rules.js; tests/test_parity.py keeps them identical.
 """
 import re
 
-from .freshness import age_label, freshness_of
+from .freshness import age_label, format_date, freshness_of
 
 _FIG = re.compile(r"\d+(?:[.,:]\d+)*")
 _DISPLAY = re.compile(r"(?:SGD\s)?\d+(?:[.,:]\d+)*(?:%|\s(?:basis points|bps|pm|am))?")
@@ -42,7 +42,7 @@ def citation_check(answer: dict, claims: list[dict], docs: dict) -> dict:
         return {"id": "citation", "status": "na", "short": "Nothing cited, nothing claimed", "summary": "No documents cited and no claims made.", "evidence": [{"kind": "search"}]}
     missing = [i for i in cited if i not in docs]
     if missing:
-        return {"id": "citation", "status": "fail", "short": "Cited document doesn’t exist", "summary": f"Cited {', '.join(missing)} does not exist in the approved library.", "evidence": []}
+        return {"id": "citation", "status": "fail", "short": "A cited document doesn’t exist", "summary": f"Cited {', '.join(missing)} does not exist in the approved library.", "evidence": []}
 
     checked = [c for c in claims if c.get("source") and c["source"]["docId"] in cited]
     mismatched = []
@@ -56,7 +56,7 @@ def citation_check(answer: dict, claims: list[dict], docs: dict) -> dict:
         return {
             "id": "citation",
             "status": "fail",
-            "short": f"Says {said} — source says {display(c['source']['passage'])}",
+            "short": f"Cited source says {display(c['source']['passage'])}, not {said}",
             "summary": f"{c['source']['docId']} exists, but the answer cites it for {said} and the passage says {display(c['source']['passage'])}.",
             "evidence": [_ref(m["source"]) for m in mismatched],
         }
@@ -89,7 +89,7 @@ def freshness_check(answer: dict, claims: list[dict], docs: dict, today: str) ->
         return {
             "id": "freshness",
             "status": "fail",
-            "short": f"Source replaced by {by['id']}",
+            "short": f"Cited source was replaced on {format_date(by['updated'])}",
             "summary": f"{r['id']} was last updated {age_label(r['months'])} and has been superseded by {by['id']}.",
             "evidence": [{"docId": by["id"], "section": pointer["id"], "passage": pointer["text"]}],
         }
@@ -100,7 +100,7 @@ def freshness_check(answer: dict, claims: list[dict], docs: dict, today: str) ->
         return {
             "id": "freshness",
             "status": "warning",
-            "short": f"Source {r['months']} months old — review overdue",
+            "short": f"Source is {r['months']} months old and overdue for review",
             "summary": f"{r['id']} was last updated {age_label(r['months'])}, past its {doc['reviewCycleMonths']}-month review cycle. It has not been superseded.",
             "evidence": [_ref(used)] if used else [],
         }
@@ -143,7 +143,7 @@ def crossref_check(answer: dict, claims: list[dict]) -> dict:
     return {
         "id": "crossref",
         "status": "fail" if conflict else "warning",
-        "short": f"Says {display(_span(answer, d))} — policy says {display(d['counter']['passage'])}",
+        "short": f"Current policy says {display(d['counter']['passage'])}",
         "summary": f"The answer states {display(_span(answer, d))}; the current approved source ({d['counter']['docId']} {d['counter']['section']}) states {display(d['counter']['passage'])}.",
         "evidence": [_ref(c["counter"]) for c in diffs],
     }

@@ -1,143 +1,96 @@
-import { useEffect, useRef, useState } from 'react'
-import { UserRound, MessageSquare, Inbox, ChartLine, Check, Sun, Moon, Library, FlaskConical, GitBranch } from 'lucide-react'
-import { getTheme, applyTheme } from '../lib/theme'
+import { MessageSquare, Inbox, ChartLine, ShieldCheck, ClipboardPaste, Library, FlaskConical, GitBranch, PanelsTopLeft, Sun, Moon } from 'lucide-react'
 import { useStore } from '../state/store'
-import { CharacterMark } from './Character'
 import { BACKEND } from '../lib/backend'
+import { useTheme } from '../lib/theme'
 
-const LINKS = {
-  workspace: [{ id: 'workspace', label: 'Workspace' }],
-  admin: [
-    { id: 'review', label: 'Review queue' },
-    { id: 'library', label: 'Knowledge library', short: 'Library' },
-    { id: 'trends', label: 'Trends' },
-    { id: 'evaluation', label: 'Evaluation' },
-    { id: 'versions', label: 'Agent versions', short: 'Versions' },
-  ],
-}
+const LINKS = [
+  { id: 'workspace', label: 'Assistant', Icon: MessageSquare },
+  { id: 'classic', label: 'Classic', Icon: PanelsTopLeft },
+  { id: 'verify', label: 'Verify answer', Icon: ClipboardPaste },
+  { id: 'review', label: 'Review queue', Icon: Inbox },
+  { id: 'library', label: 'Library', Icon: Library },
+  { id: 'trends', label: 'Trends', Icon: ChartLine },
+  { id: 'evaluation', label: 'Evaluation', Icon: FlaskConical },
+  { id: 'versions', label: 'Versions', Icon: GitBranch },
+]
 
 export default function TopNav() {
   const { state, dispatch } = useStore()
-  const [open, setOpen] = useState(false)
-  const [dark, setDark] = useState(getTheme() === 'dark')
-  const menu = useRef(null)
-  const admin = state.view !== 'workspace'
   const pending = state.queue.filter((q) => q.status === 'pending').length
 
-  useEffect(() => {
-    const close = (e) => menu.current && !menu.current.contains(e.target) && setOpen(false)
-    const esc = (e) => e.key === 'Escape' && setOpen(false)
-    document.addEventListener('mousedown', close)
-    document.addEventListener('keydown', esc)
-    return () => {
-      document.removeEventListener('mousedown', close)
-      document.removeEventListener('keydown', esc)
-    }
-  }, [])
-
-  const go = (view) => {
-    dispatch({ type: 'view', view })
-    setOpen(false)
-  }
-
   return (
-    <nav className="h-16 shrink-0 bg-obsidian-bar text-white">
-      <div className="mx-auto flex h-full max-w-[1560px] items-center gap-4 px-4 xl:gap-8 xl:px-6">
+    <nav className="relative z-20 shrink-0 px-2 pt-2 lg:px-4 lg:pt-3">
+      <div className="glass mx-auto flex h-14 max-w-[1440px] items-center gap-3 rounded-full pr-2 pl-2.5">
         <div className="flex items-center gap-2.5">
-          <span className="grid size-8 place-items-center rounded-full bg-white/10">
-            <CharacterMark size={22} />
+          <span className="grid size-9 place-items-center rounded-full bg-gradient-to-br from-ocbc-red to-ocbc-red-deep text-white shadow-md">
+            <ShieldCheck size={18} strokeWidth={2} />
           </span>
-          <span className="whitespace-nowrap text-body font-semibold tracking-[-0.01em]">Assessment AI</span>
-          <span className="hidden text-caption text-ash xl:inline">Trust layer for AI agents</span>
+          <span className="hidden leading-tight sm:block">
+            <span className="block text-body-sm font-semibold tracking-[-0.2px] whitespace-nowrap text-ink">Assessment AI</span>
+            <span className="block text-[11px] font-medium whitespace-nowrap text-smoke">Answer verification</span>
+          </span>
         </div>
 
-        <div className="flex h-full items-center gap-4 xl:gap-6">
-          {(admin ? LINKS.admin : LINKS.workspace).map((l) => (
-            <button
-              key={l.id}
-              onClick={() => go(l.id)}
-              aria-current={state.view === l.id ? 'page' : undefined}
-              className={`relative flex h-full items-center gap-2 whitespace-nowrap text-body-sm font-medium transition-colors ${state.view === l.id ? 'text-white' : 'text-ash hover:text-white'}`}
-            >
-              {l.short ? (
-                <>
-                  <span className="xl:hidden">{l.short}</span>
-                  <span className="hidden xl:inline">{l.label}</span>
-                </>
-              ) : (
-                l.label
-              )}
-              {l.id === 'review' && pending > 0 && <span className="rounded-full bg-white/15 px-1.5 text-caption tabular-nums">{pending}</span>}
-              {state.view === l.id && <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-ocbc-red" />}
-            </button>
-          ))}
+        <div className="mx-auto flex items-center gap-1 rounded-full bg-line/[0.04] p-1" role="tablist" aria-label="Views">
+          {LINKS.map((l) => {
+            const active = state.view === l.id
+            return (
+              <button
+                key={l.id}
+                role="tab"
+                aria-selected={active}
+                aria-label={l.id === 'review' && pending > 0 ? `${l.label}, ${pending} pending` : l.label}
+                title={l.label}
+                onClick={() => dispatch({ type: 'view', view: l.id })}
+                className={`relative inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-body-sm font-medium whitespace-nowrap transition-all xl:px-4 ${active ? 'bg-surface text-ink shadow-[0_1px_2px_rgb(0_0_0/0.08),0_4px_12px_-6px_rgb(120_20_35/0.25)]' : 'text-smoke hover:text-ink'}`}
+              >
+                <l.Icon size={15} aria-hidden="true" />
+                <span className="hidden lg:inline">{l.label}</span>
+                {l.id === 'review' && pending > 0 && <span className="rounded-full bg-inverse px-1.5 text-[12px] font-semibold text-white tabular-nums">{pending}</span>}
+                {l.id === 'workspace' && state.unreadOutcomes > 0 && <span className="size-2 rounded-full bg-ocbc-red" aria-label="Reviewer outcome waiting" />}
+              </button>
+            )
+          })}
         </div>
 
-        <div className="ml-auto flex items-center gap-2 xl:gap-3">
-          <span
-            className="hidden whitespace-nowrap rounded-full border border-white/25 px-2.5 py-1 text-caption text-white/80 lg:inline xl:px-3"
-            title={BACKEND ? 'Backend mode: retrieval, rule checks, the reliability index, routing and the dashboard are computed by the backend. Policy Assistant answers and their judge verdicts are scripted; submitted answers and corrections run the pipeline, with model steps only if a provider is configured.' : undefined}
-          >
-            {BACKEND ? 'Prototype · synthetic data · backend mode' : 'Prototype · synthetic data only'}
-          </span>
-          {admin && (
-            // Below xl the role menu's "Employee workspace" item does this job, so the nav fits.
-            <button onClick={() => go('workspace')} className="hidden whitespace-nowrap rounded-full border border-white/25 px-4 py-1.5 text-body-sm font-medium text-white hover:border-white/60 xl:inline-flex">
-              Back to workspace
-            </button>
-          )}
-          <button onClick={() => dispatch({ type: 'pitch', open: true })} className="whitespace-nowrap rounded-full border border-white/25 px-3 py-1.5 text-body-sm font-medium text-white hover:border-white/60 xl:px-4">Pitch</button>
-          <button onClick={() => { applyTheme(dark ? 'light' : 'dark'); setDark(!dark) }} aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'} className="grid size-9 place-items-center rounded-full border border-white/25 hover:border-white/60">
-            {dark ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
-          <div ref={menu} className="relative">
-            <button
-              onClick={() => setOpen((o) => !o)}
-              aria-haspopup="menu"
-              aria-expanded={open}
-              aria-label="Account and roles"
-              className="relative grid size-9 place-items-center rounded-full border border-white/25 hover:border-white/60"
-            >
-              <UserRound size={17} />
-              {state.unreadOutcomes > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-white ring-2 ring-obsidian-bar">
-                  <span className="sr-only">Reviewer outcome waiting</span>
-                </span>
-              )}
-            </button>
-            {open && (
-              <div role="menu" className="rise-in absolute right-0 top-12 z-30 w-72 rounded-2xl border border-frost bg-porcelain p-2 text-ink shadow-md">
-                <div className="px-3 pt-2 pb-3">
-                  <div className="eyebrow text-smoke">Switch role · demo</div>
-                  <div className="mt-1 text-caption text-carbon">{BACKEND ? 'All roles share one backend. Queue and decisions are saved.' : 'All roles share this browser session. Nothing is saved.'} Roles are simulated: there is no sign-in.</div>
-                </div>
-                <MenuItem Icon={MessageSquare} label="Employee workspace" sub="Relationship Manager · Business Banking" active={state.view === 'workspace'} onClick={() => go('workspace')} badge={state.unreadOutcomes ? `${state.unreadOutcomes} outcome` : null} />
-                <div className="my-1 border-t border-frost" />
-                <div className="eyebrow px-3 pt-2 pb-1 text-smoke">Admin</div>
-                <MenuItem Icon={Inbox} label="Reviewer queue" sub={`${pending} pending`} active={state.view === 'review'} onClick={() => go('review')} />
-                <MenuItem Icon={Library} label="Knowledge library" sub="Policy versions and change impact" active={state.view === 'library'} onClick={() => go('library')} />
-                <MenuItem Icon={ChartLine} label="Trends dashboard" sub="Reliability over 12 weeks" active={state.view === 'trends'} onClick={() => go('trends')} />
-                <MenuItem Icon={FlaskConical} label="Evaluation" sub="How well the verifier performs" active={state.view === 'evaluation'} onClick={() => go('evaluation')} />
-                <MenuItem Icon={GitBranch} label="Agent versions" sub="Release check: v1 vs v2" active={state.view === 'versions'} onClick={() => go('versions')} />
-              </div>
-            )}
-          </div>
-        </div>
+        <span
+          className="hidden items-center gap-1.5 rounded-full bg-line/[0.04] px-3 py-1 text-caption whitespace-nowrap text-carbon xl:inline-flex"
+          title={BACKEND ? backendNote(state.health) : 'Offline demo: everything runs in this browser tab and nothing is saved.'}
+        >
+          <span className={`size-1.5 rounded-full ${BACKEND ? 'bg-status-verified' : 'bg-smoke'}`} aria-hidden="true" />
+          {BACKEND ? 'Backend' : 'Offline demo'}
+        </span>
+        <ThemeToggle />
       </div>
     </nav>
   )
 }
 
-function MenuItem({ Icon, label, sub, active, onClick, badge }) {
+/** Light / dark switch. The icon shows the theme you will get, the label says it in words. */
+function ThemeToggle() {
+  const [theme, setTheme] = useTheme()
+  const dark = theme === 'dark'
   return (
-    <button role="menuitem" onClick={onClick} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-bone ${active ? 'bg-bone' : ''}`}>
-      <Icon size={16} className="shrink-0 text-carbon" />
-      <span className="min-w-0 flex-1">
-        <span className="block text-body-sm font-medium">{label}</span>
-        <span className="block text-caption text-smoke">{sub}</span>
-      </span>
-      {badge && <span className="rounded-xl bg-bone px-2 py-0.5 text-caption text-carbon">{badge}</span>}
-      {active && <Check size={14} className="text-carbon" />}
+    <button
+      onClick={() => setTheme(dark ? 'light' : 'dark')}
+      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      title={dark ? 'Light mode' : 'Dark mode'}
+      className="relative grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-line/[0.04] text-carbon transition-colors hover:bg-line/[0.08] hover:text-ink"
+    >
+      <Sun size={17} aria-hidden="true" className={`absolute transition-all duration-500 ${dark ? 'rotate-0 opacity-100' : '-rotate-90 scale-50 opacity-0'}`} />
+      <Moon size={17} aria-hidden="true" className={`absolute transition-all duration-500 ${dark ? 'rotate-90 scale-50 opacity-0' : 'rotate-0 opacity-100'}`} />
     </button>
   )
+}
+
+/** What backend mode computes and what is still scripted, from /api/health. Never claims more than it does. */
+function backendNote(health) {
+  const agent = health?.agent
+  const model = health?.model
+  const agentLine =
+    agent?.provider && agent.provider !== 'scripted'
+      ? `Assistant page answers are written by ${agent.model} from the synthetic policy library and verified by the full pipeline. Classic page answers and their judge verdicts are scripted.`
+      : 'Policy Assistant answers and their judge verdicts are scripted.'
+  const modelLine = model?.available ? `Verifier model steps run on ${model.model}.` : 'Verifier model steps are not run (no provider configured).'
+  return `Backend mode: retrieval, rule checks, the reliability index, routing and the dashboard are computed by the backend. ${agentLine} ${modelLine} Submitted answers and corrections run the pipeline.`
 }

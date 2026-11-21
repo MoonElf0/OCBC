@@ -74,28 +74,6 @@ def conn():
     return _conn
 
 
-_writer = None
-
-
-def writer():
-    """The answering agent's model. Configured separately from the verifier's."""
-    global _writer
-    if _writer is None:
-        _writer = agent.get_writer()
-    return _writer
-
-
-_embedder = False  # not yet created; None means unavailable
-
-
-def embedder():
-    """The agent's meaning-based search. Never used by the verifier."""
-    global _embedder
-    if _embedder is False:
-        _embedder = agent.get_embedder()
-    return _embedder
-
-
 def provider():
     global _provider
     if _provider is None:
@@ -254,6 +232,9 @@ DATE = r"^\d{4}-\d{2}-\d{2}$"
 
 class AskIn(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
+    # "model": the model-backed agent when AGENT_MODEL_PROVIDER is set (scripted otherwise).
+    # "scripted": always the scripted scenarios (the Classic page and the demo storyline).
+    agent: Literal["model", "scripted"] = "scripted"
 
 
 class SubmitIn(BaseModel):
@@ -333,7 +314,7 @@ def _sse(result: dict, done: dict, pace: float):
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "provenance": PROVENANCE, "model": provider().status(), "agent": writer().status(), "highRiskTopics": HIGH_RISK_TOPICS,
+    return {"ok": True, "provenance": PROVENANCE, "model": provider().status(), "agent": agent.agent_status(), "highRiskTopics": HIGH_RISK_TOPICS,
             "reviewRules": RULES, "reviewers": [{**r, "simulated": True} for r in SIMULATED_REVIEWERS], "states": STATES,
             "today": db.today(conn())}
 
@@ -341,8 +322,20 @@ def health():
 @app.post("/api/ask")
 def ask(body: AskIn):
     """The answering agent. Returns the answer only; verification is a separate call."""
-    reply = agent.ask(body.question, index=library_docs()[1], writer=writer(), embedder=embedder())
-    sc = fixtures.scenario_by_id(reply["scenarioId"]) if reply["scenarioId"] else {}
+    if body.agent == "model" and agent.model_enabled():
+        docs, index = library_docs()
+        try:
+            reply = agent.model_ask(body.question, docs, index)
+        except agent.AgentUnavailable as e:
+            raise HTTPException(503, f"The Policy Assistant could not answer: {e}")
+        # A model-written answer has no scenario: it is verified by the full pipeline, nothing scripted.
+        with _lock:
+            answer_id = db.add_answer(conn(), kind="asked", question=body.question, text=reply["text"], citations=reply["citations"],
+                                      as_of=db.today(conn()))
+            db.log(conn(), "asked", actor=EMPLOYEE["name"], role="employee", simulated=True, answer_id=answer_id, agent=reply["generatedBy"])
+        return {"answerId": answer_id, "asOf": db.today(conn()), **reply}
+    reply = agent.ask(body.question)
+    sc = fixtures.scenario_by_id(reply["scenarioId"])
     with _lock:
         answer_id = db.add_answer(conn(), kind="asked", question=body.question, text=reply["text"], citations=reply["citations"],
                                   as_of=db.today(conn()), scenario_id=reply["scenarioId"], topic=sc.get("topic"))

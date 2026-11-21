@@ -45,7 +45,8 @@ async function call(path, { method = 'GET', body } = {}) {
 }
 
 export const api = {
-  ask: (question) => call('/ask', { method: 'POST', body: { question } }),
+  // agent: 'model' asks the model-backed Policy Assistant when the server has one configured; 'scripted' never does.
+  ask: (question, agent = 'scripted') => call('/ask', { method: 'POST', body: { question, agent } }),
   feedback: (answerId, value) => call(`/answers/${answerId}/feedback`, { method: 'POST', body: { value } }),
   escalate: (answerId, note) => call(`/answers/${answerId}/escalate`, { method: 'POST', body: { note } }),
   reviews: () => call('/reviews'),

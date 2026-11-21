@@ -3,7 +3,7 @@ import { FlaskConical, LoaderCircle, Play, CircleCheck, CircleDashed, Cpu, ListC
 import { BACKEND, api } from '../lib/backend'
 import { CLAIM_STATUS, CHECK_STATUS, TONES } from '../lib/status'
 import { Eyebrow, Pill, PrimaryButton, ScoreBadge } from '../components/ui'
-import { formatWhen } from '../components/Thread'
+import { formatWhen } from '../components/lifecycle'
 import { DEMO_TODAY } from '../fixtures'
 
 /**

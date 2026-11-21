@@ -13,6 +13,7 @@
     "build:backend": "vite build --mode backend"
   },
   "dependencies": {
+    "@fontsource-variable/geist": "^5.3.0",
     "@fontsource/inter": "^5.3.0",
     "lucide-react": "^1.52.0",
     "react": "^19.3.0",

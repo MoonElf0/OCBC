@@ -18,6 +18,15 @@ def age_label(months: int) -> str:
     return f"{months} months ago"
 
 
+# Matches toLocaleDateString('en-SG', { day: 'numeric', month: 'short', year: 'numeric' }).
+_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"]
+
+
+def format_date(iso: str) -> str:
+    d = date.fromisoformat(iso)
+    return f"{d.day} {_MONTHS[d.month - 1]} {d.year}"
+
+
 def freshness_of(doc_id: str, docs: dict, today: str) -> dict:
     """state: current | superseded | overdue"""
     doc = docs[doc_id]

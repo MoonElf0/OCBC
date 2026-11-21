@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, ChevronDown, ThumbsUp, ThumbsDown, Inbox, Clock, CircleSlash, Sparkles, Flag, BookOpen, ListChecks, Maximize2, MessageSquare, Lightbulb, CircleCheck, Search, LoaderCircle, CircleDashed, RefreshCw, History } from 'lucide-react'
-import { useStore, useActiveAnswer } from '../state/store'
+import { useClassicStore as useStore, useClassicActive as useActiveAnswer } from '../state/store'
 import { CHECKS, CHECK_STATUS, CHECK_ICON, CLAIM_STATUS, CLAIM_COUNT_LABEL, TONES, BAND_ICON, bandFor, METHOD_LABEL, topicIcon, ANSWER_STATES } from '../lib/status'
 import { BACKEND, api } from '../lib/backend'
 import { freshnessOf, formatDate } from '../lib/freshness'
@@ -8,8 +8,8 @@ import { display } from '../lib/rules'
 import { scenarioById } from '../lib/pipeline'
 import { visibleClaims, moodFor, flagged, runningCheck, claimCounts } from '../lib/view'
 import Character from './Character'
-import { PrimaryButton, GhostButton, SourceChip, ScoreBadge, SectionHeader, IconTile, CheckPill } from './ui'
-import { SearchRecord } from './Evidence'
+import { PrimaryButton, GhostButton, SourceChip, ScoreBadge, SectionHeader, IconTile, CheckPill } from '../components/ui'
+import { SearchRecord } from '../components/Evidence'
 import { OUTCOME_META } from './Thread'
 
 export default function CharacterPanel() {

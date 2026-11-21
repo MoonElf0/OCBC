@@ -11,10 +11,10 @@ figure conflicts, scoring, routing) is plain code and runs without a model.
 
 Configuration is server-side only. Nothing here is sent to the browser.
 
-  ASSESSMENT_MODEL_PROVIDER   none (default) | qwen | anthropic
-  ASSESSMENT_MODEL            model id (qwen: qwen3.8-flash, anthropic: claude-opus-5-5)
-  DASHSCOPE_API_KEY           qwen: Alibaba Cloud Model Studio key
-  ANTHROPIC_API_KEY           anthropic: read by the Anthropic SDK (or `ant auth login`)
+  ASSESSMENT_MODEL_PROVIDER   none (default) | anthropic | qwen
+  ASSESSMENT_MODEL            model id (default claude-opus-5-5 for anthropic, qwen-plus for qwen)
+  ANTHROPIC_API_KEY           read by the Anthropic SDK (or `ant auth login`)
+  DASHSCOPE_API_KEY           Qwen via Alibaba Cloud Model Studio (see app/qwen.py)
 
 With the default (`none`) every model step reports itself as unavailable.
 The pipeline then marks those checks "Not run" and the result as partial;
@@ -201,97 +201,33 @@ class AnthropicProvider:
         )
 
 
-def _check(out, schema: dict) -> dict:
-    """Minimal check of the model's JSON against a schema above (JSON mode does not enforce one)."""
-    if not isinstance(out, dict):
-        raise ModelUnavailable("The model returned malformed output.")
-    kinds = {"string": str, "integer": int, "boolean": bool, "array": list}
-    for key in schema["required"]:
-        spec = schema["properties"][key]
-        val = out.get(key)
-        if not isinstance(val, kinds[spec["type"]]) or (spec["type"] == "integer" and isinstance(val, bool)):
-            raise ModelUnavailable(f"The model output is missing or has a wrong '{key}' field.")
-        if "enum" in spec and val not in spec["enum"]:
-            raise ModelUnavailable(f"The model returned an unknown value for '{key}'.")
-    return out
-
-
-class QwenProvider(AnthropicProvider):
-    """Qwen through Alibaba Cloud Model Studio's OpenAI-compatible endpoint.
-
-    ASSESSMENT_MODEL   default qwen3.8-flash
-    DASHSCOPE_API_KEY  Model Studio API key (backend/.env only)
-    QWEN_BASE_URL      default: the Singapore (ap-southeast-1) endpoint
-
-    Uses Chat Completions in JSON mode with thinking off: structured output
-    is not available with thinking enabled, and every step here must return
-    JSON the pipeline can check. The prompts are shared with AnthropicProvider.
-    """
+class QwenProvider:
+    """Qwen through DashScope's OpenAI-compatible API (app/qwen.py). Same three steps and prompts as Anthropic."""
 
     name = "qwen"
-    BASE_URL = "https://ap-southeast-1.maas.qwencloudapi.com/compatible-mode/v1"
 
-    def __init__(self, model: str | None = None, client=None):
-        self.model = model or os.environ.get("ASSESSMENT_MODEL") or "qwen3.8-flash"
-        self._client = client
-        self._error = None
-        if client is not None:
-            return
-        key = os.environ.get("DASHSCOPE_API_KEY")
-        if not key:
-            self._error = "DASHSCOPE_API_KEY is not set in backend/.env."
-            return
-        try:
-            import openai  # optional dependency: pip install -r requirements-model.txt
+    def __init__(self, model: str | None = None):
+        from . import qwen
 
-            self._client = openai.OpenAI(api_key=key, base_url=os.environ.get("QWEN_BASE_URL") or self.BASE_URL,
-                                         timeout=60, max_retries=2)
-        except ImportError:
-            self._error = "The openai package is not installed (pip install -r requirements-model.txt)."
-        except Exception as e:
-            self._error = f"The Qwen client could not start: {e}"
+        self._qwen = qwen
+        self.model = model or os.environ.get("ASSESSMENT_MODEL") or "qwen-plus"
+        ok, self._error = qwen.configured()
+
+    def status(self) -> dict:
+        return {"provider": self.name, "model": self.model, "available": self._error is None, "reason": self._error}
 
     def _json(self, user: str, schema: dict) -> dict:
-        if self._client is None:
+        if self._error:
             raise ModelUnavailable(self._error)
         try:
-            import openai
+            return self._qwen.chat_json(self.model, SYSTEM, user, schema)
+        except self._qwen.QwenError as e:
+            raise ModelUnavailable(str(e))
 
-            errors = openai
-        except ImportError:  # injected test client
-            errors = None
-        prompt = (f"{user}\n\nReply with a single JSON object only, matching this JSON Schema:\n"
-                  f"{json.dumps(schema)}")
-        try:
-            response = self._client.chat.completions.create(
-                model=self.model,
-                messages=[{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}],
-                response_format={"type": "json_object"},
-                temperature=0,
-                extra_body={"enable_thinking": False},
-            )
-        except Exception as e:
-            if errors is not None:
-                if isinstance(e, errors.AuthenticationError):
-                    raise ModelUnavailable("The model provider rejected the server's credentials.")
-                if isinstance(e, errors.RateLimitError):
-                    raise ModelUnavailable("The model provider is rate limiting requests. Try again shortly.")
-                if isinstance(e, errors.APIStatusError):
-                    raise ModelUnavailable(f"The model provider returned an error ({e.status_code}).")
-                if isinstance(e, errors.APIConnectionError):
-                    raise ModelUnavailable("The server could not reach the model provider.")
-            raise ModelUnavailable(f"The model call failed: {type(e).__name__}.")
-        choice = response.choices[0] if response.choices else None
-        if choice is None or not choice.message.content:
-            raise ModelUnavailable("The model returned no text.")
-        if choice.finish_reason == "length":
-            raise ModelUnavailable("The model response was cut off.")
-        if choice.finish_reason == "content_filter":
-            raise ModelUnavailable("The model declined this request.")
-        try:
-            return _check(json.loads(choice.message.content), schema)
-        except json.JSONDecodeError:
-            raise ModelUnavailable("The model returned malformed output.")
+    # The prompts are the provider-neutral part: reuse them as they are.
+    extract_claims = AnthropicProvider.extract_claims
+    judge_claim = AnthropicProvider.judge_claim
+    review_answer = AnthropicProvider.review_answer
 
 
 def get_provider() -> Provider:

@@ -171,6 +171,10 @@
       "type": "string",
       "description": "Short plain-language verdict shown as the score card title."
     },
+    "guidance": {
+      "type": "string",
+      "description": "One-line advice on what the employee should do with this answer."
+    },
     "matchedQuestion": {
       "type": [
         "string",

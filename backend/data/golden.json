@@ -1,8 +1,9 @@
 {
   "assess": {
     "sme-limit": {
-      "explanation": "Two of three claims match current policy. The SGD 250,000 limit comes only from a circular that was superseded in May 2026 — the current standard sets SGD 200,000. Confirm the limit before acting on it.",
+      "explanation": "Two of three claims match current policy. The SGD 250,000 limit comes only from a circular that was superseded in May 2026. The current standard sets SGD 200,000. Confirm the limit before acting on it.",
       "headline": "Confirm the limit before acting",
+      "guidance": "The current limit is SGD 200,000. Anything above it needs Credit Committee approval.",
       "retrieved": [
         "DOC-SME-112"
       ],
@@ -23,7 +24,7 @@
             "section": "§3.1",
             "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
           },
-          "short": "SGD 250k is outdated — now SGD 200k",
+          "short": "SGD 250k is outdated. It is now SGD 200k",
           "reason": "No current approved source supports SGD 250,000. The only passage stating it is in a superseded circular, so it counts as unsupported rather than conflicting: the agent copied its source faithfully, but the source is no longer approved. The current standard sets SGD 200,000."
         },
         {
@@ -75,7 +76,7 @@
         {
           "id": "freshness",
           "status": "fail",
-          "short": "Source replaced by DOC-SME-112",
+          "short": "Cited source was replaced on 20 May 2026",
           "summary": "DOC-SME-087 was last updated 14 months ago and has been superseded by DOC-SME-112.",
           "evidence": [
             {
@@ -88,7 +89,7 @@
         {
           "id": "crossref",
           "status": "warning",
-          "short": "Says SGD 250,000 — policy says SGD 200,000",
+          "short": "Current policy says SGD 200,000",
           "summary": "The answer states SGD 250,000; the current approved source (DOC-SME-112 §3.1) states SGD 200,000.",
           "evidence": [
             {
@@ -124,7 +125,7 @@
         {
           "id": "consistency",
           "status": "pass",
-          "short": "No contradictions",
+          "short": "Doesn’t contradict itself",
           "summary": "The answer does not contradict itself. The limit discrepancy is reported under cross-referencing.",
           "evidence": [
             {
@@ -165,6 +166,7 @@
     "kyc-ubo": {
       "explanation": "All four claims match the current Customer Due Diligence Procedures, updated seven months ago. No conflicts with other approved documents.",
       "headline": "Safe to use",
+      "guidance": "Safe to use as written. Every requirement matches the current procedure.",
       "retrieved": [],
       "claims": [
         {
@@ -306,7 +308,7 @@
         {
           "id": "consistency",
           "status": "pass",
-          "short": "No contradictions",
+          "short": "Doesn’t contradict itself",
           "summary": "The answer does not contradict itself or another approved document.",
           "evidence": [
             {
@@ -345,8 +347,9 @@
       "matchedQuestion": null
     },
     "fx-override": {
-      "explanation": "The answer contradicts its own cited source. The FX guidelines cap relationship-manager overrides at 10 basis points — not 50 — and nothing in the library mentions a treasury-mandate exception. Do not act on this answer.",
+      "explanation": "The answer contradicts its own cited source. The FX guidelines cap relationship-manager overrides at 10 basis points, not 50, and nothing in the library mentions a treasury-mandate exception. Do not act on this answer.",
       "headline": "Don’t act on this answer",
+      "guidance": "Don’t rely on this answer. Policy allows overrides up to 10 bps; above that, get the Treasury desk head’s approval first.",
       "retrieved": [],
       "claims": [
         {
@@ -365,7 +368,7 @@
             "section": "§2.1",
             "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
           },
-          "short": "Says 50 bps — policy caps it at 10 bps",
+          "short": "Says 50 bps, but policy caps it at 10 bps",
           "reason": "The guideline caps relationship-manager overrides at 10 basis points. Anything above needs prior approval from the Treasury desk head."
         },
         {
@@ -401,7 +404,7 @@
         {
           "id": "citation",
           "status": "fail",
-          "short": "Says 50 basis points — source says 10 basis points",
+          "short": "Cited source says 10 basis points, not 50 basis points",
           "summary": "DOC-FX-019 exists, but the answer cites it for 50 basis points and the passage says 10 basis points.",
           "evidence": [
             {
@@ -427,7 +430,7 @@
         {
           "id": "crossref",
           "status": "fail",
-          "short": "Says 50 basis points — policy says 10 basis points",
+          "short": "Current policy says 10 basis points",
           "summary": "The answer states 50 basis points; the current approved source (DOC-FX-019 §2.1) states 10 basis points.",
           "evidence": [
             {
@@ -458,7 +461,7 @@
         {
           "id": "consistency",
           "status": "fail",
-          "short": "Says no approval — policy requires it",
+          "short": "Says no approval needed, but policy requires it",
           "summary": "The answer says no approval is needed; the cited guideline says approval is required above 10 bps.",
           "evidence": [
             {
@@ -499,6 +502,7 @@
     "fees-waiver": {
       "explanation": "The waiver limits match the Fee Waiver Authority Matrix, but that document is 22 months old and past its 12-month review. The last sentence answers a question about retail cards that was not asked.",
       "headline": "Right limits, outdated source",
+      "guidance": "The SGD 500 limit matches the matrix, but the matrix is overdue for review. Confirm with Branch Operations before waiving.",
       "retrieved": [],
       "claims": [
         {
@@ -512,7 +516,7 @@
             "section": "Row 3",
             "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
           },
-          "short": "SGD 500 limit — source overdue for review",
+          "short": "Right limit, but the source is overdue for review",
           "reason": "Matches the source, but the source is 22 months old and overdue for its annual review. The limit may have changed."
         },
         {
@@ -526,7 +530,7 @@
             "section": "Row 4",
             "passage": "Waivers above SGD 500 require approval from the area head."
           },
-          "short": "Area-head rule — source overdue",
+          "short": "Right rule, but the source is overdue for review",
           "reason": "Matches the source, but the source is overdue for review."
         },
         {
@@ -540,8 +544,8 @@
             "section": "§7.2",
             "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
           },
-          "short": "About retail cards — not what you asked",
-          "reason": "Accurate, but it answers a different question: you asked about SME business accounts, not retail credit cards."
+          "short": "About retail cards, not what you asked",
+          "reason": "Accurate, but it answers a different question: the question was about SME business accounts, not retail credit cards."
         }
       ],
       "checks": [
@@ -571,7 +575,7 @@
         {
           "id": "freshness",
           "status": "warning",
-          "short": "Source 22 months old — review overdue",
+          "short": "Source is 22 months old and overdue for review",
           "summary": "DOC-OPS-045 was last updated 22 months ago, past its 12-month review cycle. It has not been superseded.",
           "evidence": [
             {
@@ -620,7 +624,7 @@
         {
           "id": "consistency",
           "status": "pass",
-          "short": "No contradictions",
+          "short": "Doesn’t contradict itself",
           "summary": "The answer does not contradict itself or another approved document.",
           "evidence": [
             {
@@ -667,6 +671,7 @@
       "noSource": true,
       "explanation": "No approved document covers crypto or digital-asset collateral, and the answer cites nothing. Every claim here is unverified. Treat it as unknown until a reviewer confirms policy.",
       "headline": "No policy covers this",
+      "guidance": "Treat crypto collateral as not permitted until a reviewer confirms policy.",
       "retrieved": [],
       "search": {
         "documentsSearched": 7,
@@ -754,7 +759,7 @@
         {
           "id": "consistency",
           "status": "pass",
-          "short": "No contradictions",
+          "short": "Doesn’t contradict itself",
           "summary": "The answer does not contradict itself.",
           "evidence": [
             {
@@ -993,7 +998,7 @@
         {
           "id": "consistency",
           "status": "pass",
-          "short": "No contradictions",
+          "short": "Doesn’t contradict itself",
           "summary": "No contradiction with any approved document.",
           "evidence": [
             {
@@ -1147,7 +1152,7 @@
         {
           "id": "consistency",
           "status": "pass",
-          "short": "No contradictions",
+          "short": "Doesn’t contradict itself",
           "summary": "No contradiction with the guideline.",
           "evidence": [
             {
@@ -1187,7 +1192,7 @@
     },
     "fees-waiver~corrected": {
       "explanation": "The off-topic sentence is gone. The limits still rest on a matrix that is overdue for review, so the score stays Medium until Branch Operations confirms it.",
-      "headline": "Fixed — source still overdue",
+      "headline": "Fixed, but the source is still overdue",
       "retrieved": [],
       "claims": [
         {
@@ -1201,7 +1206,7 @@
             "section": "Row 3",
             "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
           },
-          "short": "SGD 500 limit — source overdue for review",
+          "short": "Right limit, but the source is overdue for review",
           "reason": "Matches the source, which is overdue for review."
         },
         {
@@ -1215,7 +1220,7 @@
             "section": "Row 4",
             "passage": "Waivers above SGD 500 require approval from the area head."
           },
-          "short": "Area-head rule — source overdue",
+          "short": "Right rule, but the source is overdue for review",
           "reason": "Matches the source, which is overdue for review."
         }
       ],
@@ -1241,7 +1246,7 @@
         {
           "id": "freshness",
           "status": "warning",
-          "short": "Source 22 months old — review overdue",
+          "short": "Source is 22 months old and overdue for review",
           "summary": "DOC-OPS-045 was last updated 22 months ago, past its 12-month review cycle. It has not been superseded.",
           "evidence": [
             {
@@ -1285,7 +1290,7 @@
         {
           "id": "consistency",
           "status": "pass",
-          "short": "No contradictions",
+          "short": "Doesn’t contradict itself",
           "summary": "No contradiction with any approved document.",
           "evidence": [
             {
@@ -1585,7 +1590,7 @@
         {
           "id": "freshness",
           "status": "fail",
-          "short": "Source replaced by DOC-SME-112",
+          "short": "Cited source was replaced on 20 May 2026",
           "summary": "DOC-SME-087 was last updated 14 months ago and has been superseded by DOC-SME-112.",
           "evidence": [
             {
@@ -1598,7 +1603,7 @@
         {
           "id": "crossref",
           "status": "warning",
-          "short": "Says 3:00 pm — policy says 2:30 pm",
+          "short": "Current policy says 2:30 pm",
           "summary": "The answer states 3:00 pm; the current approved source (DOC-SME-112 §3.4) states 2:30 pm.",
           "evidence": [
             {
@@ -1861,7 +1866,7 @@
         {
           "id": "citation",
           "status": "fail",
-          "short": "Says 20% — source says 25%",
+          "short": "Cited source says 25%, not 20%",
           "summary": "DOC-KYC-031 exists, but the answer cites it for 20% and the passage says 25%.",
           "evidence": [
             {
@@ -1887,7 +1892,7 @@
         {
           "id": "crossref",
           "status": "fail",
-          "short": "Says 20% — policy says 25%",
+          "short": "Current policy says 25%",
           "summary": "The answer states 20%; the current approved source (DOC-KYC-031 §4.1) states 25%.",
           "evidence": [
             {
@@ -2702,7 +2707,7 @@
         {
           "id": "freshness",
           "status": "warning",
-          "short": "Source 22 months old — review overdue",
+          "short": "Source is 22 months old and overdue for review",
           "summary": "DOC-OPS-045 was last updated 22 months ago, past its 12-month review cycle. It has not been superseded.",
           "evidence": [
             {
@@ -3294,8 +3299,9 @@
   },
   "assessParaphrased": {
     "sme-limit": {
-      "explanation": "Two of three claims match current policy. The SGD 250,000 limit comes only from a circular that was superseded in May 2026 — the current standard sets SGD 200,000. Confirm the limit before acting on it.",
+      "explanation": "Two of three claims match current policy. The SGD 250,000 limit comes only from a circular that was superseded in May 2026. The current standard sets SGD 200,000. Confirm the limit before acting on it.",
       "headline": "Confirm the limit before acting",
+      "guidance": "The current limit is SGD 200,000. Anything above it needs Credit Committee approval.",
       "retrieved": [
         "DOC-SME-112"
       ],
@@ -3316,7 +3322,7 @@
             "section": "§3.1",
             "passage": "A relationship manager may approve a single SME cross-border transfer of up to SGD 200,000. This replaces the SGD 250,000 limit in circular DOC-SME-087."
           },
-          "short": "SGD 250k is outdated — now SGD 200k",
+          "short": "SGD 250k is outdated. It is now SGD 200k",
           "reason": "No current approved source supports SGD 250,000. The only passage stating it is in a superseded circular, so it counts as unsupported rather than conflicting: the agent copied its source faithfully, but the source is no longer approved. The current standard sets SGD 200,000."
         },
         {
@@ -3368,7 +3374,7 @@
         {
           "id": "freshness",
           "status": "fail",
-          "short": "Source replaced by DOC-SME-112",
+          "short": "Cited source was replaced on 20 May 2026",
           "summary": "DOC-SME-087 was last updated 14 months ago and has been superseded by DOC-SME-112.",
           "evidence": [
             {
@@ -3381,7 +3387,7 @@
         {
           "id": "crossref",
           "status": "warning",
-          "short": "Says SGD 250,000 — policy says SGD 200,000",
+          "short": "Current policy says SGD 200,000",
           "summary": "The answer states SGD 250,000; the current approved source (DOC-SME-112 §3.1) states SGD 200,000.",
           "evidence": [
             {
@@ -3417,7 +3423,7 @@
         {
           "id": "consistency",
           "status": "pass",
-          "short": "No contradictions",
+          "short": "Doesn’t contradict itself",
           "summary": "The answer does not contradict itself. The limit discrepancy is reported under cross-referencing.",
           "evidence": [
             {
@@ -3458,6 +3464,7 @@
     "kyc-ubo": {
       "explanation": "All four claims match the current Customer Due Diligence Procedures, updated seven months ago. No conflicts with other approved documents.",
       "headline": "Safe to use",
+      "guidance": "Safe to use as written. Every requirement matches the current procedure.",
       "retrieved": [],
       "claims": [
         {
@@ -3599,7 +3606,7 @@
         {
           "id": "consistency",
           "status": "pass",
-          "short": "No contradictions",
+          "short": "Doesn’t contradict itself",
           "summary": "The answer does not contradict itself or another approved document.",
           "evidence": [
             {
@@ -3638,8 +3645,9 @@
       "matchedQuestion": "What documents do I need to verify the beneficial owners of a new SME client?"
     },
     "fx-override": {
-      "explanation": "The answer contradicts its own cited source. The FX guidelines cap relationship-manager overrides at 10 basis points — not 50 — and nothing in the library mentions a treasury-mandate exception. Do not act on this answer.",
+      "explanation": "The answer contradicts its own cited source. The FX guidelines cap relationship-manager overrides at 10 basis points, not 50, and nothing in the library mentions a treasury-mandate exception. Do not act on this answer.",
       "headline": "Don’t act on this answer",
+      "guidance": "Don’t rely on this answer. Policy allows overrides up to 10 bps; above that, get the Treasury desk head’s approval first.",
       "retrieved": [],
       "claims": [
         {
@@ -3658,7 +3666,7 @@
             "section": "§2.1",
             "passage": "Relationship managers may apply FX rate overrides of up to 10 basis points."
           },
-          "short": "Says 50 bps — policy caps it at 10 bps",
+          "short": "Says 50 bps, but policy caps it at 10 bps",
           "reason": "The guideline caps relationship-manager overrides at 10 basis points. Anything above needs prior approval from the Treasury desk head."
         },
         {
@@ -3694,7 +3702,7 @@
         {
           "id": "citation",
           "status": "fail",
-          "short": "Says 50 basis points — source says 10 basis points",
+          "short": "Cited source says 10 basis points, not 50 basis points",
           "summary": "DOC-FX-019 exists, but the answer cites it for 50 basis points and the passage says 10 basis points.",
           "evidence": [
             {
@@ -3720,7 +3728,7 @@
         {
           "id": "crossref",
           "status": "fail",
-          "short": "Says 50 basis points — policy says 10 basis points",
+          "short": "Current policy says 10 basis points",
           "summary": "The answer states 50 basis points; the current approved source (DOC-FX-019 §2.1) states 10 basis points.",
           "evidence": [
             {
@@ -3751,7 +3759,7 @@
         {
           "id": "consistency",
           "status": "fail",
-          "short": "Says no approval — policy requires it",
+          "short": "Says no approval needed, but policy requires it",
           "summary": "The answer says no approval is needed; the cited guideline says approval is required above 10 bps.",
           "evidence": [
             {
@@ -3792,6 +3800,7 @@
     "fees-waiver": {
       "explanation": "The waiver limits match the Fee Waiver Authority Matrix, but that document is 22 months old and past its 12-month review. The last sentence answers a question about retail cards that was not asked.",
       "headline": "Right limits, outdated source",
+      "guidance": "The SGD 500 limit matches the matrix, but the matrix is overdue for review. Confirm with Branch Operations before waiving.",
       "retrieved": [],
       "claims": [
         {
@@ -3805,7 +3814,7 @@
             "section": "Row 3",
             "passage": "Branch managers may waive account service fees of up to SGD 500 per account per year."
           },
-          "short": "SGD 500 limit — source overdue for review",
+          "short": "Right limit, but the source is overdue for review",
           "reason": "Matches the source, but the source is 22 months old and overdue for its annual review. The limit may have changed."
         },
         {
@@ -3819,7 +3828,7 @@
             "section": "Row 4",
             "passage": "Waivers above SGD 500 require approval from the area head."
           },
-          "short": "Area-head rule — source overdue",
+          "short": "Right rule, but the source is overdue for review",
           "reason": "Matches the source, but the source is overdue for review."
         },
         {
@@ -3833,8 +3842,8 @@
             "section": "§7.2",
             "passage": "Annual fee reversals for retail credit cards are handled by the Cards Service team."
           },
-          "short": "About retail cards — not what you asked",
-          "reason": "Accurate, but it answers a different question: you asked about SME business accounts, not retail credit cards."
+          "short": "About retail cards, not what you asked",
+          "reason": "Accurate, but it answers a different question: the question was about SME business accounts, not retail credit cards."
         }
       ],
       "checks": [
@@ -3864,7 +3873,7 @@
         {
           "id": "freshness",
           "status": "warning",
-          "short": "Source 22 months old — review overdue",
+          "short": "Source is 22 months old and overdue for review",
           "summary": "DOC-OPS-045 was last updated 22 months ago, past its 12-month review cycle. It has not been superseded.",
           "evidence": [
             {
@@ -3913,7 +3922,7 @@
         {
           "id": "consistency",
           "status": "pass",
-          "short": "No contradictions",
+          "short": "Doesn’t contradict itself",
           "summary": "The answer does not contradict itself or another approved document.",
           "evidence": [
             {
@@ -3955,6 +3964,7 @@
       "noSource": true,
       "explanation": "No approved document covers crypto or digital-asset collateral, and the answer cites nothing. Every claim here is unverified. Treat it as unknown until a reviewer confirms policy.",
       "headline": "No policy covers this",
+      "guidance": "Treat crypto collateral as not permitted until a reviewer confirms policy.",
       "retrieved": [],
       "search": {
         "documentsSearched": 7,
@@ -4042,7 +4052,7 @@
         {
           "id": "consistency",
           "status": "pass",
-          "short": "No contradictions",
+          "short": "Doesn’t contradict itself",
           "summary": "The answer does not contradict itself.",
           "evidence": [
             {
@@ -4603,22 +4613,6 @@
         "priority": "High"
       },
       {
-        "id": "doc-DOC-REM-014",
-        "kind": "retire-document",
-        "topic": "fees",
-        "docId": "DOC-REM-014",
-        "affected": 158,
-        "unit": "claims",
-        "title": "Retire DOC-REM-014 from the retrieval index",
-        "detail": "Remittance Fee Schedule 2025 was superseded by DOC-REM-019 but is still being retrieved, so the agent keeps quoting its old figures. Redirect it to Remittance Fee Schedule 2026.",
-        "evidence": [
-          "Fees & Charges stale-source rate 16% (158 of 972 claims)",
-          "0 of 46 Fees & Charges reviews corrected an answer resting on it"
-        ],
-        "today": 0,
-        "priority": "Medium"
-      },
-      {
         "id": "gap-collateral",
         "kind": "add-source",
         "topic": "collateral",
@@ -4646,7 +4640,7 @@
           "Conflicting-claim rate 10% (82 claims)"
         ],
         "today": 0,
-        "priority": "Low"
+        "priority": "Medium"
       },
       {
         "id": "prompt-off-intent-fees",
@@ -4698,22 +4692,6 @@
         "priority": "High"
       },
       {
-        "id": "doc-DOC-REM-014",
-        "kind": "retire-document",
-        "topic": "fees",
-        "docId": "DOC-REM-014",
-        "affected": 158,
-        "unit": "claims",
-        "title": "Retire DOC-REM-014 from the retrieval index",
-        "detail": "Remittance Fee Schedule 2025 was superseded by DOC-REM-019 but is still being retrieved, so the agent keeps quoting its old figures. Redirect it to Remittance Fee Schedule 2026.",
-        "evidence": [
-          "Fees & Charges stale-source rate 16% (158 of 972 claims)",
-          "0 of 46 Fees & Charges reviews corrected an answer resting on it"
-        ],
-        "today": 0,
-        "priority": "Medium"
-      },
-      {
         "id": "gap-collateral",
         "kind": "add-source",
         "topic": "collateral",
@@ -4741,7 +4719,7 @@
           "Conflicting-claim rate 10% (82 claims)"
         ],
         "today": 1,
-        "priority": "Low"
+        "priority": "Medium"
       },
       {
         "id": "prompt-off-intent-fees",
@@ -4821,7 +4799,7 @@
             {
               "id": "sme-limit-c1",
               "status": "unsupported",
-              "short": "SGD 250k is outdated — now SGD 200k",
+              "short": "SGD 250k is outdated. It is now SGD 200k",
               "docId": "DOC-SME-087"
             }
           ],
@@ -4938,7 +4916,7 @@
             {
               "id": "fx-override-c1",
               "status": "conflicting",
-              "short": "Says 50 bps — policy caps it at 10 bps",
+              "short": "Says 50 bps, but policy caps it at 10 bps",
               "docId": "DOC-FX-019"
             },
             {
@@ -5006,19 +4984,19 @@
             {
               "id": "fees-waiver-c1",
               "status": "stale",
-              "short": "SGD 500 limit — source overdue for review",
+              "short": "Right limit, but the source is overdue for review",
               "docId": "DOC-OPS-045"
             },
             {
               "id": "fees-waiver-c2",
               "status": "stale",
-              "short": "Area-head rule — source overdue",
+              "short": "Right rule, but the source is overdue for review",
               "docId": "DOC-OPS-045"
             },
             {
               "id": "fees-waiver-c3",
               "status": "off-intent",
-              "short": "About retail cards — not what you asked",
+              "short": "About retail cards, not what you asked",
               "docId": "DOC-CRD-022"
             }
           ],

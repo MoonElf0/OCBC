@@ -76,7 +76,7 @@ export const DOCUMENTS = {
   },
   'DOC-KYC-031': {
     id: 'DOC-KYC-031',
-    title: 'Customer Due Diligence Procedures — SME',
+    title: 'Customer Due Diligence Procedures (SME)',
     version: 'v3.1',
     topic: 'kyc',
     owner: 'Financial Crime Compliance',
@@ -133,100 +133,92 @@ export const DOCUMENTS = {
     ],
   },
 
-  // Wider library for free-text questions (backend mode, model-written answers).
-  // No scripted scenario uses these, so they change no dashboard figure.
-  'DOC-DEP-210': {
-    id: 'DOC-DEP-210',
-    title: 'Savings Account Terms — Retail',
-    version: 'v3.0',
+  // ── Library-only documents ──────────────────────────────────────────────
+  // No scripted scenario uses these. In backend mode with a model agent
+  // (AGENT_MODEL_PROVIDER), the Assistant page answers questions about them
+  // from these passages and the verifier checks those answers against them.
+  // They sit under existing topics so the dashboard's topic counts stay as
+  // they are, and all are within their review cycle (no stale-document
+  // recommendations). Collateral is left without a document on purpose: the
+  // crypto-collateral question is the "no source found" failure case.
+  'DOC-KYC-040': {
+    id: 'DOC-KYC-040',
+    title: 'Personal Account Opening Procedures',
+    version: 'v2.0',
+    topic: 'kyc',
+    owner: 'Retail Banking Operations',
+    updated: '2026-04-20',
+    reviewCycleMonths: 12,
+    supersededBy: null,
+    sections: [
+      { id: '§2.1', heading: 'Eligibility', text: 'Individuals aged 16 and above may open a personal savings account. Applicants under 21 need a parent or legal guardian to sign as joint signatory.' },
+      { id: '§2.2', heading: 'Identity documents', text: "Singapore citizens and permanent residents must present their NRIC. Foreign applicants must present a valid passport and an employment pass, dependant's pass or student pass with at least six months' validity remaining." },
+      { id: '§2.3', heading: 'Local address', text: 'Foreign applicants must also provide a utility bill or tenancy agreement showing a Singapore address.' },
+      { id: '§3.1', heading: 'Initial deposit', text: 'The minimum initial deposit for a personal savings account is SGD 1,000. There is no minimum initial deposit for applicants under 21.' },
+      { id: '§4.1', heading: 'Screening', text: 'Every applicant must be screened against sanctions and politically exposed persons lists before the account is activated.' },
+    ],
+  },
+  'DOC-DEP-015': {
+    id: 'DOC-DEP-015',
+    title: 'Personal Savings Account Terms',
+    version: 'v3.2',
     topic: 'fees',
-    owner: 'Deposits Product Office',
+    owner: 'Deposits Product Management',
     updated: '2026-02-10',
     reviewCycleMonths: 12,
     supersededBy: null,
     sections: [
-      { id: '§2.1', heading: 'Minimum balance', text: 'A standard savings account requires an average daily balance of SGD 1,000 in each calendar month.' },
-      { id: '§2.2', heading: 'Fall-below fee', text: 'A fall-below fee of SGD 2 is charged for any month in which the average daily balance is under SGD 1,000. The fee is waived for account holders aged 21 and below.' },
-      { id: '§3.1', heading: 'Interest', text: 'Interest is calculated on the end-of-day balance and credited monthly on the last business day of the month.' },
-      { id: '§4.1', heading: 'Dormant accounts', text: 'An account with no customer-initiated transaction for 24 months is classified as dormant.' },
+      { id: '§3.1', heading: 'Minimum balance', text: 'The minimum average daily balance for a personal savings account is SGD 3,000.' },
+      { id: '§3.2', heading: 'Fall-below fee', text: 'A fall-below fee of SGD 2 per month applies when the average daily balance in a calendar month is under SGD 3,000. The fee does not apply to account holders under 21 or aged 62 and above.' },
+      { id: '§4.1', heading: 'Interest', text: 'Base interest of 0.05% per annum is calculated on the daily balance and credited monthly.' },
+      { id: '§5.1', heading: 'Dormant accounts', text: 'An account with no customer-initiated transaction for 24 months is classified as dormant. A dormant account fee of SGD 2 per month applies until the account is reactivated.' },
     ],
   },
-  'DOC-KYC-040': {
-    id: 'DOC-KYC-040',
-    title: 'Retail Account Opening Procedures',
-    version: 'v2.2',
-    topic: 'kyc',
-    owner: 'Financial Crime Compliance',
-    updated: '2026-04-21',
+  'DOC-CRD-030': {
+    id: 'DOC-CRD-030',
+    title: 'Card Dispute and Chargeback Procedures',
+    version: 'v1.4',
+    topic: 'fees',
+    owner: 'Cards & Payments',
+    updated: '2026-05-28',
     reviewCycleMonths: 12,
     supersededBy: null,
     sections: [
-      { id: '§2.1', heading: 'Eligibility', text: 'Individual accounts may be opened by applicants aged 16 and above. Applicants under 18 need a parent or guardian as a joint signatory.' },
-      { id: '§3.1', heading: 'Identity documents — citizens and residents', text: 'Singapore citizens and permanent residents must provide their NRIC to open an account.' },
-      { id: '§3.2', heading: 'Identity documents — foreigners', text: 'Foreign applicants must provide a passport, a valid employment or student pass, and proof of residential address dated within the last three months.' },
-      { id: '§4.1', heading: 'Initial deposit', text: 'An initial deposit of SGD 500 must be made within 30 days of the account being opened.' },
-      { id: '§5.1', heading: 'Politically exposed persons', text: 'An applicant identified as a politically exposed person needs senior management approval before the account is opened.' },
+      { id: '§2.1', heading: 'Time limit', text: 'A cardholder must raise a dispute within 60 days of the statement date on which the transaction first appeared.' },
+      { id: '§2.2', heading: 'Provisional credit', text: 'For disputed amounts up to SGD 500, the Cards Service team may grant a provisional credit within 5 business days while the chargeback is investigated.' },
+      { id: '§3.1', heading: 'Chargeback filing', text: "Disputes above SGD 500 must be filed as a chargeback with the card scheme, supported by the cardholder's signed dispute form." },
+      { id: '§3.2', heading: 'Fraudulent transactions', text: 'A transaction reported as fraudulent requires the card to be blocked and replaced before the dispute is processed.' },
     ],
   },
   'DOC-SME-130': {
     id: 'DOC-SME-130',
-    title: 'SME Loan Repayment and Restructuring Guidelines',
-    version: 'v1.4',
+    title: 'SME Term Loan Repayment Guidelines',
+    version: 'v1.1',
     topic: 'sme',
     owner: 'Business Banking Credit Risk',
-    updated: '2026-01-15',
+    updated: '2026-07-01',
     reviewCycleMonths: 12,
     supersededBy: null,
     sections: [
-      { id: '§2.1', heading: 'Grace period', text: 'A loan repayment received within 7 calendar days of its due date is not treated as late.' },
-      { id: '§2.2', heading: 'Late payment fee', text: 'After the grace period, a late payment fee of 2% of the overdue instalment is charged, subject to a minimum of SGD 50.' },
-      { id: '§3.1', heading: 'Early repayment', text: "A borrower may repay a term loan in full early by giving 30 days' written notice. A prepayment fee of 1.5% of the amount repaid applies during the first two years of the loan." },
-      { id: '§4.1', heading: 'Restructuring', text: 'A request to restructure an SME loan must be approved by the Business Banking Credit Committee.' },
+      { id: '§2.1', heading: 'Repayment schedule', text: 'SME term loans are repaid in monthly instalments over a tenor of 12 to 60 months.' },
+      { id: '§2.2', heading: 'Early repayment', text: "Full or partial early repayment is allowed with 30 days' written notice. A prepayment fee of 1.5% of the amount prepaid applies within the first 24 months of the loan." },
+      { id: '§3.1', heading: 'Missed instalments', text: 'An instalment unpaid for 30 days incurs a late charge of 2% per annum above the contract rate on the overdue amount.' },
+      { id: '§3.2', heading: 'Restructuring', text: 'A request to extend the tenor or defer instalments must be referred to the Special Assets unit for assessment.' },
     ],
   },
-  'DOC-CRD-031': {
-    id: 'DOC-CRD-031',
-    title: 'Card Dispute Handling Procedure',
+  'DOC-PAY-008': {
+    id: 'DOC-PAY-008',
+    title: 'Outward Remittance Fee Schedule',
     version: 'v2.1',
     topic: 'fees',
-    owner: 'Cards & Payments',
-    updated: '2026-08-03',
+    owner: 'Payments Operations',
+    updated: '2026-03-15',
     reviewCycleMonths: 12,
     supersededBy: null,
     sections: [
-      { id: '§2.1', heading: 'Time limit', text: 'A customer must raise a card transaction dispute within 60 days of the statement date.' },
-      { id: '§2.2', heading: 'Provisional credit', text: 'For a dispute above SGD 100, a provisional credit is posted within 10 business days while the case is investigated.' },
-      { id: '§3.1', heading: 'Suspected fraud', text: 'A suspected fraudulent transaction must be reported immediately, and the card is blocked before the dispute is logged.' },
-      { id: '§4.1', heading: 'Resolution', text: 'Card disputes are resolved within 90 days of being logged.' },
-    ],
-  },
-  'DOC-REM-014': {
-    id: 'DOC-REM-014',
-    title: 'Remittance Fee Schedule 2025',
-    version: 'v1.0',
-    topic: 'fees',
-    owner: 'Retail Payments',
-    updated: '2025-01-06',
-    reviewCycleMonths: 12,
-    supersededBy: 'DOC-REM-019',
-    sections: [
-      { id: '§1', heading: 'Online remittance', text: 'Overseas remittances made through online banking are charged a flat fee of SGD 10 per transaction.' },
-      { id: '§2', heading: 'Branch remittance', text: 'Overseas remittances made at a branch are charged SGD 30 per transaction.' },
-    ],
-  },
-  'DOC-REM-019': {
-    id: 'DOC-REM-019',
-    title: 'Remittance Fee Schedule 2026',
-    version: 'v2.0',
-    topic: 'fees',
-    owner: 'Retail Payments',
-    updated: '2026-03-30',
-    reviewCycleMonths: 12,
-    supersededBy: null,
-    sections: [
-      { id: '§1', heading: 'Online remittance', text: 'Overseas remittances made through online banking are charged a flat fee of SGD 5 per transaction. This replaces the SGD 10 fee in DOC-REM-014.' },
-      { id: '§2', heading: 'Branch remittance', text: 'Overseas remittances made at a branch are charged SGD 25 per transaction.' },
-      { id: '§3', heading: 'Daily limit', text: 'Online overseas remittances are limited to SGD 50,000 per customer per day.' },
+      { id: '§1.1', heading: 'Telegraphic transfer commission', text: 'An outward telegraphic transfer made at a branch incurs a commission of SGD 30. The same remittance made through digital banking incurs a commission of SGD 10.' },
+      { id: '§1.2', heading: 'Intermediary charges', text: 'Where the sender chooses to pay all charges (OUR), an additional SGD 20 is collected to cover charges levied by intermediary banks.' },
+      { id: '§2.1', heading: 'Commission waiver', text: 'Remittance commissions may be waived only for Premier Banking customers, and only for remittances made through digital banking.' },
     ],
   },
 }
@@ -292,8 +284,9 @@ export const SCENARIOS = [
     },
     verification: {
       explanation:
-        'Two of three claims match current policy. The SGD 250,000 limit comes only from a circular that was superseded in May 2026 — the current standard sets SGD 200,000. Confirm the limit before acting on it.',
+        'Two of three claims match current policy. The SGD 250,000 limit comes only from a circular that was superseded in May 2026. The current standard sets SGD 200,000. Confirm the limit before acting on it.',
       headline: 'Confirm the limit before acting',
+      guidance: 'The current limit is SGD 200,000. Anything above it needs Credit Committee approval.',
       retrieved: ['DOC-SME-112'],
       claims: [
         {
@@ -302,7 +295,7 @@ export const SCENARIOS = [
           check: 'freshness',
           source: passageOf('DOC-SME-087', '§2'),
           counter: passageOf('DOC-SME-112', '§3.1'),
-          short: 'SGD 250k is outdated — now SGD 200k',
+          short: 'SGD 250k is outdated. It is now SGD 200k',
           reason: 'No current approved source supports SGD 250,000. The only passage stating it is in a superseded circular, so it counts as unsupported rather than conflicting: the agent copied its source faithfully, but the source is no longer approved. The current standard sets SGD 200,000.',
         },
         {
@@ -322,7 +315,7 @@ export const SCENARIOS = [
       ],
       checks: [
         { id: 'groundedness', status: 'warning', short: '1 claim rests on a replaced circular', summary: '2 of 3 claims are supported by a current approved source. 1 claim rests only on a superseded document.', evidence: [passageOf('DOC-SME-087', '§2'), passageOf('DOC-SME-104', '§5.2'), passageOf('DOC-SME-112', '§3.4')] },
-        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'The answer does not contradict itself. The limit discrepancy is reported under cross-referencing.', evidence: [passageOf('DOC-SME-104', '§5.1')] },
+        { id: 'consistency', status: 'pass', short: 'Doesn’t contradict itself', summary: 'The answer does not contradict itself. The limit discrepancy is reported under cross-referencing.', evidence: [passageOf('DOC-SME-104', '§5.1')] },
         { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'The question asks for an approval limit. The answer states a limit and the escalation path above it.', evidence: [{ kind: 'question' }] },
       ],
     },
@@ -344,6 +337,7 @@ export const SCENARIOS = [
     verification: {
       explanation: 'All four claims match the current Customer Due Diligence Procedures, updated seven months ago. No conflicts with other approved documents.',
       headline: 'Safe to use',
+      guidance: 'Safe to use as written. Every requirement matches the current procedure.',
       retrieved: [],
       claims: [
         { quote: 'each beneficial owner holding 25% or more of the company', status: 'supported', check: 'groundedness', source: passageOf('DOC-KYC-031', '§4.1'), reason: 'Matches the 25% ownership threshold.' },
@@ -353,7 +347,7 @@ export const SCENARIOS = [
       ],
       checks: [
         { id: 'groundedness', status: 'pass', short: 'All 4 claims backed by policy', summary: '4 of 4 claims are supported by an approved source.', evidence: [passageOf('DOC-KYC-031', '§4.1'), passageOf('DOC-KYC-031', '§4.2'), passageOf('DOC-KYC-031', '§4.3'), passageOf('DOC-KYC-031', '§4.4')] },
-        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'The answer does not contradict itself or another approved document.', evidence: [passageOf('DOC-KYC-031', '§4.4')] },
+        { id: 'consistency', status: 'pass', short: 'Doesn’t contradict itself', summary: 'The answer does not contradict itself or another approved document.', evidence: [passageOf('DOC-KYC-031', '§4.4')] },
         { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'The question asks which documents are needed. The answer lists them.', evidence: [{ kind: 'question' }] },
       ],
     },
@@ -374,8 +368,9 @@ export const SCENARIOS = [
     },
     verification: {
       explanation:
-        'The answer contradicts its own cited source. The FX guidelines cap relationship-manager overrides at 10 basis points — not 50 — and nothing in the library mentions a treasury-mandate exception. Do not act on this answer.',
+        'The answer contradicts its own cited source. The FX guidelines cap relationship-manager overrides at 10 basis points, not 50, and nothing in the library mentions a treasury-mandate exception. Do not act on this answer.',
       headline: 'Don’t act on this answer',
+      guidance: 'Don’t rely on this answer. Policy allows overrides up to 10 bps; above that, get the Treasury desk head’s approval first.',
       retrieved: [],
       claims: [
         {
@@ -384,7 +379,7 @@ export const SCENARIOS = [
           check: 'consistency',
           source: passageOf('DOC-FX-019', '§2.2'),
           counter: passageOf('DOC-FX-019', '§2.1'),
-          short: 'Says 50 bps — policy caps it at 10 bps',
+          short: 'Says 50 bps, but policy caps it at 10 bps',
           reason: 'The guideline caps relationship-manager overrides at 10 basis points. Anything above needs prior approval from the Treasury desk head.',
         },
         {
@@ -406,7 +401,7 @@ export const SCENARIOS = [
       ],
       checks: [
         { id: 'groundedness', status: 'fail', short: 'Only 1 of 3 claims backed', summary: '1 of 3 claims is supported. 1 conflicts with the source and 1 has no supporting passage.', evidence: [passageOf('DOC-FX-019', '§2.1'), passageOf('DOC-FX-019', '§3.1')] },
-        { id: 'consistency', status: 'fail', short: 'Says no approval — policy requires it', summary: 'The answer says no approval is needed; the cited guideline says approval is required above 10 bps.', evidence: [passageOf('DOC-FX-019', '§2.2')] },
+        { id: 'consistency', status: 'fail', short: 'Says no approval needed, but policy requires it', summary: 'The answer says no approval is needed; the cited guideline says approval is required above 10 bps.', evidence: [passageOf('DOC-FX-019', '§2.2')] },
         { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'The question asks whether approval is needed. The answer addresses that directly.', evidence: [{ kind: 'question' }] },
       ],
     },
@@ -429,15 +424,16 @@ export const SCENARIOS = [
       explanation:
         'The waiver limits match the Fee Waiver Authority Matrix, but that document is 22 months old and past its 12-month review. The last sentence answers a question about retail cards that was not asked.',
       headline: 'Right limits, outdated source',
+      guidance: 'The SGD 500 limit matches the matrix, but the matrix is overdue for review. Confirm with Branch Operations before waiving.',
       retrieved: [],
       claims: [
-        { quote: 'A branch manager can waive account service fees of up to SGD 500 per account per year', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 3'), short: 'SGD 500 limit — source overdue for review', reason: 'Matches the source, but the source is 22 months old and overdue for its annual review. The limit may have changed.' },
-        { quote: 'Waivers above SGD 500 need approval from the area head', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 4'), short: 'Area-head rule — source overdue', reason: 'Matches the source, but the source is overdue for review.' },
-        { quote: 'For retail credit cards, annual fee reversals are handled by the Cards Service team', status: 'off-intent', check: 'intent', source: passageOf('DOC-CRD-022', '§7.2'), short: 'About retail cards — not what you asked', reason: 'Accurate, but it answers a different question: you asked about SME business accounts, not retail credit cards.' },
+        { quote: 'A branch manager can waive account service fees of up to SGD 500 per account per year', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 3'), short: 'Right limit, but the source is overdue for review', reason: 'Matches the source, but the source is 22 months old and overdue for its annual review. The limit may have changed.' },
+        { quote: 'Waivers above SGD 500 need approval from the area head', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 4'), short: 'Right rule, but the source is overdue for review', reason: 'Matches the source, but the source is overdue for review.' },
+        { quote: 'For retail credit cards, annual fee reversals are handled by the Cards Service team', status: 'off-intent', check: 'intent', source: passageOf('DOC-CRD-022', '§7.2'), short: 'About retail cards, not what you asked', reason: 'Accurate, but it answers a different question: the question was about SME business accounts, not retail credit cards.' },
       ],
       checks: [
         { id: 'groundedness', status: 'pass', short: 'All 3 claims match a source', summary: '3 of 3 claims match a source passage. 2 of them rest on a document overdue for review.', evidence: [passageOf('DOC-OPS-045', 'Row 3'), passageOf('DOC-OPS-045', 'Row 4'), passageOf('DOC-CRD-022', '§7.2')] },
-        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'The answer does not contradict itself or another approved document.', evidence: [passageOf('DOC-OPS-045', 'Row 4')] },
+        { id: 'consistency', status: 'pass', short: 'Doesn’t contradict itself', summary: 'The answer does not contradict itself or another approved document.', evidence: [passageOf('DOC-OPS-045', 'Row 4')] },
         { id: 'intent', status: 'warning', short: 'Last sentence is off-topic', summary: 'The question is about an SME business account. The final sentence answers a nearby question about retail credit cards.', evidence: [{ kind: 'question' }, passageOf('DOC-CRD-022', '§7.2')] },
       ],
     },
@@ -461,6 +457,7 @@ export const SCENARIOS = [
       explanation:
         'No approved document covers crypto or digital-asset collateral, and the answer cites nothing. Every claim here is unverified. Treat it as unknown until a reviewer confirms policy.',
       headline: 'No policy covers this',
+      guidance: 'Treat crypto collateral as not permitted until a reviewer confirms policy.',
       retrieved: [],
       search: { documentsSearched: 7, query: 'crypto digital asset collateral haircut custodian', topMatch: 0.21, threshold: 0.6 },
       claims: [
@@ -470,7 +467,7 @@ export const SCENARIOS = [
       ],
       checks: [
         { id: 'groundedness', status: 'fail', short: '0 of 3 claims backed', summary: '0 of 3 claims are supported. No approved passage was retrieved.', evidence: [{ kind: 'search' }] },
-        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'The answer does not contradict itself.', evidence: [{ kind: 'search' }] },
+        { id: 'consistency', status: 'pass', short: 'Doesn’t contradict itself', summary: 'The answer does not contradict itself.', evidence: [{ kind: 'search' }] },
         { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'The question asks whether crypto is acceptable collateral. The answer addresses that.', evidence: [{ kind: 'question' }] },
       ],
     },
@@ -505,7 +502,7 @@ export const FALLBACK = {
 export const REVIEW_QUEUE_SEED = [
   { id: 'RQ-1041', scenarioId: 'fx-override', askedBy: 'Relationship Manager · Corporate Banking', askedAt: '2026-10-07T09:12', routedBy: 'auto', reasons: ['low-confidence', 'conflicting', 'high-stakes'] },
   { id: 'RQ-1039', scenarioId: 'collateral-crypto', askedBy: 'Relationship Manager · Business Banking', askedAt: '2026-10-06T16:40', routedBy: 'auto', reasons: ['low-confidence', 'no-source', 'high-stakes'] },
-  { id: 'RQ-1036', scenarioId: 'fees-waiver', askedBy: 'Branch Service Lead · Tampines', askedAt: '2026-10-06T11:05', routedBy: 'employee', reasons: ['employee', 'stale'] },
+  { id: 'RQ-1036', scenarioId: 'fees-waiver', askedBy: 'Branch Service Lead · Tampines', askedAt: '2026-10-06T11:05', routedBy: 'employee', reasons: ['employee', 'stale'], note: 'Is the SGD 500 waiver limit still current? The answer also talks about retail credit cards, but my client has an SME business account.' },
 ]
 
 // What a reviewer's decision on each scenario is filed under, plus a draft
@@ -542,7 +539,7 @@ export const CORRECTIONS = {
       ],
       checks: [
         { id: 'groundedness', status: 'pass', short: 'All 3 claims backed', summary: '3 of 3 claims are supported by a current approved source.', evidence: [passageOf('DOC-SME-112', '§3.1'), passageOf('DOC-SME-104', '§5.2'), passageOf('DOC-SME-112', '§3.4')] },
-        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-SME-112', '§3.1')] },
+        { id: 'consistency', status: 'pass', short: 'Doesn’t contradict itself', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-SME-112', '§3.1')] },
         { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'States the limit asked for and the escalation path.', evidence: [{ kind: 'question' }] },
       ],
     },
@@ -566,7 +563,7 @@ export const CORRECTIONS = {
       ],
       checks: [
         { id: 'groundedness', status: 'pass', short: 'All 3 claims backed', summary: '3 of 3 claims are supported.', evidence: [passageOf('DOC-FX-019', '§2.1'), passageOf('DOC-FX-019', '§2.2')] },
-        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with the guideline.', evidence: [passageOf('DOC-FX-019', '§2.2')] },
+        { id: 'consistency', status: 'pass', short: 'Doesn’t contradict itself', summary: 'No contradiction with the guideline.', evidence: [passageOf('DOC-FX-019', '§2.2')] },
         { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'Answers whether approval is needed.', evidence: [{ kind: 'question' }] },
       ],
     },
@@ -581,15 +578,15 @@ export const CORRECTIONS = {
     },
     verification: {
       explanation: 'The off-topic sentence is gone. The limits still rest on a matrix that is overdue for review, so the score stays Medium until Branch Operations confirms it.',
-      headline: 'Fixed — source still overdue',
+      headline: 'Fixed, but the source is still overdue',
       retrieved: [],
       claims: [
-        { quote: 'A branch manager can waive account service fees of up to SGD 500 per account per year', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 3'), short: 'SGD 500 limit — source overdue for review', reason: 'Matches the source, which is overdue for review.' },
-        { quote: 'waivers above SGD 500 need approval from the area head', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 4'), short: 'Area-head rule — source overdue', reason: 'Matches the source, which is overdue for review.' },
+        { quote: 'A branch manager can waive account service fees of up to SGD 500 per account per year', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 3'), short: 'Right limit, but the source is overdue for review', reason: 'Matches the source, which is overdue for review.' },
+        { quote: 'waivers above SGD 500 need approval from the area head', status: 'stale', check: 'freshness', source: passageOf('DOC-OPS-045', 'Row 4'), short: 'Right rule, but the source is overdue for review', reason: 'Matches the source, which is overdue for review.' },
       ],
       checks: [
         { id: 'groundedness', status: 'pass', short: 'Both claims match a source', summary: '2 of 2 claims match a source passage.', evidence: [passageOf('DOC-OPS-045', 'Row 3'), passageOf('DOC-OPS-045', 'Row 4')] },
-        { id: 'consistency', status: 'pass', short: 'No contradictions', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-OPS-045', 'Row 4')] },
+        { id: 'consistency', status: 'pass', short: 'Doesn’t contradict itself', summary: 'No contradiction with any approved document.', evidence: [passageOf('DOC-OPS-045', 'Row 4')] },
         { id: 'intent', status: 'pass', short: 'Answers the question asked', summary: 'Answers only about the SME business account asked about.', evidence: [{ kind: 'question' }] },
       ],
     },

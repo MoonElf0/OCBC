@@ -12,25 +12,25 @@ import {
   IdCard,
   ArrowLeftRight,
   Receipt,
-  Vault,
+  Coins,
+  SearchX,
   MessageCircleQuestion,
   Quote,
   Layers,
   Anchor,
   Scale,
   Target,
-  CircleDashed,
-  SearchX,
-  Inbox,
   Pencil,
   Ban,
+  CircleDashed,
+  Inbox,
   RefreshCw,
   ShieldCheck,
 } from 'lucide-react'
 
 export const CHECK_ICON = { citation: Quote, freshness: Clock, crossref: Layers, groundedness: Anchor, consistency: Scale, intent: Target }
 
-export const TOPIC_ICON = { sme: Building2, kyc: IdCard, fx: ArrowLeftRight, fees: Receipt, collateral: Vault }
+export const TOPIC_ICON = { sme: Building2, kyc: IdCard, fx: ArrowLeftRight, fees: Receipt, collateral: Coins }
 export const topicIcon = (topic) => TOPIC_ICON[topic] ?? MessageCircleQuestion
 import { BANDS } from '../fixtures'
 
@@ -52,7 +52,8 @@ export const CLAIM_STATUS = {
   conflicting: { label: 'Conflicting', tone: 'unsupported', Icon: GitCompareArrows },
   stale: { label: 'Stale source', tone: 'caution', Icon: Clock },
   'off-intent': { label: 'Off the question', tone: 'caution', Icon: Shuffle },
-  'no-source': { label: 'No source found', tone: 'unknown', Icon: CircleSlash },
+  'no-source': { label: 'No source found', tone: 'unsupported', Icon: SearchX },
+  // Backend-mode statuses: the pipeline found no approved evidence, or a model step did not run.
   insufficient: { label: 'Insufficient evidence', tone: 'unknown', Icon: SearchX },
   unassessed: { label: 'Not checked', tone: 'unknown', Icon: CircleDashed },
 }
@@ -69,13 +70,42 @@ export const CHECK_STATUS = {
 
 // Resolve order is deliberate: fast rule-based checks first, judge checks after.
 export const CHECKS = [
-  { id: 'citation', name: 'Citation verification', question: 'Do the cited documents exist, and do they say what the answer claims?', method: 'rule', ms: 200 },
-  { id: 'freshness', name: 'Freshness', question: 'Is each source current, or superseded or overdue for review?', method: 'rule', ms: 180 },
-  { id: 'crossref', name: 'Cross-referencing', question: 'Does the answer match the approved sources on the same point?', method: 'rule', ms: 220 },
-  { id: 'groundedness', name: 'Groundedness', question: 'Is each claim supported by a retrieved source passage?', method: 'judge', ms: 320 },
-  { id: 'consistency', name: 'Consistency', question: 'Does the answer contradict itself or another approved document?', method: 'judge', ms: 270 },
-  { id: 'intent', name: 'Intent alignment', question: 'Did it answer the question asked, or a nearby one?', method: 'judge', ms: 260 },
+  { id: 'citation', name: 'Citation accuracy', question: 'Do the cited documents exist, and do they say what the answer claims?', method: 'rule', ms: 260 },
+  { id: 'freshness', name: 'Freshness', question: 'Is each source current, or superseded or overdue for review?', method: 'rule', ms: 240 },
+  { id: 'crossref', name: 'Source quality', question: 'Do the sources used agree with the current approved policy on the same point?', method: 'rule', ms: 280 },
+  { id: 'groundedness', name: 'Groundedness', question: 'Is each claim supported by a retrieved source passage?', method: 'judge', ms: 420 },
+  { id: 'consistency', name: 'Consistency', question: 'Does the answer contradict itself or another approved document?', method: 'judge', ms: 340 },
+  { id: 'intent', name: 'Relevance & intent', question: 'Did it answer the question asked, or a nearby one?', method: 'judge', ms: 320 },
 ]
+
+// Order the six checks are shown in the verify pane.
+// Same as the run order, so boxes fill in top to bottom.
+export const CHECK_DISPLAY_ORDER = CHECKS.map((c) => c.id)
+
+// What the employee should do at each score band.
+export const VERDICT = {
+  high: { tag: 'Trusted', action: 'Safe to use', range: '80-100' },
+  medium: { tag: 'Check sources', action: 'Confirm before acting', range: '50-79' },
+  low: { tag: 'Human review', action: 'Do not act yet', range: '0-49' },
+  none: { tag: 'Nothing to score', action: 'No policy claims', range: '' },
+}
+
+// Severity of each claim status, worst first. Drives sort order and the legend.
+export const SEVERITY = [
+  { id: 'wrong', label: 'Wrong', tone: 'unsupported', Icon: CircleX, statuses: ['conflicting', 'unsupported'] },
+  { id: 'nosource', label: 'No source', tone: 'unsupported', Icon: SearchX, statuses: ['no-source', 'insufficient'] },
+  { id: 'check', label: 'Check', tone: 'caution', Icon: TriangleAlert, statuses: ['stale', 'off-intent'] },
+  { id: 'unchecked', label: 'Not checked', tone: 'unknown', Icon: CircleDashed, statuses: ['unassessed'] },
+  { id: 'correct', label: 'Correct', tone: 'verified', Icon: CircleCheck, statuses: ['supported'] },
+]
+export const severityFor = (status) => SEVERITY.find((s) => s.statuses.includes(status))
+export const severityOf = (status) => SEVERITY.findIndex((s) => s.statuses.includes(status))
+
+export const OUTCOME_META = {
+  approved: { label: 'Approved by reviewer', tone: 'verified', Icon: CircleCheck },
+  corrected: { label: 'Corrected by reviewer', tone: 'verified', Icon: Pencil },
+  rejected: { label: 'Rejected by reviewer · do not use', tone: 'unsupported', Icon: Ban },
+}
 
 export const METHOD_LABEL = {
   rule: 'Rule-based check',

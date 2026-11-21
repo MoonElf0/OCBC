@@ -106,7 +106,7 @@ export default function TrustMap() {
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center p-4" role="dialog" aria-modal="true" aria-label="Trust Map">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={close} />
+      <div className="absolute inset-0 bg-line/50 backdrop-blur-sm" onClick={close} />
       <div className="glass pop relative max-h-full w-full max-w-[640px] overflow-hidden rounded-3xl border border-frost shadow-xl">
         <div className="aurora pointer-events-none absolute -top-24 -right-16 size-64 rounded-full bg-ocbc-red/25" aria-hidden="true" />
         <div className="aurora pointer-events-none absolute -bottom-24 -left-16 size-64 rounded-full bg-[#7c5cff]/20" aria-hidden="true" />
