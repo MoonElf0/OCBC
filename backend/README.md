@@ -40,6 +40,21 @@ cd backend
 
 Tests use `mongomock` (in memory) and never touch your cluster.
 
+### No cluster reachable? `MONGODB_URI=memory`
+
+If Atlas refuses the connection (an SSL handshake error or a timeout usually
+means your current IP is not on its Network Access list, e.g. on venue
+Wi‑Fi), run against an in-memory database instead:
+
+```powershell
+npm run dev:full:memory --prefix frontend    # backend + frontend, in-memory database
+```
+
+or set `MONGODB_URI=memory` yourself (in `.env`, or in the environment, which
+wins over `.env`). Everything else, Qwen included, runs as normal. The
+database is seeded fresh on every start and is lost when the server stops,
+so reviewer decisions and new policy versions do not survive a restart.
+
 Data lives in the MongoDB database named by `MONGODB_DB` (default
 `assessment`), created and seeded on first run. A database written by an
 older version of the backend is rebuilt from the seed, since it only ever

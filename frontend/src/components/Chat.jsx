@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { ArrowUp, ShieldCheck, ShieldAlert, ShieldX, ShieldQuestion, Inbox, CircleHelp, Sparkles, ChevronRight } from 'lucide-react'
+import { ArrowUp, ShieldCheck, ShieldAlert, ShieldX, ShieldQuestion, Inbox, CircleHelp, Sparkles, ChevronRight, ClipboardPaste, MessageSquare } from 'lucide-react'
 import { useStore } from '../state/store'
 import { SCENARIOS, TOPICS } from '../fixtures'
 import { TONES, CHECKS, VERDICT, OUTCOME_META, bandFor, topicIcon } from '../lib/status'
@@ -8,13 +8,17 @@ import { BACKEND } from '../lib/backend'
 import { visibleClaims, checksDone } from '../lib/view'
 import AnswerText from './AnswerText'
 import { MiniRing } from './charts'
+import Challenger from './Challenger'
+import { TrustChips } from './TrustMap'
+import { StateChip } from './lifecycle'
+import { SubmitForm, BackendNotice } from './VerifyAnswerPage'
 
 export default function Chat() {
   const { state } = useStore()
   const scroller = useRef(null)
   const stick = useRef(true)
-  // Answers pasted in on the Verify answer page live there, not in the chat.
-  const messages = state.messages.filter((m) => m.source !== 'submitted' && m.origin !== 'classic')
+  // Answers pasted in on the Verify answer page live there; ones pasted into the chat stay here.
+  const messages = state.messages.filter((m) => m.origin !== 'classic' && (m.source !== 'submitted' || m.origin === 'chat'))
   const last = messages[messages.length - 1]
   const empty = messages.length === 0
 
@@ -43,10 +47,11 @@ export default function Chat() {
   )
 }
 
-function AgentAvatar() {
+function AgentAvatar({ submitted = false }) {
+  // A pasted answer was not written by the Policy Assistant, so it doesn't wear its avatar.
   return (
     <span className="glass hidden size-10 shrink-0 place-items-center rounded-2xl text-carbon sm:grid" aria-hidden="true">
-      <Sparkles size={17} strokeWidth={2} />
+      {submitted ? <ClipboardPaste size={17} strokeWidth={2} /> : <Sparkles size={17} strokeWidth={2} />}
     </span>
   )
 }
@@ -59,10 +64,10 @@ function Welcome() {
         <span className="grid size-6 place-items-center rounded-full bg-ocbc-red text-white">
           <ShieldCheck size={14} strokeWidth={2.25} />
         </span>
-        Press Verify to check any answer against approved policy
+        Every answer is checked against approved policy by Assessment AI
       </div>
       <h1 className="text-heading font-semibold text-ink sm:text-[44px] sm:tracking-[-1.4px]">What policy question do you have?</h1>
-      <p className="mt-3 max-w-[52ch] text-body text-smoke">Ask the Policy Assistant. Press Verify on any answer to see how far you can trust it.</p>
+      <p className="mt-3 max-w-[56ch] text-body text-smoke">Ask the Policy Assistant, or paste in an answer from any AI tool. Assessment AI checks it as soon as it lands, separately from the agent that wrote it.</p>
 
       <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {SCENARIOS.map((s, i) => {
@@ -102,16 +107,28 @@ function AnswerBubble({ m }) {
   const { state, dispatch } = useStore()
   const open = state.paneId === m.id
   const claims = visibleClaims(m)
-  const matched = m.phase !== 'thinking' && m.phase !== 'streaming' && scenarioById(m.scenarioId).question && scenarioById(m.scenarioId).question !== m.question
+  const matched = m.source !== 'submitted' && m.phase !== 'thinking' && m.phase !== 'streaming' && scenarioById(m.scenarioId).question && scenarioById(m.scenarioId).question !== m.question
   const faded = m.outcome?.decision === 'corrected' || m.outcome?.decision === 'rejected'
+  const submitted = m.source === 'submitted'
+  const settled = m.phase !== 'thinking' && m.phase !== 'streaming'
 
   return (
     <article aria-label={`Answer to: ${m.question}`} className="rise-in flex gap-3">
-      <AgentAvatar />
+      <AgentAvatar submitted={submitted} />
       <div className="min-w-0 flex-1">
         <div className={`glass rounded-3xl rounded-tl-lg px-5 pt-3.5 pb-4 transition-shadow ${open ? 'ring-2 ring-line/15' : ''}`}>
-          <div className="mb-2 flex items-center gap-2 text-caption">
-            <span className="font-semibold text-carbon">Policy Assistant</span>
+          <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-caption">
+            <span className="font-semibold text-carbon">{submitted ? 'Submitted for verification' : 'Policy Assistant'}</span>
+            {submitted && (
+              <>
+                <span className="text-ash" aria-hidden="true">
+                  ·
+                </span>
+                <span className="text-smoke">not from the Policy Assistant</span>
+                {m.citations.length > 0 && <span className="text-smoke">· cites {m.citations.join(', ')}</span>}
+                {m.asOf && <span className="text-smoke">· policy date {m.asOf}</span>}
+              </>
+            )}
             {TOPICS[scenarioById(m.scenarioId)?.topic] && (
               <>
                 <span className="text-ash" aria-hidden="true">
@@ -163,13 +180,16 @@ function AnswerBubble({ m }) {
               Matched to “{scenarioById(m.scenarioId).question}”
             </p>
           )}
+          {m.phase === 'done' && m.result && <TrustChips m={m} claims={claims} />}
         </div>
 
-        {m.phase !== 'thinking' && m.phase !== 'streaming' && (
+        {settled && (
           <div className="rise-in mt-2.5 flex flex-wrap items-center gap-2">
             <VerifyButton m={m} open={open} />
+            {m.phase === 'done' && <StateChip state={m.state} />}
           </div>
         )}
+        {m.phase === 'done' && !m.outcome && <Challenger m={m} reviewRequired={m.state === 'review-required' || !!m.routed} className="mt-3" />}
         {m.outcome && <Outcome outcome={m.outcome} />}
       </div>
     </article>
@@ -271,6 +291,50 @@ export function Outcome({ outcome }) {
 }
 
 function Composer({ compact }) {
+  const [mode, setMode] = useState('ask')
+  return (
+    <div className="shrink-0 px-4 pt-2 pb-4 sm:px-6">
+      <div className="mx-auto w-full max-w-[780px]">
+        <div className="mb-2.5 flex justify-center">
+          <div className="glass-soft inline-flex gap-1 rounded-full p-1" role="tablist" aria-label="What do you want to do?">
+            {[
+              { id: 'ask', label: 'Ask the Policy Assistant', Icon: MessageSquare },
+              { id: 'verify', label: 'Verify an answer', Icon: ClipboardPaste },
+            ].map((t) => (
+              <button
+                key={t.id}
+                role="tab"
+                aria-selected={mode === t.id}
+                onClick={() => setMode(t.id)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-caption font-medium whitespace-nowrap transition-all ${mode === t.id ? 'bg-surface text-ink shadow-[0_1px_2px_rgb(0_0_0/0.08)]' : 'text-smoke hover:text-ink'}`}
+              >
+                <t.Icon size={14} aria-hidden="true" />
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {mode === 'ask' ? <AskComposer compact={compact} /> : <VerifyComposer />}
+      </div>
+    </div>
+  )
+}
+
+/** Paste in a question, an answer from any AI tool and its citations; Assessment AI checks it here in the chat. */
+function VerifyComposer() {
+  return (
+    <div className="scroll-quiet max-h-[55vh] overflow-y-auto">
+      {!BACKEND && (
+        <div className="mb-2.5">
+          <BackendNotice />
+        </div>
+      )}
+      <SubmitForm origin="chat" idPrefix="chat-va" rows={3} className="glass rise-in rounded-[28px] p-4 sm:p-5" />
+    </div>
+  )
+}
+
+function AskComposer({ compact }) {
   const { state, askQuestion } = useStore()
   const [value, setValue] = useState('')
   const busy = state.messages.some((m) => m.kind === 'answer' && (m.phase === 'thinking' || m.phase === 'streaming'))
@@ -286,58 +350,56 @@ function Composer({ compact }) {
   }
 
   return (
-    <div className="shrink-0 px-4 pt-2 pb-4 sm:px-6">
-      <div className="mx-auto w-full max-w-[780px]">
-        {compact && (
-          <div className="scroll-quiet mb-2.5 flex gap-2 overflow-x-auto pr-6 pb-1 [mask-image:linear-gradient(to_right,black_calc(100%-32px),transparent)]" role="group" aria-label="Suggested questions">
-            {SCENARIOS.filter((s) => !asked.has(s.question)).map((s) => {
-              const Icon = topicIcon(s.topic)
-              return (
-                <button key={s.id} onClick={() => submit(s.question)} disabled={busy} className="glass-soft inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-caption font-medium whitespace-nowrap text-carbon transition-colors hover:text-ink disabled:opacity-50">
-                  <Icon size={14} aria-hidden="true" />
-                  {s.prompt}
-                </button>
-              )
-            })}
-          </div>
-        )}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault()
-            submit()
+    <>
+      {compact && (
+        <div className="scroll-quiet mb-2.5 flex gap-2 overflow-x-auto pr-6 pb-1 [mask-image:linear-gradient(to_right,black_calc(100%-32px),transparent)]" role="group" aria-label="Suggested questions">
+          {SCENARIOS.filter((s) => !asked.has(s.question)).map((s) => {
+            const Icon = topicIcon(s.topic)
+            return (
+              <button key={s.id} onClick={() => submit(s.question)} disabled={busy} className="glass-soft inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-caption font-medium whitespace-nowrap text-carbon transition-colors hover:text-ink disabled:opacity-50">
+                <Icon size={14} aria-hidden="true" />
+                {s.prompt}
+              </button>
+            )
+          })}
+        </div>
+      )}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          submit()
+        }}
+        className="glass flex items-end gap-3 rounded-[28px] py-2.5 pr-2.5 pl-5 focus-within:ring-2 focus-within:ring-ocbc-red/20"
+      >
+        <label htmlFor="ask" className="sr-only">
+          Ask a policy question
+        </label>
+        <textarea
+          id="ask"
+          rows={1}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault()
+              submit()
+            }
           }}
-          className="glass flex items-end gap-3 rounded-[28px] py-2.5 pr-2.5 pl-5 focus-within:ring-2 focus-within:ring-ocbc-red/20"
+          placeholder="Ask a policy question"
+          className="max-h-32 min-h-7 flex-1 resize-none bg-transparent py-2 text-body text-ink placeholder:text-smoke focus:outline-none"
+        />
+        <button
+          type="submit"
+          disabled={!value.trim() || busy}
+          aria-label="Send question"
+          className="grid size-11 shrink-0 place-items-center rounded-full bg-inverse text-white shadow-md transition-all hover:bg-inverse-hover active:scale-95 disabled:bg-line/10 disabled:text-white disabled:shadow-none"
         >
-          <label htmlFor="ask" className="sr-only">
-            Ask a policy question
-          </label>
-          <textarea
-            id="ask"
-            rows={1}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                submit()
-              }
-            }}
-            placeholder="Ask a policy question"
-            className="max-h-32 min-h-7 flex-1 resize-none bg-transparent py-2 text-body text-ink placeholder:text-smoke focus:outline-none"
-          />
-          <button
-            type="submit"
-            disabled={!value.trim() || busy}
-            aria-label="Send question"
-            className="grid size-11 shrink-0 place-items-center rounded-full bg-inverse text-white shadow-md transition-all hover:bg-inverse-hover active:scale-95 disabled:bg-line/10 disabled:text-white disabled:shadow-none"
-          >
-            <ArrowUp size={20} strokeWidth={2.25} />
-          </button>
-        </form>
-        <p className="mt-2 text-center text-caption text-smoke">
-          {agentModel ? `Prototype · answers written by ${agentModel} from synthetic policy data · verified separately` : 'Scripted prototype with synthetic policy data'}
-        </p>
-      </div>
-    </div>
+          <ArrowUp size={20} strokeWidth={2.25} />
+        </button>
+      </form>
+      <p className="mt-2 text-center text-caption text-smoke">
+        {agentModel ? `Prototype · answers written by ${agentModel} from synthetic policy data · checked separately by Assessment AI` : 'Scripted prototype with synthetic policy data · every answer checked by Assessment AI'}
+      </p>
+    </>
   )
 }

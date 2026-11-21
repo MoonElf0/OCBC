@@ -67,7 +67,9 @@ function reducer(state, a) {
       return { ...state, view: a.view, toast: null, classic: { ...state.classic, checksOpen: false }, unreadOutcomes: a.view === 'workspace' || a.view === 'classic' ? 0 : state.unreadOutcomes }
 
     case 'ask': {
-      const origin = a.origin ?? 'assistant' // which page asked: 'assistant' | 'classic'
+      // Where it lives: 'assistant' (asked in the Assistant chat), 'chat' (pasted in to verify from the Assistant chat), 'classic'.
+      // Submitted answers with any other origin live on the Verify answer page.
+      const origin = a.origin ?? 'assistant'
       const user = { id: `u${a.id}`, kind: 'user', text: a.question, source: a.source ?? 'asked', origin }
       const answer = {
         id: `a${a.id}`,
@@ -353,15 +355,16 @@ export function StoreProvider({ children }) {
     }
     dispatch({ type: 'ask', id, question, reply, origin })
     const answerId = `a${id}`
-    // Brief "thinking" beat, then stream the answer. On the assistant page
-    // verification waits for the employee; the classic page verifies at once.
+    // Brief "thinking" beat, then stream the answer. Assessment AI starts
+    // checking it the moment it has landed, on both pages: the answer is
+    // never blocked, and the checks resolve after it.
     const t = setTimeout(() => {
       const stop = streamText(
         reply.text,
         (shown) => dispatch({ type: 'stream', id: answerId, shown }),
         () => {
           dispatch({ type: 'streamed', id: answerId })
-          if (origin === 'classic') verifyRef.current({ id: answerId, scenarioId: reply.scenarioId, serverId: reply.answerId ?? null, question })
+          verifyRef.current({ id: answerId, scenarioId: reply.scenarioId, serverId: reply.answerId ?? null, question })
         },
       )
       cancels.current.push(stop)

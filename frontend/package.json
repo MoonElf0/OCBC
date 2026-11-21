@@ -10,6 +10,8 @@
     "test": "vitest run",
     "export:fixtures": "node scripts/export-fixtures.mjs",
     "dev:backend": "vite --mode backend",
+    "dev:full": "node scripts/dev-full.mjs",
+    "dev:full:memory": "node scripts/dev-full.mjs --memory",
     "build:backend": "vite build --mode backend"
   },
   "dependencies": {

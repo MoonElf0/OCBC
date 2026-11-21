@@ -15,9 +15,10 @@ import ClassicThread from './classic/Thread'
 
 export default function App() {
   const { state } = useStore()
-  // The verify pane belongs to the page its answer lives on: chat answers in the workspace, pasted ones on Verify answer.
+  // The verify pane belongs to the page its answer lives on: chat answers (asked or pasted in the chat) in the workspace, pasted ones on Verify answer.
   const paneMsg = state.messages.find((m) => m.id === state.paneId)
-  const paneOn = (page) => paneMsg && (paneMsg.source === 'submitted') === (page === 'verify')
+  const onVerifyPage = (m) => m.source === 'submitted' && m.origin !== 'chat'
+  const paneOn = (page) => paneMsg && onVerifyPage(paneMsg) === (page === 'verify')
   return (
     <div className="relative flex h-full flex-col">
       <div className="atmosphere" aria-hidden="true" />

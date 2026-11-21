@@ -23,7 +23,8 @@ const EXAMPLE = {
 
 export default function VerifyAnswerPage() {
   const { state } = useStore()
-  const submitted = state.messages.filter((m) => m.kind === 'answer' && m.source === 'submitted' && m.origin !== 'classic').reverse()
+  // Answers pasted into the Assistant chat stay in the chat.
+  const submitted = state.messages.filter((m) => m.kind === 'answer' && m.source === 'submitted' && m.origin !== 'classic' && m.origin !== 'chat').reverse()
 
   return (
     <section aria-labelledby="va-title" className="relative flex min-h-0 min-w-0 flex-1 flex-col">
@@ -61,7 +62,7 @@ export default function VerifyAnswerPage() {
   )
 }
 
-function BackendNotice() {
+export function BackendNotice() {
   return (
     <div role="note" className="rise-in flex gap-3 rounded-2xl border border-dashed border-line/15 bg-bone/70 p-4">
       <ServerOff size={18} className="mt-0.5 shrink-0 text-status-unknown" aria-hidden="true" />
@@ -76,7 +77,11 @@ function BackendNotice() {
   )
 }
 
-function SubmitForm() {
+/**
+ * Paste-to-verify form. Used on this page and, with origin 'chat', inside the
+ * Assistant chat composer, where the result lands in the conversation.
+ */
+export function SubmitForm({ origin = 'assistant', idPrefix = 'va', className = 'glass rise-in rounded-3xl p-5 sm:p-6', rows = 5 }) {
   const { state, submitAnswer } = useStore()
   const [q, setQ] = useState('')
   const [a, setA] = useState('')
@@ -95,7 +100,7 @@ function SubmitForm() {
       .split(/[,;\n]+/)
       .map((c) => c.trim())
       .filter(Boolean)
-    const ok = await submitAnswer({ question: q.trim(), answer: a.trim(), citations, asOf: asOf || null })
+    const ok = await submitAnswer({ question: q.trim(), answer: a.trim(), citations, asOf: asOf || null }, { origin })
     setSending(false)
     if (ok) {
       setQ('')
@@ -108,32 +113,32 @@ function SubmitForm() {
   const label = 'text-caption font-semibold text-carbon'
 
   return (
-    <form onSubmit={submit} className="glass rise-in space-y-4 rounded-3xl p-5 sm:p-6" aria-describedby="va-help">
+    <form onSubmit={submit} className={`space-y-4 ${className}`} aria-describedby={`${idPrefix}-help`}>
       <div className="grid gap-4 sm:grid-cols-[1fr_180px]">
         <div>
-          <label htmlFor="va-q" className={label}>
+          <label htmlFor={`${idPrefix}-q`} className={label}>
             Original question
           </label>
-          <input id="va-q" value={q} onChange={(e) => setQ(e.target.value)} disabled={!BACKEND} placeholder="What the employee asked" className={`mt-1.5 ${field}`} />
+          <input id={`${idPrefix}-q`} value={q} onChange={(e) => setQ(e.target.value)} disabled={!BACKEND} placeholder="What the employee asked" className={`mt-1.5 ${field}`} />
         </div>
         <div>
-          <label htmlFor="va-date" className={label}>
+          <label htmlFor={`${idPrefix}-date`} className={label}>
             Policy date
           </label>
-          <input id="va-date" type="date" value={asOf || today} max="2100-12-31" onChange={(e) => setAsOf(e.target.value)} disabled={!BACKEND} className={`mt-1.5 ${field}`} />
+          <input id={`${idPrefix}-date`} type="date" value={asOf || today} max="2100-12-31" onChange={(e) => setAsOf(e.target.value)} disabled={!BACKEND} className={`mt-1.5 ${field}`} />
         </div>
       </div>
       <div>
-        <label htmlFor="va-a" className={label}>
+        <label htmlFor={`${idPrefix}-a`} className={label}>
           AI-generated answer
         </label>
-        <textarea id="va-a" rows={5} value={a} onChange={(e) => setA(e.target.value)} disabled={!BACKEND} placeholder="Paste the answer to check" className={`mt-1.5 resize-y ${field}`} />
+        <textarea id={`${idPrefix}-a`} rows={rows} value={a} onChange={(e) => setA(e.target.value)} disabled={!BACKEND} placeholder="Paste the answer to check" className={`mt-1.5 resize-y ${field}`} />
       </div>
       <div>
-        <label htmlFor="va-c" className={label}>
+        <label htmlFor={`${idPrefix}-c`} className={label}>
           Citations given with it <span className="font-normal text-smoke">(optional)</span>
         </label>
-        <input id="va-c" value={cites} onChange={(e) => setCites(e.target.value)} disabled={!BACKEND} placeholder="e.g. DOC-FX-019 §2.1, DOC-SME-104" className={`mt-1.5 ${field}`} />
+        <input id={`${idPrefix}-c`} value={cites} onChange={(e) => setCites(e.target.value)} disabled={!BACKEND} placeholder="e.g. DOC-FX-019 §2.1, DOC-SME-104" className={`mt-1.5 ${field}`} />
       </div>
       <div className="flex flex-wrap items-center gap-3 border-t border-line/[0.06] pt-4">
         {BACKEND && (
@@ -145,7 +150,7 @@ function SubmitForm() {
           {sending ? <LoaderCircle size={16} className="spin" aria-hidden="true" /> : <ShieldCheck size={16} aria-hidden="true" />} Verify answer
         </button>
       </div>
-      <p id="va-help" className="text-caption text-smoke">
+      <p id={`${idPrefix}-help`} className="text-caption text-smoke">
         The library text is treated as evidence, never as instructions. Without a model provider on the server, the model steps are reported as not run and the result is marked partial.
       </p>
     </form>

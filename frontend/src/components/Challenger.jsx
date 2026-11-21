@@ -3,7 +3,7 @@ import { Swords, ShieldCheck, MessageCircleQuestion, Sparkles } from 'lucide-rea
 import { CHALLENGES, clarification } from '../lib/challenger'
 import { DOCUMENTS } from '../fixtures'
 
-export default function Challenger({ m, reviewRequired = false }) {
+export default function Challenger({ m, reviewRequired = false, className = 'mx-3 mb-3' }) {
   const ch = CHALLENGES[m.scenarioId]
   const [ready, setReady] = useState(false)
   const [picked, setPicked] = useState(null)
@@ -18,7 +18,7 @@ export default function Challenger({ m, reviewRequired = false }) {
   const words = clarification(opt ?? ch.options?.[0] ?? { title: '' }, reviewRequired)
 
   return (
-    <div className="chal-border pop mx-3 mb-3 rounded-2xl p-4" role="region" aria-label="Challenger agent">
+    <div className={`chal-border pop rounded-2xl p-4 ${className}`} role="region" aria-label="Challenger agent">
       <div className="flex items-center gap-2 text-caption font-medium text-carbon">
         <Swords size={15} aria-hidden="true" /> Challenger Agent
         <span className="eyebrow rounded-full border border-frost px-2 py-0.5 text-smoke">Second opinion</span>

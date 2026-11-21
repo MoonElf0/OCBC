@@ -58,6 +58,22 @@ def _plain(value):
 
 # ── connection and seed ──────────────────────────────────────────────────
 
+# MONGODB_URI=memory: an in-process MongoDB stand-in (mongomock), for running
+# backend mode when the real cluster is unreachable (no network, IP not on the
+# Atlas allow-list). Same API and code path; seeded fresh on every start and
+# lost when the server stops. Opt-in only: the default is still a real MongoDB.
+MEMORY_URI = "memory"
+
+
+def _memory_client():
+    try:
+        import mongomock
+    except ImportError as e:
+        raise RuntimeError("MONGODB_URI=memory needs mongomock: pip install -r backend/requirements.txt") from e
+    print("[db] MONGODB_URI=memory: using an in-memory database. Demo data is re-seeded on start; nothing is saved.", file=sys.stderr)
+    return mongomock.MongoClient()
+
+
 def connect(uri: str | None = None, name: str | None = None, client=None) -> Database:
     """Open the database, rebuilding or seeding it as needed. Tests pass `client=mongomock.MongoClient()`."""
     if client is None:
@@ -65,7 +81,7 @@ def connect(uri: str | None = None, name: str | None = None, client=None) -> Dat
         if not uri:
             raise RuntimeError("MONGODB_URI is not set. Copy backend/.env.example to backend/.env and put your "
                                "MongoDB connection string in it (see backend/README.md).")
-        client = MongoClient(uri, serverSelectionTimeoutMS=8000, appname="assessment-ai-backend")
+        client = _memory_client() if uri.strip().lower() == MEMORY_URI else MongoClient(uri, serverSelectionTimeoutMS=8000, appname="assessment-ai-backend")
     db = client[name or os.environ.get("MONGODB_DB") or DEFAULT_DB]
     schema = db.meta.find_one({"_id": "schema"})
     if not schema or schema["value"] != SCHEMA_VERSION or db.policy_versions.count_documents({}) == 0:
