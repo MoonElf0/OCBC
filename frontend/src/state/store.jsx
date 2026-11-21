@@ -25,6 +25,7 @@ export function reviewReasons(result, highStakes) {
   const reasons = []
   if (result.band?.id === 'low') reasons.push('low-confidence')
   if (claims.some((c) => c.status === 'conflicting')) reasons.push('conflicting')
+  if (claims.some((c) => c.status === 'unsupported')) reasons.push('unsupported')
   if (result.noSource || claims.some((c) => c.status === 'no-source' || c.status === 'insufficient')) reasons.push('no-source')
   if (result.assessment?.partial) reasons.push('partial')
   if (highStakes && claims.length) reasons.push('high-stakes')
@@ -194,6 +195,7 @@ function reducer(state, a) {
       if (claims.some((c) => c.status === 'unsupported')) reasons.push('unsupported')
       if (claims.some((c) => c.status === 'stale' || (c.source && freshnessOf(c.source.docId).stale))) reasons.push('stale')
       if (claims.some((c) => c.status === 'conflicting')) reasons.push('conflicting')
+  if (claims.some((c) => c.status === 'unsupported')) reasons.push('unsupported')
       if (msg.result?.noSource) reasons.push('no-source')
       if (msg.result?.matchedQuestion) reasons.push('paraphrased')
       const s0 = addToQueue(state, msg, 'employee', reasons, a.note)

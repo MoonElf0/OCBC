@@ -23,8 +23,13 @@ describe('mandatory review', () => {
     expect(reviewReasons(r, false)).toEqual(['partial'])
   })
   it('conflicting and missing evidence need review', () => {
-    expect(reviewReasons(assess('fx-override'), true)).toEqual(['low-confidence', 'conflicting', 'high-stakes'])
+    expect(reviewReasons(assess('fx-override'), true)).toEqual(['low-confidence', 'conflicting', 'unsupported', 'high-stakes'])
     expect(reviewReasons(assess('collateral-crypto'), true)).toEqual(['low-confidence', 'no-source', 'high-stakes'])
+  })
+  it('an unsupported claim needs review even at Medium on an ordinary topic', () => {
+    const r = assess('sme-limit')
+    expect(r.band.id).toBe('medium')
+    expect(reviewReasons(r, false)).toEqual(['unsupported'])
   })
   it('the Challenger never says review is skipped when review is required', () => {
     for (const ch of Object.values(CHALLENGES)) {
