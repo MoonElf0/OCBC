@@ -51,6 +51,7 @@ const initial = {
   pitch: false,
   seq: 1042,
   health: null, // backend mode: model status, review rules, simulated reviewers
+  verifyDraft: null, // { question, answer, citations, asOf } handed from an Assistant answer to the Verify answer form
 }
 
 const isClassic = (m) => m?.origin === 'classic'
@@ -65,6 +66,13 @@ function reducer(state, a) {
   switch (a.type) {
     case 'view':
       return { ...state, view: a.view, toast: null, classic: { ...state.classic, checksOpen: false }, unreadOutcomes: a.view === 'workspace' || a.view === 'classic' ? 0 : state.unreadOutcomes }
+
+    // Copy an Assistant answer into the Verify answer form and go there. The form
+    // reads the draft once and clears it, so coming back later starts empty.
+    case 'prefillVerify':
+      return { ...reducer(state, { type: 'view', view: 'verify' }), verifyDraft: a.draft }
+    case 'verifyDraftUsed':
+      return { ...state, verifyDraft: null }
 
     case 'ask': {
       const origin = a.origin ?? 'assistant' // which page asked: 'assistant' | 'classic'
@@ -109,6 +117,14 @@ function reducer(state, a) {
       if (isClassic(s.messages.find((m) => m.id === a.id))) return s
       return { ...s, paneId: a.id, focusClaimId: null }
     }
+
+    // The second verifier's advisory result, shown beside the main one. Never touches state or routing.
+    case 'secondStart':
+      return updateMsg(state, a.id, { second: { phase: 'running', verifier: a.verifier ?? null } })
+    case 'secondDone':
+      return updateMsg(state, a.id, { second: { phase: a.result ? 'done' : 'not-run', verifier: a.verifier, result: a.result } })
+    case 'secondFailed':
+      return updateMsg(state, a.id, { second: { phase: 'error', verifier: a.verifier ?? null, error: a.error } })
 
     case 'checkStart':
       return updateMsg(state, a.id, (m) => ({ checks: m.checks.map((c, i) => (i === a.i ? { status: 'running' } : c)) }))
@@ -411,10 +427,28 @@ export function StoreProvider({ children }) {
     if (BACKEND && m?.serverId) api.feedback(m.serverId, m.feedback === value ? null : value).catch(() => {})
   }, [])
 
+  /**
+   * Backend mode, Assistant page: ask the second verifier for its own assessment
+   * of the same answer, in parallel with the main one, so the two can be compared.
+   */
+  const secondOpinion = useCallback(async (m) => {
+    if (!BACKEND || !m.serverId || m.origin === 'classic' || m.source === 'submitted') return
+    const verifier = stateRef.current.health?.secondVerifier ?? null
+    if (verifier && !verifier.available) return dispatch({ type: 'secondDone', id: m.id, verifier, result: null })
+    dispatch({ type: 'secondStart', id: m.id, verifier })
+    try {
+      const r = await api.secondOpinion(m.serverId)
+      dispatch({ type: 'secondDone', id: m.id, verifier: r.verifier, result: r.result })
+    } catch (e) {
+      dispatch({ type: 'secondFailed', id: m.id, verifier, error: e.fromServer ? e.message : 'The backend did not respond.' })
+    }
+  }, [])
+
   /** Run (or re-run) the verifier on one answer. Opens the pane on it. */
   const verifyAnswer = useCallback((m) => {
     running.current[m.id]?.()
     dispatch({ type: 'verifyStart', id: m.id })
+    secondOpinion(m)
     const stop = verify(m.scenarioId, {
       answerId: m.serverId,
       question: m.question,
@@ -432,7 +466,7 @@ export function StoreProvider({ children }) {
     })
     running.current[m.id] = stop
     cancels.current.push(stop)
-  }, [fail, refreshQueue])
+  }, [fail, refreshQueue, secondOpinion])
 
   /**
    * Verify an answer written elsewhere: the user pastes the question, the AI

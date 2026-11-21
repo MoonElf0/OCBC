@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { ArrowUp, ShieldCheck, ShieldAlert, ShieldX, ShieldQuestion, Inbox, CircleHelp, Sparkles, ChevronRight } from 'lucide-react'
+import { ArrowUp, ShieldCheck, ShieldAlert, ShieldX, ShieldQuestion, Inbox, CircleHelp, Sparkles, ChevronRight, GitCompareArrows, LoaderCircle } from 'lucide-react'
 import { useStore } from '../state/store'
 import { SCENARIOS, TOPICS } from '../fixtures'
 import { TONES, CHECKS, VERDICT, OUTCOME_META, bandFor, topicIcon } from '../lib/status'
@@ -168,6 +168,7 @@ function AnswerBubble({ m }) {
         {m.phase !== 'thinking' && m.phase !== 'streaming' && (
           <div className="rise-in mt-2.5 flex flex-wrap items-center gap-2">
             <VerifyButton m={m} open={open} />
+            {m.second && <SecondChip m={m} />}
           </div>
         )}
         {m.outcome && <Outcome outcome={m.outcome} />}
@@ -245,6 +246,33 @@ export function VerifyButton({ m, open }) {
         </span>
       )}
       <span className="ml-0.5 rounded-full bg-line/[0.05] px-2 py-0.5 text-caption text-carbon">{open ? 'Hide' : 'Details'}</span>
+    </button>
+  )
+}
+
+/** The second verifier's index beside the main one; opens the comparison in the pane. */
+function SecondChip({ m }) {
+  const { dispatch } = useStore()
+  const s = m.second
+  const name = s.verifier?.model ?? 'Second verifier'
+  if (s.phase !== 'running' && s.phase !== 'done') return null
+  const r = s.result
+  const band = r ? bandFor(r.score) : null
+  const differs = r && m.result && bandFor(m.result.score).id !== band.id
+  const open = () => {
+    dispatch({ type: 'openPane', id: m.id })
+    setTimeout(() => document.getElementById('sec-compare')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
+  }
+  return (
+    <button onClick={open} className="glass-soft inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-caption font-medium text-carbon transition-colors hover:text-ink" aria-label={r ? `Second verifier ${name}: ${r.score ?? 'not scored'} out of 100, ${band.label}. Compare` : `Second verifier ${name} is checking`}>
+      {r ? <GitCompareArrows size={14} aria-hidden="true" /> : <LoaderCircle size={14} className="spin" aria-hidden="true" />}
+      <span className="text-smoke">{name}</span>
+      {r ? <span className="tabular-nums text-ink">{r.score != null ? `${r.score}/100 · ${band.label}` : band.label}</span> : 'checking'}
+      {differs && (
+        <span className={`inline-flex items-center gap-1 ${TONES.caution.text}`}>
+          <ShieldAlert size={13} aria-hidden="true" /> Disagrees
+        </span>
+      )}
     </button>
   )
 }

@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT / "backend"))
 # not override variables that are already set, so these win.
 os.environ["ASSESSMENT_MODEL_PROVIDER"] = "none"
 os.environ["AGENT_MODEL_PROVIDER"] = "none"
+os.environ["SECOND_VERIFIER_PROVIDER"] = "none"
 
 
 @pytest.fixture(scope="session")

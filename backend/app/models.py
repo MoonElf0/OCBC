@@ -16,6 +16,13 @@ Configuration is server-side only. Nothing here is sent to the browser.
   ANTHROPIC_API_KEY           read by the Anthropic SDK (or `ant auth login`)
   DASHSCOPE_API_KEY           Qwen via Alibaba Cloud Model Studio (see app/qwen.py)
 
+A second, independent verifier can run the same pipeline with another model,
+so an employee can compare two verdicts on one answer. It is advisory: it is
+never stored as the answer's assessment and never changes review routing.
+
+  SECOND_VERIFIER_PROVIDER    none (default) | anthropic | qwen
+  SECOND_VERIFIER_MODEL       model id (default qwen4-max for qwen)
+
 With the default (`none`) every model step reports itself as unavailable.
 The pipeline then marks those checks "Not run" and the result as partial;
 it never substitutes a scripted verdict.
@@ -237,3 +244,18 @@ def get_provider() -> Provider:
     if which == "qwen":
         return QwenProvider()
     return NoProvider()
+
+
+class NoSecondProvider(NoProvider):
+    reason = "No second verifier is configured on the server (SECOND_VERIFIER_PROVIDER is not set)."
+
+
+def get_second_provider() -> Provider:
+    """The second verifier: same pipeline and prompts, its own provider and model."""
+    which = (os.environ.get("SECOND_VERIFIER_PROVIDER") or "none").strip().lower()
+    model = os.environ.get("SECOND_VERIFIER_MODEL") or None
+    if which == "anthropic":
+        return AnthropicProvider(model or "claude-opus-5-5")
+    if which == "qwen":
+        return QwenProvider(model or "qwen4-max")
+    return NoSecondProvider()

@@ -31,7 +31,7 @@ from . import agent, db, evaluation, fixtures, library, pipeline
 from .release_check import compare_versions
 from .freshness import freshness_of
 from .metrics import Metrics
-from .models import get_provider
+from .models import get_provider, get_second_provider
 from .retrieval import Index
 from .routing import HIGH_RISK_TOPICS, RULES, auto_route_reasons, escalation_reasons, review_reasons
 from .verifier import PROVENANCE, verify
@@ -63,6 +63,7 @@ _conn = None
 _lock = threading.RLock()
 _index: tuple[str, Index] | None = None
 _provider = None
+_second = None
 _seeding = False
 
 
@@ -79,6 +80,13 @@ def provider():
     if _provider is None:
         _provider = get_provider()
     return _provider
+
+
+def second_provider():
+    global _second
+    if _second is None:
+        _second = get_second_provider()
+    return _second
 
 
 def library_docs() -> tuple[dict, Index]:
@@ -314,7 +322,7 @@ def _sse(result: dict, done: dict, pace: float):
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "provenance": PROVENANCE, "model": provider().status(), "agent": agent.agent_status(), "highRiskTopics": HIGH_RISK_TOPICS,
+    return {"ok": True, "provenance": PROVENANCE, "model": provider().status(), "secondVerifier": second_provider().status(), "agent": agent.agent_status(), "highRiskTopics": HIGH_RISK_TOPICS,
             "reviewRules": RULES, "reviewers": [{**r, "simulated": True} for r in SIMULATED_REVIEWERS], "states": STATES,
             "today": db.today(conn())}
 
@@ -383,6 +391,23 @@ async def verify_stream(answer_id: str, pace: float = 1.0):
             result, routed, aid = record_assessment(a, "initial")
         state = db.get_answer(conn(), answer_id)["state"]
     return _sse(result, {"routed": routed, "state": state, "stateLabel": STATES[state], "assessmentId": aid}, pace)
+
+
+@app.post("/api/answers/{answer_id}/second-opinion")
+def second_opinion(answer_id: str):
+    """
+    The second verifier's independent assessment of the same answer, for side-by-side comparison.
+    Advisory only: not stored as the answer's assessment, never routes or clears a review.
+    """
+    a = _get(answer_id)
+    status = second_provider().status()
+    if not status["available"]:
+        return {"verifier": status, "result": None}
+    as_of = a["asOf"]
+    result = pipeline.run(a["question"], a["text"], a["citations"], entries(as_of), as_of, second_provider(), drafts=draft_only_docs())
+    db.log(conn(), "second opinion", answer_id=answer_id, verifier=status["model"], index=result["score"], band=result["band"]["id"],
+           partial=bool(result["assessment"]["partial"]))
+    return {"verifier": status, "result": result}
 
 
 @app.post("/api/answers/{answer_id}/reverify")

@@ -65,6 +65,13 @@ API (`app/qwen.py`, standard library only, no extra package).
   Classic page sends `agent: "scripted"` and keeps the scripted storyline.
   If the model fails, `/api/ask` returns 503 with the reason; it never falls
   back to a scripted answer.
+- **Second verifier** (`SECOND_VERIFIER_PROVIDER=qwen`, `SECOND_VERIFIER_MODEL`,
+  default `qwen4-max`): the same pipeline with another model, run by
+  `POST /api/answers/{id}/second-opinion` when the employee presses Verify on
+  the Assistant page. Its result is shown beside the main verifier's, with the
+  claims the two judge differently. Advisory only: it is not stored as the
+  answer's assessment and never routes or clears a review. Unset, the panel
+  says "Not run". `GET /api/health` reports it as `secondVerifier`.
 
 Both need `DASHSCOPE_API_KEY`. `GET /api/health` reports `model` (verifier)
 and `agent`. Tests force both providers off and never call a model.

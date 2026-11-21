@@ -56,6 +56,8 @@ export const api = {
   submit: (body) => call('/answers', { method: 'POST', body }),
   preview: (body) => call('/verify/preview', { method: 'POST', body }),
   reverify: (answerId) => call(`/answers/${answerId}/reverify`, { method: 'POST' }),
+  // The second verifier (SECOND_VERIFIER_MODEL): an advisory assessment of the same answer, for comparison.
+  secondOpinion: (answerId) => call(`/answers/${answerId}/second-opinion`, { method: 'POST' }),
   history: (answerId) => call(`/answers/${answerId}/history`),
   library: () => call('/library'),
   proposeVersion: (docId, body) => call(`/library/${encodeURIComponent(docId)}/versions`, { method: 'POST', body }),

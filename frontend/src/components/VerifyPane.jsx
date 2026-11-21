@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { CircleCheck, CircleX, TriangleAlert, X, RotateCw, ShieldCheck, ShieldAlert, ShieldX, Inbox, Clock, CalendarCheck, ScanSearch, SearchX, LoaderCircle, ArrowRight, BookOpen, ChevronDown, Send, RefreshCw, FileQuestion, ListChecks, Calculator, Library } from 'lucide-react'
+import { CircleCheck, CircleX, TriangleAlert, X, RotateCw, ShieldCheck, ShieldAlert, ShieldX, Inbox, Clock, CalendarCheck, ScanSearch, SearchX, LoaderCircle, ArrowRight, BookOpen, ChevronDown, Send, RefreshCw, FileQuestion, ListChecks, Calculator, Library, GitCompareArrows, CircleDashed } from 'lucide-react'
 import { useStore, usePaneAnswer } from '../state/store'
 import { CHECKS, CHECK_ICON, CHECK_STATUS, CLAIM_STATUS, TONES, VERDICT, SEVERITY, CHECK_DISPLAY_ORDER, severityOf, severityFor, bandFor } from '../lib/status'
 import { scenarioById } from '../lib/pipeline'
@@ -7,6 +7,7 @@ import { visibleClaims, runningCheck } from '../lib/view'
 import { freshnessOf, formatDate } from '../lib/freshness'
 import { display } from '../lib/rules'
 import { DOCUMENTS } from '../fixtures'
+import { BACKEND } from '../lib/backend'
 import { ScoreRing, CompositionBar, TONE_HEX, useCountUp } from './charts'
 import { docInfo } from './ui'
 import { StateCard, PartialNotice, AssessmentHistory } from './lifecycle'
@@ -90,6 +91,7 @@ export default function VerifyPane() {
 
         <div ref={body} className="scroll-quiet min-h-0 flex-1 space-y-3 overflow-y-auto px-4 pb-4">
           <Score m={m} sc={sc} key={`score-${m.id}-${m.runs}`} />
+          <SecondVerifier m={m} />
           <Card id="sec-claims">
             <Claims m={m} />
           </Card>
@@ -244,6 +246,204 @@ function AtAGlance({ m, sc }) {
         </button>
       ))}
     </div>
+  )
+}
+
+/* ─── Second verifier ────────────────────────────────────────────────────── */
+
+const overlaps = (a, b) => a.start < b.end && b.start < a.end
+
+/** "72/100 · Medium" — the index is never shown bare. */
+const indexLabel = (r) => (r.score != null ? `${r.score}/100 · ${bandFor(r.score).label}` : bandFor(r.score).label)
+
+/**
+ * The same answer, assessed independently by a second model (SECOND_VERIFIER_MODEL),
+ * set beside the main verifier so the employee can see where the two disagree.
+ * Advisory: it is not the answer's assessment and never clears or routes a review.
+ */
+function SecondVerifier({ m }) {
+  const { state } = useStore()
+  const [showAll, setShowAll] = useState(false)
+  if (m.source === 'submitted' || m.origin === 'classic') return null
+  const s = m.second
+  const name = s?.verifier?.model ?? state.health?.secondVerifier?.model ?? 'Second verifier'
+  const mainModel = state.health?.model
+  const mainName = m.scenarioId ? 'Scripted verdicts' : mainModel?.available ? mainModel.model : 'No model'
+
+  let body
+  if (!BACKEND) {
+    body = <NotRun text="Not run. The second verifier needs backend mode with SECOND_VERIFIER_PROVIDER set on the server." />
+  } else if (!s) {
+    body = <NotRun text="Runs when you press Verify." />
+  } else if (s.phase === 'not-run' || s.phase === 'error') {
+    body = <NotRun text={`Not run. ${s.phase === 'error' ? s.error : s.verifier?.reason ?? 'No second verifier is configured on the server.'}`} />
+  } else if (s.phase === 'running' || !m.result) {
+    body = (
+      <div aria-live="polite">
+        <div className="grid grid-cols-2 gap-2">
+          <VerifierTile label="Main verifier" model={mainName} r={m.result} />
+          <VerifierTile label="Second verifier" model={name} r={s.phase === 'done' ? s.result : null} />
+        </div>
+        <p className="mt-2.5 inline-flex items-center gap-1.5 text-caption text-carbon">
+          <LoaderCircle size={13} className="spin" aria-hidden="true" /> {s.phase === 'running' ? `${name} is checking the same answer` : 'Waiting for the main verifier'}
+        </p>
+      </div>
+    )
+  } else {
+    const a = m.result
+    const b = s.result
+    const same = bandFor(a.score).id === bandFor(b.score).id
+    const mainClaims = visibleClaims(m)
+    // Each verifier splits the answer itself; pair claims by where they sit in the answer.
+    const rows = b.claims.map((c2) => {
+      const c1 = mainClaims.find((c) => overlaps(c, c2)) ?? null
+      return { c1, c2, differs: !c1 || severityFor(c1.status)?.id !== severityFor(c2.status)?.id }
+    })
+    const differ = rows.filter((x) => x.differs)
+    const shown = showAll ? rows : differ
+    body = (
+      <div aria-live="polite">
+        <div className="grid grid-cols-2 gap-2">
+          <VerifierTile label="Main verifier" model={mainName} r={a} claims={mainClaims} />
+          <VerifierTile label="Second verifier" model={name} r={b} claims={b.claims} />
+        </div>
+        <p className={`mt-3 flex items-start gap-1.5 text-body-sm font-semibold ${same ? TONES.verified.text : TONES.caution.text}`}>
+          {same ? <CircleCheck size={16} className="mt-0.5 shrink-0" aria-hidden="true" /> : <TriangleAlert size={16} className="mt-0.5 shrink-0" aria-hidden="true" />}
+          <span className="text-ink">
+            {same ? `Both verifiers rate it ${bandFor(a.score).label}.` : `The verifiers disagree: ${bandFor(a.score).label} vs ${bandFor(b.score).label}. Check the sources before acting.`}
+          </span>
+        </p>
+        {b.assessment?.partial && (
+          <p className="mt-1.5 flex items-start gap-1.5 text-caption text-carbon">
+            <CircleDashed size={13} className="mt-0.5 shrink-0 text-status-unknown" aria-hidden="true" />
+            <span>
+              Partial: some of its model steps did not run, so its index is capped below High.
+              {b.assessment.unavailable?.length > 0 && ` ${[...new Set(b.assessment.unavailable.map((u) => u.reason))].join(' ')}`}
+            </span>
+          </p>
+        )}
+        {rows.length > 0 && (
+          <>
+            <div className="mt-3.5 flex items-center gap-2">
+              <span className="text-caption font-semibold text-ink">{differ.length ? `${differ.length} of ${rows.length} claims judged differently` : `All ${rows.length} claims judged the same way`}</span>
+              {differ.length < rows.length && (
+                <button onClick={() => setShowAll((x) => !x)} className="ml-auto rounded-full px-2 py-0.5 text-caption font-medium text-carbon hover:bg-line/[0.05] hover:text-ink">
+                  {showAll ? 'Show differences' : 'Show all'}
+                </button>
+              )}
+            </div>
+            <ul className="mt-2 space-y-2">
+              {shown.map(({ c1, c2 }) => (
+                <CompareRow key={c2.id} m={m} c1={c1} c2={c2} mainName={mainName} name={name} />
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <Card id="sec-compare">
+      <SectionTitle icon={GitCompareArrows} aside="Advisory">
+        Second verifier
+      </SectionTitle>
+      {body}
+      <p className="mt-3 text-[12px] text-smoke">Only a reviewer’s decision clears a review. The second verifier cannot, and does not change routing.</p>
+    </Card>
+  )
+}
+
+function NotRun({ text }) {
+  return (
+    <p className="flex items-start gap-2 text-body-sm text-carbon">
+      <CircleDashed size={16} className="mt-0.5 shrink-0 text-smoke" aria-hidden="true" />
+      {text}
+    </p>
+  )
+}
+
+function VerifierTile({ label, model, r, claims }) {
+  const band = r ? bandFor(r.score) : null
+  const flagged = claims?.filter((c) => c.status !== 'supported').length
+  const Shield = band ? BAND_SHIELD[band.status] : LoaderCircle
+  return (
+    <div className="pane-item rounded-2xl px-3 py-2.5">
+      <div className="text-[11px] font-medium tracking-[0.04em] text-smoke uppercase">{label}</div>
+      <div className="truncate text-caption text-carbon" title={model}>
+        {model}
+      </div>
+      {r ? (
+        <>
+          <div className={`mt-1.5 inline-flex items-center gap-1.5 text-body-sm font-semibold ${TONES[band.status].text}`}>
+            <Shield size={15} strokeWidth={2.25} aria-hidden="true" />
+            <span className="text-ink tabular-nums">{indexLabel(r)}</span>
+          </div>
+          <div className="mt-0.5 text-[12px] text-carbon">
+            {VERDICT[band.id].tag}
+            {claims ? ` · ${claims.length ? `${flagged} of ${claims.length} flagged` : 'no claims'}` : ''}
+          </div>
+        </>
+      ) : (
+        <div className="mt-2 space-y-1.5">
+          <div className="shimmer h-2 w-4/5 rounded-full" />
+          <div className="shimmer h-2 w-3/5 rounded-full" />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Verdict({ who, c }) {
+  if (!c) return <span className="inline-flex items-center gap-1 text-[12px] text-smoke"><CircleDashed size={12} aria-hidden="true" />{who}: not split out</span>
+  const sev = severityFor(c.status)
+  return (
+    <span className={`inline-flex min-w-0 items-center gap-1 text-[12px] font-semibold ${TONES[sev.tone].text}`}>
+      <sev.Icon size={12} strokeWidth={2.5} className="shrink-0" aria-hidden="true" />
+      <span className="truncate text-carbon">{who}:</span> {sev.label}
+    </span>
+  )
+}
+
+/** One claim as the two verifiers saw it, with the second verifier's passage and reason. */
+function CompareRow({ m, c1, c2, mainName, name }) {
+  const [open, setOpen] = useState(false)
+  const p = c2.counter ?? c2.source
+  return (
+    <li className="pane-item overflow-hidden rounded-2xl">
+      <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full gap-2 p-3 text-left transition-colors hover:bg-surface">
+        <span className="min-w-0 flex-1">
+          <span className={`text-body-sm text-ink ${open ? '' : 'line-clamp-2'}`}>“{m.text.slice(c2.start, c2.end)}”</span>
+          <span className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
+            <Verdict who={mainName} c={c1} />
+            <Verdict who={name} c={c2} />
+          </span>
+        </span>
+        <ChevronDown size={16} className={`mt-1 shrink-0 text-smoke transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+      </button>
+      {open && (
+        <div className="rise-in space-y-2.5 border-t border-line/5 bg-bone/60 p-3">
+          <p className="text-caption text-carbon">
+            <span className="font-semibold text-ink">{name}: </span>
+            {c2.reason}
+          </p>
+          {p ? (
+            <PassageBox p={p} label={c2.counter ? 'Current policy' : c2.nearest ? 'Closest passage found (does not mention this)' : 'Source'} />
+          ) : (
+            <div className="flex items-center gap-2 rounded-xl bg-surface p-3 text-body-sm text-carbon">
+              <SearchX size={16} className="shrink-0 text-status-unsupported" aria-hidden="true" />
+              No approved document mentions this.
+            </div>
+          )}
+          {c1 && (
+            <p className="text-caption text-carbon">
+              <span className="font-semibold text-ink">{mainName}: </span>
+              {c1.short ?? c1.reason}
+            </p>
+          )}
+        </div>
+      )}
+    </li>
   )
 }
 

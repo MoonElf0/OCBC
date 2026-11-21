@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ClipboardPaste, LoaderCircle, ShieldCheck, ServerOff, Sparkles } from 'lucide-react'
 import { useStore } from '../state/store'
 import { DEMO_TODAY } from '../fixtures'
@@ -77,12 +77,23 @@ function BackendNotice() {
 }
 
 function SubmitForm() {
-  const { state, submitAnswer } = useStore()
+  const { state, dispatch, submitAnswer } = useStore()
   const [q, setQ] = useState('')
   const [a, setA] = useState('')
   const [cites, setCites] = useState('')
   const [asOf, setAsOf] = useState('')
   const [sending, setSending] = useState(false)
+
+  // An answer sent here from the Assistant page ("Open in Verify answer").
+  const draft = state.verifyDraft
+  useEffect(() => {
+    if (!draft) return
+    setQ(draft.question ?? '')
+    setA(draft.answer ?? '')
+    setCites((draft.citations ?? []).join(', '))
+    setAsOf(draft.asOf ?? '')
+    dispatch({ type: 'verifyDraftUsed' })
+  }, [draft, dispatch])
   const busy = sending || state.messages.some((m) => m.source === 'submitted' && m.kind === 'answer' && m.phase !== 'done')
   const today = state.health?.today ?? DEMO_TODAY
   const ready = BACKEND && q.trim() && a.trim() && !busy
